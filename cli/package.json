@@ -1,0 +1,46 @@
+{
+  "name": "@oxog/berryact-cli",
+  "version": "1.0.0",
+  "description": "CLI tool for Berryact JS Framework project scaffolding",
+  "main": "index.js",
+  "type": "module",
+  "bin": {
+    "berryact": "./bin/berryact.js",
+    "create-berryact-app": "./bin/create-berryact-app.js"
+  },
+  "scripts": {
+    "test": "jest",
+    "build": "rollup -c",
+    "dev": "node --watch bin/berryact.js"
+  },
+  "keywords": [
+    "berryact",
+    "cli",
+    "scaffolding",
+    "framework",
+    "create-app"
+  ],
+  "author": "OXOG",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^11.0.0",
+    "inquirer": "^9.0.0",
+    "chalk": "^5.3.0",
+    "ora": "^7.0.0",
+    "fs-extra": "^11.0.0",
+    "download-git-repo": "^3.0.2",
+    "validate-npm-package-name": "^5.0.0",
+    "semver": "^7.5.0"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "rollup": "^3.0.0"
+  },
+  "peerDependencies": {
+    "@oxog/berryact": "^1.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oxog/berryact-cli"
+  }
+}

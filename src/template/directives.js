@@ -1,0 +1,210 @@
+import { isSignal, effect } from '../core/signal.js';
+
+export const directives = new Map();
+
+export function registerDirective(name, handler) {
+  directives.set(name, handler);
+}
+
+export function processDirectives(element, props) {
+  Object.entries(props).forEach(([key, value]) => {
+    if (key.startsWith('n-')) {
+      const directiveName = key.slice(2);
+      const directive = directives.get(directiveName);
+      
+      if (directive) {
+        directive(element, value, props);
+      }
+    }
+  });
+}
+
+registerDirective('show', (element, value) => {
+  if (isSignal(value)) {
+    effect(() => {
+      element.style.display = value.value ? '' : 'none';
+    });
+  } else {
+    element.style.display = value ? '' : 'none';
+  }
+});
+
+registerDirective('if', (element, value) => {
+  const placeholder = document.createComment('n-if');
+  element.parentNode?.insertBefore(placeholder, element);
+  
+  if (isSignal(value)) {
+    effect(() => {
+      if (value.value) {
+        if (!element.parentNode) {
+          placeholder.parentNode?.insertBefore(element, placeholder.nextSibling);
+        }
+      } else {
+        if (element.parentNode) {
+          element.parentNode.removeChild(element);
+        }
+      }
+    });
+  } else {
+    if (!value && element.parentNode) {
+      element.parentNode.removeChild(element);
+    }
+  }
+});
+
+registerDirective('model', (element, value) => {
+  if (!isSignal(value)) {
+    throw new Error('n-model requires a signal');
+  }
+  
+  const tagName = element.tagName.toLowerCase();
+  
+  if (tagName === 'input') {
+    const type = element.type;
+    
+    if (type === 'checkbox') {
+      effect(() => {
+        element.checked = value.value;
+      });
+      
+      element.addEventListener('change', () => {
+        value.value = element.checked;
+      });
+    } else if (type === 'radio') {
+      effect(() => {
+        element.checked = element.value === value.value;
+      });
+      
+      element.addEventListener('change', () => {
+        if (element.checked) {
+          value.value = element.value;
+        }
+      });
+    } else {
+      effect(() => {
+        element.value = value.value;
+      });
+      
+      element.addEventListener('input', () => {
+        value.value = element.value;
+      });
+    }
+  } else if (tagName === 'textarea') {
+    effect(() => {
+      element.value = value.value;
+    });
+    
+    element.addEventListener('input', () => {
+      value.value = element.value;
+    });
+  } else if (tagName === 'select') {
+    effect(() => {
+      element.value = value.value;
+    });
+    
+    element.addEventListener('change', () => {
+      value.value = element.value;
+    });
+  }
+});
+
+registerDirective('for', (element, value) => {
+  if (!Array.isArray(value) && !isSignal(value)) {
+    throw new Error('n-for requires an array or signal containing an array');
+  }
+  
+  const placeholder = document.createComment('n-for');
+  const template = element.cloneNode(true);
+  element.parentNode?.insertBefore(placeholder, element);
+  element.parentNode?.removeChild(element);
+  
+  let renderedElements = [];
+  
+  const updateList = () => {
+    renderedElements.forEach(el => el.remove());
+    renderedElements = [];
+    
+    const items = isSignal(value) ? value.value : value;
+    
+    items.forEach((item, index) => {
+      const newElement = template.cloneNode(true);
+      
+      newElement.querySelectorAll('[n-for-item]').forEach(el => {
+        el.textContent = item;
+      });
+      
+      newElement.querySelectorAll('[n-for-index]').forEach(el => {
+        el.textContent = index;
+      });
+      
+      placeholder.parentNode?.insertBefore(newElement, placeholder.nextSibling);
+      renderedElements.push(newElement);
+    });
+  };
+  
+  if (isSignal(value)) {
+    effect(updateList);
+  } else {
+    updateList();
+  }
+});
+
+registerDirective('text', (element, value) => {
+  if (isSignal(value)) {
+    effect(() => {
+      element.textContent = value.value;
+    });
+  } else {
+    element.textContent = value;
+  }
+});
+
+registerDirective('html', (element, value) => {
+  if (isSignal(value)) {
+    effect(() => {
+      element.innerHTML = value.value;
+    });
+  } else {
+    element.innerHTML = value;
+  }
+});
+
+registerDirective('class', (element, value) => {
+  if (typeof value === 'object') {
+    Object.entries(value).forEach(([className, condition]) => {
+      if (isSignal(condition)) {
+        effect(() => {
+          element.classList.toggle(className, condition.value);
+        });
+      } else {
+        element.classList.toggle(className, condition);
+      }
+    });
+  } else if (isSignal(value)) {
+    effect(() => {
+      element.className = value.value;
+    });
+  } else {
+    element.className = value;
+  }
+});
+
+registerDirective('style', (element, value) => {
+  if (typeof value === 'object') {
+    Object.entries(value).forEach(([property, styleValue]) => {
+      if (isSignal(styleValue)) {
+        effect(() => {
+          element.style[property] = styleValue.value;
+        });
+      } else {
+        element.style[property] = styleValue;
+      }
+    });
+  } else if (isSignal(value)) {
+    effect(() => {
+      element.style.cssText = value.value;
+    });
+  } else {
+    element.style.cssText = value;
+  }
+});

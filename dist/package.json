@@ -1,0 +1,30 @@
+{
+  "name": "@berryact/core",
+  "version": "1.0.0",
+  "description": "A lightweight, reactive JavaScript framework",
+  "main": "index.js",
+  "module": "index.js",
+  "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./index.js",
+      "require": "./index.js"
+    },
+    "./core": "./berryact.bundle.js"
+  },
+  "files": [
+    "**/*"
+  ],
+  "keywords": [
+    "framework",
+    "reactive",
+    "component",
+    "signals",
+    "jsx"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/berryact/berryact-js"
+  }
+}

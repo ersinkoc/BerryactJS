@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Berryact Todo App</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .todo-app {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .todo-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        .todo-input input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        .todo-input input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        .add-btn {
+            padding: 12px 24px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .add-btn:hover {
+            background: #0056b3;
+        }
+        .todo-filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid #e0e0e0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .filter-btn.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        .todo-list {
+            list-style: none;
+            padding: 0;
+        }
+        .todo-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .todo-item.completed {
+            opacity: 0.6;
+            text-decoration: line-through;
+        }
+        .todo-item input[type="checkbox"] {
+            transform: scale(1.2);
+        }
+        .todo-text {
+            flex: 1;
+            font-size: 1rem;
+        }
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .delete-btn:hover {
+            background: #c82333;
+        }
+        .todo-stats {
+            margin-top: 20px;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+    
+    <script type="module">
+        import { createApp, signal, computed, html, useSignal, useState } from '../../src/index.js';
+
+        function TodoApp() {
+            const [todos, setTodos] = useState([]);
+            const [inputValue, setInputValue] = useState('');
+            const [filter, setFilter] = useState('all');
+
+            const filteredTodos = computed(() => {
+                switch (filter.value) {
+                    case 'active':
+                        return todos.value.filter(todo => !todo.completed);
+                    case 'completed':
+                        return todos.value.filter(todo => todo.completed);
+                    default:
+                        return todos.value;
+                }
+            });
+
+            const totalTodos = computed(() => todos.value.length);
+            const completedTodos = computed(() => todos.value.filter(todo => todo.completed).length);
+            const activeTodos = computed(() => totalTodos.value - completedTodos.value);
+
+            const addTodo = () => {
+                if (inputValue.value.trim()) {
+                    setTodos([...todos.value, {
+                        id: Date.now(),
+                        text: inputValue.value.trim(),
+                        completed: false
+                    }]);
+                    setInputValue('');
+                }
+            };
+
+            const toggleTodo = (id) => {
+                setTodos(todos.value.map(todo =>
+                    todo.id === id ? { ...todo, completed: !todo.completed } : todo
+                ));
+            };
+
+            const deleteTodo = (id) => {
+                setTodos(todos.value.filter(todo => todo.id !== id));
+            };
+
+            const handleKeyPress = (e) => {
+                if (e.key === 'Enter') {
+                    addTodo();
+                }
+            };
+
+            return html`
+                <div class="todo-app">
+                    <h1>Berryact Todo App</h1>
+                    
+                    <div class="todo-input">
+                        <input 
+                            type="text" 
+                            placeholder="Add a new todo..."
+                            n-model=${inputValue}
+                            @keypress=${handleKeyPress}
+                        />
+                        <button class="add-btn" @click=${addTodo}>Add</button>
+                    </div>
+
+                    <div class="todo-filters">
+                        <button 
+                            class="filter-btn ${filter.value === 'all' ? 'active' : ''}"
+                            @click=${() => setFilter('all')}
+                        >
+                            All
+                        </button>
+                        <button 
+                            class="filter-btn ${filter.value === 'active' ? 'active' : ''}"
+                            @click=${() => setFilter('active')}
+                        >
+                            Active
+                        </button>
+                        <button 
+                            class="filter-btn ${filter.value === 'completed' ? 'active' : ''}"
+                            @click=${() => setFilter('completed')}
+                        >
+                            Completed
+                        </button>
+                    </div>
+
+                    <ul class="todo-list">
+                        ${filteredTodos.value.map(todo => html`
+                            <li class="todo-item ${todo.completed ? 'completed' : ''}" key=${todo.id}>
+                                <input 
+                                    type="checkbox" 
+                                    checked=${todo.completed}
+                                    @change=${() => toggleTodo(todo.id)}
+                                />
+                                <span class="todo-text">${todo.text}</span>
+                                <button 
+                                    class="delete-btn" 
+                                    @click=${() => deleteTodo(todo.id)}
+                                >
+                                    Delete
+                                </button>
+                            </li>
+                        `)}
+                    </ul>
+
+                    <div class="todo-stats">
+                        <p>
+                            Total: ${totalTodos} | 
+                            Active: ${activeTodos} | 
+                            Completed: ${completedTodos}
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+
+        const app = createApp(TodoApp);
+        app.mount('#app');
+    </script>
+</body>
+</html>

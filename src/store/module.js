@@ -1,0 +1,245 @@
+export class StoreModule {
+  constructor(options = {}) {
+    this.state = options.state || {};
+    this.getters = options.getters || {};
+    this.mutations = options.mutations || {};
+    this.actions = options.actions || {};
+    this.modules = options.modules || {};
+    this.namespaced = options.namespaced !== false;
+  }
+
+  getNamespacedType(type, namespace) {
+    return namespace ? `${namespace}/${type}` : type;
+  }
+
+  install(store, namespace = '') {
+    const moduleNamespace = this.namespaced ? 
+      (namespace ? `${namespace}/${this.name}` : this.name) : 
+      namespace;
+
+    this.installState(store, moduleNamespace);
+    this.installGetters(store, moduleNamespace);
+    this.installMutations(store, moduleNamespace);
+    this.installActions(store, moduleNamespace);
+    this.installChildModules(store, moduleNamespace);
+  }
+
+  installState(store, namespace) {
+    if (namespace) {
+      const namespaceArray = namespace.split('/');
+      let currentState = store.state.value;
+      
+      for (let i = 0; i < namespaceArray.length - 1; i++) {
+        const key = namespaceArray[i];
+        if (!currentState[key]) {
+          currentState[key] = {};
+        }
+        currentState = currentState[key];
+      }
+      
+      currentState[namespaceArray[namespaceArray.length - 1]] = this.state;
+    } else {
+      Object.assign(store.state.value, this.state);
+    }
+  }
+
+  installGetters(store, namespace) {
+    Object.entries(this.getters).forEach(([key, getter]) => {
+      const namespacedKey = this.getNamespacedType(key, namespace);
+      
+      store.getters[namespacedKey] = computed(() => {
+        const moduleState = this.getModuleState(store.state.value, namespace);
+        const moduleGetters = this.getModuleGetters(store.getters, namespace);
+        
+        return getter(moduleState, moduleGetters, store.state.value, store.getters);
+      });
+    });
+  }
+
+  installMutations(store, namespace) {
+    Object.entries(this.mutations).forEach(([key, mutation]) => {
+      const namespacedKey = this.getNamespacedType(key, namespace);
+      
+      store.mutations[namespacedKey] = (state, payload) => {
+        const moduleState = this.getModuleState(state, namespace);
+        const result = mutation(moduleState, payload);
+        
+        if (result !== undefined) {
+          this.setModuleState(state, namespace, result);
+        }
+      };
+    });
+  }
+
+  installActions(store, namespace) {
+    Object.entries(this.actions).forEach(([key, action]) => {
+      const namespacedKey = this.getNamespacedType(key, namespace);
+      
+      store.actions[namespacedKey] = (context, payload) => {
+        const moduleState = this.getModuleState(context.state, namespace);
+        const moduleGetters = this.getModuleGetters(context.getters, namespace);
+        
+        const moduleContext = {
+          state: moduleState,
+          getters: moduleGetters,
+          commit: (type, payload, options) => {
+            const namespacedType = this.namespaced ? 
+              this.getNamespacedType(type, namespace) : type;
+            return context.commit(namespacedType, payload, options);
+          },
+          dispatch: (type, payload) => {
+            const namespacedType = this.namespaced ? 
+              this.getNamespacedType(type, namespace) : type;
+            return context.dispatch(namespacedType, payload);
+          },
+          rootState: context.state,
+          rootGetters: context.getters
+        };
+        
+        return action(moduleContext, payload);
+      };
+    });
+  }
+
+  installChildModules(store, namespace) {
+    Object.entries(this.modules).forEach(([name, childModule]) => {
+      const childNamespace = namespace ? `${namespace}/${name}` : name;
+      
+      if (childModule instanceof StoreModule) {
+        childModule.name = name;
+        childModule.install(store, childNamespace);
+      } else {
+        const module = new StoreModule(childModule);
+        module.name = name;
+        module.install(store, childNamespace);
+      }
+    });
+  }
+
+  getModuleState(rootState, namespace) {
+    if (!namespace) return rootState;
+    
+    const namespaceArray = namespace.split('/');
+    let state = rootState;
+    
+    for (const key of namespaceArray) {
+      state = state[key];
+      if (!state) return {};
+    }
+    
+    return state;
+  }
+
+  setModuleState(rootState, namespace, newState) {
+    if (!namespace) {
+      Object.assign(rootState, newState);
+      return;
+    }
+    
+    const namespaceArray = namespace.split('/');
+    let state = rootState;
+    
+    for (let i = 0; i < namespaceArray.length - 1; i++) {
+      state = state[namespaceArray[i]];
+    }
+    
+    state[namespaceArray[namespaceArray.length - 1]] = newState;
+  }
+
+  getModuleGetters(rootGetters, namespace) {
+    if (!namespace) return rootGetters;
+    
+    const moduleGetters = {};
+    const prefix = namespace + '/';
+    
+    Object.keys(rootGetters).forEach(key => {
+      if (key.startsWith(prefix)) {
+        const localKey = key.slice(prefix.length);
+        moduleGetters[localKey] = rootGetters[key];
+      }
+    });
+    
+    return moduleGetters;
+  }
+}
+
+export function createModule(options) {
+  return new StoreModule(options);
+}
+
+export function mapState(namespace, states) {
+  if (typeof namespace !== 'string') {
+    states = namespace;
+    namespace = '';
+  }
+  
+  const res = {};
+  
+  states.forEach(key => {
+    res[key] = function() {
+      const state = this.$store.state.value;
+      return namespace ? 
+        state[namespace][key] : 
+        state[key];
+    };
+  });
+  
+  return res;
+}
+
+export function mapGetters(namespace, getters) {
+  if (typeof namespace !== 'string') {
+    getters = namespace;
+    namespace = '';
+  }
+  
+  const res = {};
+  
+  getters.forEach(key => {
+    const namespacedKey = namespace ? `${namespace}/${key}` : key;
+    
+    res[key] = function() {
+      return this.$store.getters[namespacedKey].value;
+    };
+  });
+  
+  return res;
+}
+
+export function mapMutations(namespace, mutations) {
+  if (typeof namespace !== 'string') {
+    mutations = namespace;
+    namespace = '';
+  }
+  
+  const res = {};
+  
+  mutations.forEach(key => {
+    const namespacedKey = namespace ? `${namespace}/${key}` : key;
+    
+    res[key] = function(payload) {
+      return this.$store.commit(namespacedKey, payload);
+    };
+  });
+  
+  return res;
+}
+
+export function mapActions(namespace, actions) {
+  if (typeof namespace !== 'string') {
+    actions = namespace;
+    namespace = '';
+  }
+  
+  const res = {};
+  
+  actions.forEach(key => {
+    const namespacedKey = namespace ? `${namespace}/${key}` : key;
+    
+    res[key] = function(payload) {
+      return this.$store.dispatch(namespacedKey, payload);
+    };
+  });
+  
+  return res;
+}

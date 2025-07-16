@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Berryact Dashboard Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+        }
+
+        .dashboard {
+            min-height: 100vh;
+            display: grid;
+            grid-template-areas: 
+                "sidebar header"
+                "sidebar main";
+            grid-template-columns: 250px 1fr;
+            grid-template-rows: 60px 1fr;
+        }
+
+        .sidebar {
+            grid-area: sidebar;
+            background: #1e293b;
+            color: white;
+            padding: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+            color: #60a5fa;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+        }
+
+        .sidebar-nav li {
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-nav a {
+            color: #cbd5e1;
+            text-decoration: none;
+            padding: 0.75rem 1rem;
+            display: block;
+            border-radius: 0.375rem;
+            transition: all 0.2s;
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background: #334155;
+            color: white;
+        }
+
+        .header {
+            grid-area: header;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: #f1f5f9;
+            border-radius: 0.375rem;
+        }
+
+        .main-content {
+            grid-area: main;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-title {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .stat-change {
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .stat-change.positive {
+            color: #059669;
+        }
+
+        .stat-change.negative {
+            color: #dc2626;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
+            margin-bottom: 2rem;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .chart-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .chart-filters {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chart-filter {
+            padding: 0.5rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.375rem;
+            background: white;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .chart-filter.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .chart-filter:hover {
+            background: #f8fafc;
+        }
+
+        .chart-filter.active:hover {
+            background: #2563eb;
+        }
+
+        .simple-chart {
+            height: 300px;
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 0.375rem;
+            margin-top: 1rem;
+        }
+
+        .chart-bar {
+            flex: 1;
+            margin: 0 2px;
+            background: #3b82f6;
+            border-radius: 2px 2px 0 0;
+            min-height: 10px;
+            transition: all 0.3s;
+            opacity: 0.8;
+        }
+
+        .chart-bar:hover {
+            opacity: 1;
+            background: #2563eb;
+        }
+
+        .data-table {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+
+        .table-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .table-search {
+            padding: 0.5rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 0.75rem 1.5rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.875rem;
+        }
+
+        td {
+            font-size: 0.875rem;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-inactive {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #64748b;
+        }
+
+        .refresh-btn {
+            padding: 0.5rem 1rem;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background 0.2s;
+        }
+
+        .refresh-btn:hover {
+            background: #2563eb;
+        }
+
+        .refresh-btn:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-areas: 
+                    "header"
+                    "main";
+                grid-template-columns: 1fr;
+                grid-template-rows: 60px 1fr;
+            }
+            
+            .sidebar {
+                display: none;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .main-content {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script type="module">
+        import { createApp, defineComponent, html, signal, computed, useState, useEffect } from '../../src/index.js';
+
+        // Mock data
+        const generateMockData = () => {
+            const users = [];
+            const names = ['John Doe', 'Jane Smith', 'Bob Johnson', 'Alice Brown', 'Charlie Wilson'];
+            const statuses = ['active', 'pending', 'inactive'];
+            
+            for (let i = 1; i <= 50; i++) {
+                users.push({
+                    id: i,
+                    name: names[Math.floor(Math.random() * names.length)],
+                    email: `user${i}@example.com`,
+                    status: statuses[Math.floor(Math.random() * statuses.length)],
+                    lastLogin: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+                    orders: Math.floor(Math.random() * 20)
+                });
+            }
+            return users;
+        };
+
+        const generateChartData = (days = 30) => {
+            const data = [];
+            const now = new Date();
+            
+            for (let i = days - 1; i >= 0; i--) {
+                const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+                data.push({
+                    date: date.toLocaleDateString(),
+                    value: Math.floor(Math.random() * 1000) + 100
+                });
+            }
+            return data;
+        };
+
+        // Global state
+        const currentPage = signal('dashboard');
+        const loading = signal(false);
+        const users = signal(generateMockData());
+        const searchQuery = signal('');
+        const chartPeriod = signal('30d');
+        const chartData = signal(generateChartData(30));
+
+        // Computed values
+        const filteredUsers = computed(() => {
+            if (!searchQuery.value) return users.value;
+            return users.value.filter(user => 
+                user.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+                user.email.toLowerCase().includes(searchQuery.value.toLowerCase())
+            );
+        });
+
+        const stats = computed(() => {
+            const totalUsers = users.value.length;
+            const activeUsers = users.value.filter(u => u.status === 'active').length;
+            const pendingUsers = users.value.filter(u => u.status === 'pending').length;
+            const totalOrders = users.value.reduce((sum, u) => sum + u.orders, 0);
+            
+            return {
+                totalUsers,
+                activeUsers,
+                pendingUsers,
+                totalOrders
+            };
+        });
+
+        // Functions
+        const refreshData = async () => {
+            loading.value = true;
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            users.value = generateMockData();
+            chartData.value = generateChartData(chartPeriod.value === '7d' ? 7 : chartPeriod.value === '30d' ? 30 : 90);
+            loading.value = false;
+        };
+
+        const updateChartPeriod = (period) => {
+            chartPeriod.value = period;
+            const days = period === '7d' ? 7 : period === '30d' ? 30 : 90;
+            chartData.value = generateChartData(days);
+        };
+
+        // Components
+        const Sidebar = defineComponent(() => {
+            return html`
+                <div class="sidebar">
+                    <div class="sidebar-brand">📊 Dashboard</div>
+                    <nav>
+                        <ul class="sidebar-nav">
+                            <li>
+                                <a href="#" 
+                                   class=${currentPage.value === 'dashboard' ? 'active' : ''}
+                                   @click=${() => currentPage.value = 'dashboard'}>
+                                    Dashboard
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#"
+                                   class=${currentPage.value === 'users' ? 'active' : ''}
+                                   @click=${() => currentPage.value = 'users'}>
+                                    Users
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#"
+                                   class=${currentPage.value === 'analytics' ? 'active' : ''}
+                                   @click=${() => currentPage.value = 'analytics'}>
+                                    Analytics
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#"
+                                   class=${currentPage.value === 'settings' ? 'active' : ''}
+                                   @click=${() => currentPage.value = 'settings'}>
+                                    Settings
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            `;
+        });
+
+        const Header = defineComponent(() => {
+            const pageTitle = computed(() => {
+                switch (currentPage.value) {
+                    case 'dashboard': return 'Dashboard';
+                    case 'users': return 'User Management';
+                    case 'analytics': return 'Analytics';
+                    case 'settings': return 'Settings';
+                    default: return 'Dashboard';
+                }
+            });
+
+            return html`
+                <div class="header">
+                    <h1 class="header-title">${pageTitle}</h1>
+                    <div class="header-actions">
+                        <button class="refresh-btn" @click=${refreshData} ?disabled=${loading}>
+                            ${loading.value ? 'Refreshing...' : 'Refresh'}
+                        </button>
+                        <div class="user-menu">
+                            <span>👤 Admin User</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        const StatsGrid = defineComponent(() => {
+            return html`
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-title">Total Users</div>
+                        <div class="stat-value">${stats.value.totalUsers}</div>
+                        <div class="stat-change positive">+12% from last month</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">Active Users</div>
+                        <div class="stat-value">${stats.value.activeUsers}</div>
+                        <div class="stat-change positive">+8% from last month</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">Pending Users</div>
+                        <div class="stat-value">${stats.value.pendingUsers}</div>
+                        <div class="stat-change negative">-3% from last month</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">Total Orders</div>
+                        <div class="stat-value">${stats.value.totalOrders}</div>
+                        <div class="stat-change positive">+15% from last month</div>
+                    </div>
+                </div>
+            `;
+        });
+
+        const Chart = defineComponent(() => {
+            const maxValue = computed(() => Math.max(...chartData.value.map(d => d.value)));
+            
+            return html`
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">User Activity</h3>
+                        <div class="chart-filters">
+                            <button class="chart-filter ${chartPeriod.value === '7d' ? 'active' : ''}" 
+                                    @click=${() => updateChartPeriod('7d')}>
+                                7 Days
+                            </button>
+                            <button class="chart-filter ${chartPeriod.value === '30d' ? 'active' : ''}" 
+                                    @click=${() => updateChartPeriod('30d')}>
+                                30 Days
+                            </button>
+                            <button class="chart-filter ${chartPeriod.value === '90d' ? 'active' : ''}" 
+                                    @click=${() => updateChartPeriod('90d')}>
+                                90 Days
+                            </button>
+                        </div>
+                    </div>
+                    <div class="simple-chart">
+                        ${chartData.value.map(point => html`
+                            <div class="chart-bar" 
+                                 style="height: ${(point.value / maxValue.value) * 100}%"
+                                 title="${point.date}: ${point.value}">
+                            </div>
+                        `)}
+                    </div>
+                </div>
+            `;
+        });
+
+        const UserTable = defineComponent(() => {
+            return html`
+                <div class="data-table">
+                    <div class="table-header">
+                        <h3 class="table-title">Users</h3>
+                        <input 
+                            type="text" 
+                            class="table-search" 
+                            placeholder="Search users..."
+                            value=${searchQuery}
+                            @input=${(e) => searchQuery.value = e.target.value}
+                        />
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                    <th>Last Login</th>
+                                    <th>Orders</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${filteredUsers.value.map(user => html`
+                                    <tr key=${user.id}>
+                                        <td>${user.name}</td>
+                                        <td>${user.email}</td>
+                                        <td>
+                                            <span class="status-badge status-${user.status}">
+                                                ${user.status}
+                                            </span>
+                                        </td>
+                                        <td>${user.lastLogin}</td>
+                                        <td>${user.orders}</td>
+                                    </tr>
+                                `)}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        });
+
+        const DashboardPage = defineComponent(() => {
+            return html`
+                <div>
+                    <${StatsGrid} />
+                    <${Chart} />
+                    <${UserTable} />
+                </div>
+            `;
+        });
+
+        const UsersPage = defineComponent(() => {
+            return html`
+                <div>
+                    <${UserTable} />
+                </div>
+            `;
+        });
+
+        const AnalyticsPage = defineComponent(() => {
+            return html`
+                <div>
+                    <${Chart} />
+                    <div class="chart-container">
+                        <h3>Analytics features would go here</h3>
+                        <p>This is a placeholder for more detailed analytics.</p>
+                    </div>
+                </div>
+            `;
+        });
+
+        const SettingsPage = defineComponent(() => {
+            return html`
+                <div class="chart-container">
+                    <h3>Settings</h3>
+                    <p>Settings configuration would go here.</p>
+                </div>
+            `;
+        });
+
+        const MainContent = defineComponent(() => {
+            const CurrentPage = computed(() => {
+                switch (currentPage.value) {
+                    case 'dashboard': return DashboardPage;
+                    case 'users': return UsersPage;
+                    case 'analytics': return AnalyticsPage;
+                    case 'settings': return SettingsPage;
+                    default: return DashboardPage;
+                }
+            });
+
+            return html`
+                <div class="main-content">
+                    ${loading.value ? html`
+                        <div class="loading">Loading...</div>
+                    ` : html`
+                        <${CurrentPage.value} />
+                    `}
+                </div>
+            `;
+        });
+
+        const App = defineComponent(() => {
+            return html`
+                <div class="dashboard">
+                    <${Sidebar} />
+                    <${Header} />
+                    <${MainContent} />
+                </div>
+            `;
+        });
+
+        // Start the app
+        const app = createApp(App);
+        app.mount(document.getElementById('app'));
+    </script>
+</body>
+</html>

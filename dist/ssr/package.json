@@ -1,0 +1,20 @@
+{
+  "name": "@oxog/berryact-ssr",
+  "version": "1.0.0",
+  "description": "Server-Side Rendering for Berryact Framework",
+  "main": "index.js",
+  "type": "module",
+  "dependencies": {
+    "jsdom": "^22.0.0"
+  },
+  "peerDependencies": {
+    "@oxog/berryact": "^1.0.0"
+  },
+  "keywords": [
+    "ssr",
+    "server-side-rendering",
+    "berryact",
+    "framework"
+  ],
+  "license": "MIT"
+}

@@ -1,0 +1,93 @@
+{
+  "name": "@oxog/berryact",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Berryact JS Framework - A modern, lightweight JavaScript UI framework",
+  "main": "dist/berryact.cjs.js",
+  "module": "dist/berryact.esm.js",
+  "browser": "dist/berryact.umd.js",
+  "types": "types/index.d.ts",
+  "files": [
+    "dist",
+    "types",
+    "src"
+  ],
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:dual-syntax": "jest tests/dual-syntax.test.js",
+    "lint": "eslint src/**/*.js tests/**/*.js examples/**/*.js",
+    "lint:fix": "eslint src/**/*.js tests/**/*.js examples/**/*.js --fix",
+    "format": "prettier --write src/**/*.js tests/**/*.js examples/**/*.js",
+    "format:check": "prettier --check src/**/*.js tests/**/*.js examples/**/*.js",
+    "typecheck": "tsc --noEmit",
+    "verify-dual-syntax": "node scripts/verify-dual-syntax.js",
+    "quality": "npm run lint && npm run format:check && npm run typecheck",
+    "quality:fix": "npm run lint:fix && npm run format",
+    "dev:jsx": "cd examples/todo-app-jsx && npm run dev",
+    "dev:template": "cd examples/todo-app-template && python -m http.server 3000",
+    "dev:mixed": "cd examples/mixed-syntax && npm run dev",
+    "dev:migration": "cd examples/react-migration && python -m http.server 3001"
+  },
+  "keywords": [
+    "ui",
+    "framework",
+    "reactive",
+    "lightweight",
+    "javascript"
+  ],
+  "author": "OXOG",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "^7.28.0",
+    "@babel/plugin-transform-modules-commonjs": "^7.22.0",
+    "@babel/preset-env": "^7.28.0",
+    "@rollup/plugin-node-resolve": "^15.0.0",
+    "@rollup/plugin-terser": "^0.4.0",
+    "babel-jest": "^29.7.0",
+    "eslint": "^8.0.0",
+    "eslint-plugin-jsdoc": "^46.0.0",
+    "prettier": "^3.0.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.0.0",
+    "rollup": "^3.0.0",
+    "typescript": "^5.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oxog/berryact"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/berryact.esm.js",
+      "require": "./dist/berryact.cjs.js",
+      "browser": "./dist/berryact.umd.js"
+    },
+    "./jsx-runtime": {
+      "import": "./src/jsx-runtime.js",
+      "require": "./dist/jsx-runtime.cjs.js"
+    },
+    "./jsx-dev-runtime": {
+      "import": "./src/jsx-dev-runtime.js",
+      "require": "./dist/jsx-dev-runtime.cjs.js"
+    },
+    "./compat": {
+      "import": "./src/compat/index.js",
+      "require": "./dist/compat.cjs.js"
+    },
+    "./build/vite-plugin": {
+      "import": "./src/build/vite-plugin.js"
+    },
+    "./build/webpack-plugin": {
+      "import": "./src/build/webpack-plugin.js",
+      "require": "./src/build/webpack-plugin.js"
+    },
+    "./build/babel-preset": {
+      "import": "./src/build/babel-preset.js",
+      "require": "./src/build/babel-preset.js"
+    }
+  }
+}

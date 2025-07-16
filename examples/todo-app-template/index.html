@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Berryact Todo App (Template Literals)</title>
+    <link rel="stylesheet" href="../todo-app-jsx/styles.css">
+</head>
+<body>
+    <div id="root"></div>
+    
+    <!-- No build step required! -->
+    <script type="module">
+        import { createApp } from '../../src/index.js';
+        import TodoApp from './app.js';
+
+        // Create and mount the app
+        const app = createApp(TodoApp);
+        app.mount('#root');
+    </script>
+</body>
+</html>
