@@ -17,7 +17,7 @@ export class Reconciler {
       dom: container,
       props: {},
       alternate: this.currentRoot,
-      effectTag: null
+      effectTag: null,
     };
 
     this.performWork();
@@ -60,7 +60,7 @@ export class Reconciler {
 
   updateComponent(fiber) {
     const { type: Component, props } = fiber.vnode;
-    
+
     // Create component instance
     let instance;
     if (isFunction(Component)) {
@@ -100,11 +100,11 @@ export class Reconciler {
   updateTextNode(fiber) {
     if (!fiber.dom) {
       const text = fiber.vnode.props.nodeValue;
-      
+
       if (isSignal(text)) {
         // Create text node with signal
         fiber.dom = document.createTextNode(text());
-        
+
         // Update text on signal change
         effect(() => {
           fiber.dom.nodeValue = text();
@@ -120,7 +120,7 @@ export class Reconciler {
     const dom = document.createElement(type);
 
     // Set properties
-    Object.keys(props).forEach(name => {
+    Object.keys(props).forEach((name) => {
       this.setProp(dom, name, props[name]);
     });
 
@@ -129,14 +129,14 @@ export class Reconciler {
 
   updateDOMProps(dom, oldProps, newProps) {
     // Remove old props
-    Object.keys(oldProps).forEach(name => {
+    Object.keys(oldProps).forEach((name) => {
       if (!(name in newProps)) {
         this.removeProp(dom, name, oldProps[name]);
       }
     });
 
     // Add/update new props
-    Object.keys(newProps).forEach(name => {
+    Object.keys(newProps).forEach((name) => {
       if (oldProps[name] !== newProps[name]) {
         this.setProp(dom, name, newProps[name]);
       }
@@ -145,7 +145,7 @@ export class Reconciler {
 
   setProp(dom, name, value) {
     if (name === 'children') return;
-    
+
     // Handle event listeners
     if (name.startsWith('on')) {
       const eventName = name.toLowerCase().substring(2);
@@ -212,7 +212,7 @@ export class Reconciler {
           dom: oldFiber.dom,
           parent: fiber,
           alternate: oldFiber,
-          effectTag: 'UPDATE'
+          effectTag: 'UPDATE',
         };
       } else {
         if (child) {
@@ -222,7 +222,7 @@ export class Reconciler {
             dom: null,
             parent: fiber,
             alternate: null,
-            effectTag: 'PLACEMENT'
+            effectTag: 'PLACEMENT',
           };
         }
 

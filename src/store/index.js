@@ -10,16 +10,16 @@ export class Store {
     this.plugins = [];
     this.strict = options.strict !== false;
     this.devtools = options.devtools !== false;
-    
+
     this.history = [];
     this.historyIndex = -1;
     this.maxHistorySize = options.maxHistory || 50;
-    
+
     this.setupGetters(options.getters || {});
     this.setupModules(options.modules || {});
     this.setupPlugins(options.plugins || []);
     this.setupDevtools();
-    
+
     this.saveStateSnapshot();
   }
 
@@ -38,7 +38,7 @@ export class Store {
   }
 
   setupPlugins(plugins) {
-    plugins.forEach(plugin => {
+    plugins.forEach((plugin) => {
       this.use(plugin);
     });
   }
@@ -101,7 +101,7 @@ export class Store {
       state: this.state.value,
       getters: this.getters,
       commit: this.commit.bind(this),
-      dispatch: this.dispatch.bind(this)
+      dispatch: this.dispatch.bind(this),
     };
 
     this.notifyPlugins('action', { type, payload });
@@ -127,17 +127,17 @@ export class Store {
         fn(this.state.value);
       }
     });
-    
+
     return () => effectInstance.dispose();
   }
 
   subscribeAction(fn) {
     this.plugins.push({
-      action: fn
+      action: fn,
     });
-    
+
     return () => {
-      const index = this.plugins.findIndex(p => p.action === fn);
+      const index = this.plugins.findIndex((p) => p.action === fn);
       if (index >= 0) {
         this.plugins.splice(index, 1);
       }
@@ -146,17 +146,17 @@ export class Store {
 
   watch(getter, callback, options = {}) {
     const { immediate = false, deep = false } = options;
-    
+
     const computedValue = computed(() => {
       if (typeof getter === 'function') {
         return getter(this.state.value, this.getters);
       }
-      
+
       // If getter is a string, look up in getters first, then in state
       if (this.getters[getter]) {
         return this.getters[getter].value;
       }
-      
+
       return this.state.value[getter];
     });
 
@@ -165,7 +165,7 @@ export class Store {
 
     return effect(() => {
       const newValue = computedValue.value;
-      
+
       if (isFirst) {
         isFirst = false;
         if (immediate) {
@@ -189,7 +189,7 @@ export class Store {
       mutations: module.mutations || {},
       actions: module.actions || {},
       strict: this.strict,
-      devtools: false
+      devtools: false,
     });
 
     this.modules.set(name, moduleStore);
@@ -197,7 +197,7 @@ export class Store {
     Object.defineProperty(this.state.value, name, {
       get: () => moduleStore.state.value,
       enumerable: true,
-      configurable: true
+      configurable: true,
     });
 
     Object.entries(module.getters || {}).forEach(([key, getter]) => {
@@ -215,7 +215,7 @@ export class Store {
     this.modules.delete(name);
     delete this.state.value[name];
 
-    Object.keys(this.getters).forEach(key => {
+    Object.keys(this.getters).forEach((key) => {
       if (key.startsWith(`${name}/`)) {
         delete this.getters[key];
       }
@@ -243,16 +243,16 @@ export class Store {
 
   saveStateSnapshot(mutationType = null, payload = null) {
     const currentState = this.state.value;
-    
+
     // Handle undefined state gracefully
     if (currentState === undefined) {
       return;
     }
-    
+
     const snapshot = {
       state: JSON.parse(JSON.stringify(currentState)),
       mutation: mutationType ? { type: mutationType, payload } : null,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     this.historyIndex++;
@@ -272,7 +272,7 @@ export class Store {
 
     this.historyIndex = index;
     const snapshot = this.history[index];
-    
+
     batch(() => {
       this.state.value = JSON.parse(JSON.stringify(snapshot.state));
     });
@@ -313,7 +313,7 @@ export class Store {
   }
 
   notifyPlugins(event, data) {
-    this.plugins.forEach(plugin => {
+    this.plugins.forEach((plugin) => {
       if (plugin[event]) {
         try {
           plugin[event](data);

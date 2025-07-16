@@ -2,7 +2,7 @@ export class RouteGuard {
   constructor() {
     this.globalGuards = {
       beforeEach: [],
-      afterEach: []
+      afterEach: [],
     };
     this.errorHandlers = [];
   }
@@ -24,22 +24,19 @@ export class RouteGuard {
 
   async canActivate(to, from) {
     try {
-      const guards = [
-        ...this.globalGuards.beforeEach,
-        ...(to.beforeEnter ? [to.beforeEnter] : [])
-      ];
+      const guards = [...this.globalGuards.beforeEach, ...(to.beforeEnter ? [to.beforeEnter] : [])];
 
       for (const guard of guards) {
         const result = await this.executeGuard(guard, to, from);
-        
+
         if (result === false) {
           return false;
         }
-        
+
         if (typeof result === 'string') {
           throw new NavigationRedirect(result);
         }
-        
+
         if (result && result.path) {
           throw new NavigationRedirect(result.path);
         }
@@ -60,9 +57,9 @@ export class RouteGuard {
       };
 
       const guardResult = guard(to, from, next);
-      
+
       if (guardResult instanceof Promise) {
-        guardResult.then(resolve).catch(error => {
+        guardResult.then(resolve).catch((error) => {
           this.handleError(error, to, from);
           resolve(false);
         });
@@ -73,7 +70,7 @@ export class RouteGuard {
   }
 
   executeAfterEachGuards(to, from) {
-    this.globalGuards.afterEach.forEach(guard => {
+    this.globalGuards.afterEach.forEach((guard) => {
       try {
         guard(to, from);
       } catch (error) {
@@ -87,7 +84,7 @@ export class RouteGuard {
   }
 
   handleError(error, to, from) {
-    this.errorHandlers.forEach(handler => {
+    this.errorHandlers.forEach((handler) => {
       try {
         handler(error, to, from);
       } catch (handlerError) {
@@ -123,10 +120,8 @@ export function requireAuth(to, from, next) {
 
 export function requireRole(role) {
   return (to, from, next) => {
-    const userRole = typeof window !== 'undefined' 
-      ? window.localStorage.getItem('userRole') 
-      : null;
-    
+    const userRole = typeof window !== 'undefined' ? window.localStorage.getItem('userRole') : null;
+
     if (userRole !== role) {
       next('/unauthorized');
     } else {
@@ -154,7 +149,7 @@ export function trackPageView(to, from) {
   if (typeof window !== 'undefined' && window.gtag) {
     window.gtag('config', 'GA_TRACKING_ID', {
       page_path: to.path,
-      page_title: to.meta?.title || document.title
+      page_title: to.meta?.title || document.title,
     });
   }
 }
@@ -177,12 +172,12 @@ export function preserveScroll(savedPositions = new Map()) {
       if (from && typeof window !== 'undefined') {
         savedPositions.set(from.path, {
           x: window.pageXOffset,
-          y: window.pageYOffset
+          y: window.pageYOffset,
         });
       }
       next();
     },
-    
+
     afterEach(to, from) {
       if (typeof window !== 'undefined') {
         const savedPosition = savedPositions.get(to.path);
@@ -194,6 +189,6 @@ export function preserveScroll(savedPositions = new Map()) {
           window.scrollTo(0, 0);
         }
       }
-    }
+    },
   };
 }

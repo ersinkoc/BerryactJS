@@ -11,7 +11,7 @@ export function processDirectives(element, props) {
     if (key.startsWith('n-')) {
       const directiveName = key.slice(2);
       const directive = directives.get(directiveName);
-      
+
       if (directive) {
         directive(element, value, props);
       }
@@ -32,7 +32,7 @@ registerDirective('show', (element, value) => {
 registerDirective('if', (element, value) => {
   const placeholder = document.createComment('n-if');
   element.parentNode?.insertBefore(placeholder, element);
-  
+
   if (isSignal(value)) {
     effect(() => {
       if (value.value) {
@@ -56,17 +56,17 @@ registerDirective('model', (element, value) => {
   if (!isSignal(value)) {
     throw new Error('n-model requires a signal');
   }
-  
+
   const tagName = element.tagName.toLowerCase();
-  
+
   if (tagName === 'input') {
     const type = element.type;
-    
+
     if (type === 'checkbox') {
       effect(() => {
         element.checked = value.value;
       });
-      
+
       element.addEventListener('change', () => {
         value.value = element.checked;
       });
@@ -74,7 +74,7 @@ registerDirective('model', (element, value) => {
       effect(() => {
         element.checked = element.value === value.value;
       });
-      
+
       element.addEventListener('change', () => {
         if (element.checked) {
           value.value = element.value;
@@ -84,7 +84,7 @@ registerDirective('model', (element, value) => {
       effect(() => {
         element.value = value.value;
       });
-      
+
       element.addEventListener('input', () => {
         value.value = element.value;
       });
@@ -93,7 +93,7 @@ registerDirective('model', (element, value) => {
     effect(() => {
       element.value = value.value;
     });
-    
+
     element.addEventListener('input', () => {
       value.value = element.value;
     });
@@ -101,7 +101,7 @@ registerDirective('model', (element, value) => {
     effect(() => {
       element.value = value.value;
     });
-    
+
     element.addEventListener('change', () => {
       value.value = element.value;
     });
@@ -112,36 +112,36 @@ registerDirective('for', (element, value) => {
   if (!Array.isArray(value) && !isSignal(value)) {
     throw new Error('n-for requires an array or signal containing an array');
   }
-  
+
   const placeholder = document.createComment('n-for');
   const template = element.cloneNode(true);
   element.parentNode?.insertBefore(placeholder, element);
   element.parentNode?.removeChild(element);
-  
+
   let renderedElements = [];
-  
+
   const updateList = () => {
-    renderedElements.forEach(el => el.remove());
+    renderedElements.forEach((el) => el.remove());
     renderedElements = [];
-    
+
     const items = isSignal(value) ? value.value : value;
-    
+
     items.forEach((item, index) => {
       const newElement = template.cloneNode(true);
-      
-      newElement.querySelectorAll('[n-for-item]').forEach(el => {
+
+      newElement.querySelectorAll('[n-for-item]').forEach((el) => {
         el.textContent = item;
       });
-      
-      newElement.querySelectorAll('[n-for-index]').forEach(el => {
+
+      newElement.querySelectorAll('[n-for-index]').forEach((el) => {
         el.textContent = index;
       });
-      
+
       placeholder.parentNode?.insertBefore(newElement, placeholder.nextSibling);
       renderedElements.push(newElement);
     });
   };
-  
+
   if (isSignal(value)) {
     effect(updateList);
   } else {

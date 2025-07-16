@@ -52,24 +52,24 @@ function mountNode(node, container) {
 
   if (node.type === 'element') {
     const element = document.createElement(node.tag);
-    
+
     updateProps(element, {}, node.props);
-    
-    node.children.forEach(child => {
+
+    node.children.forEach((child) => {
       mountNode(child, element);
     });
-    
+
     container.appendChild(element);
     return element;
   }
 
   if (node.type === 'fragment') {
     const fragment = document.createDocumentFragment();
-    
-    node.children.forEach(child => {
+
+    node.children.forEach((child) => {
       mountNode(child, fragment);
     });
-    
+
     container.appendChild(fragment);
     return container.lastChild;
   }
@@ -85,10 +85,10 @@ function unmountNode(node) {
 
 function patchElement(oldNode, newNode, container) {
   const element = container.querySelector(oldNode.tag) || container.firstChild;
-  
+
   updateProps(element, oldNode.props, newNode.props);
   patchChildren(oldNode.children, newNode.children, element);
-  
+
   return element;
 }
 
@@ -99,11 +99,11 @@ function patchFragment(oldNode, newNode, container) {
 
 function updateProps(element, oldProps, newProps) {
   const allProps = new Set([...Object.keys(oldProps), ...Object.keys(newProps)]);
-  
-  allProps.forEach(key => {
+
+  allProps.forEach((key) => {
     const oldValue = oldProps[key];
     const newValue = newProps[key];
-    
+
     if (oldValue !== newValue) {
       setProp(element, key, newValue, oldValue);
     }
@@ -137,11 +137,11 @@ function setProp(element, key, value, oldValue) {
 
 function patchChildren(oldChildren, newChildren, container) {
   const maxLength = Math.max(oldChildren.length, newChildren.length);
-  
+
   for (let i = 0; i < maxLength; i++) {
     const oldChild = oldChildren[i];
     const newChild = newChildren[i];
-    
+
     if (!oldChild && newChild) {
       mountNode(newChild, container);
     } else if (oldChild && !newChild) {
@@ -181,7 +181,7 @@ export function createListDiffer() {
               type: 'move',
               from: oldIndex,
               to: newIndex,
-              key
+              key,
             });
           } else {
             operations.push({
@@ -189,7 +189,7 @@ export function createListDiffer() {
               index: newIndex,
               key,
               oldItem: oldKeyMap.get(key).item,
-              newItem: newList[newIndex]
+              newItem: newList[newIndex],
             });
           }
         } else {
@@ -197,17 +197,17 @@ export function createListDiffer() {
             type: 'insert',
             index: newIndex,
             item: newList[newIndex],
-            key
+            key,
           });
         }
       });
 
-      oldKeys.forEach(key => {
+      oldKeys.forEach((key) => {
         if (!newKeyMap.has(key)) {
           operations.push({
             type: 'remove',
             index: oldKeyMap.get(key).index,
-            key
+            key,
           });
         }
       });
@@ -219,6 +219,6 @@ export function createListDiffer() {
         if (b.type === 'move') return 1;
         return 0;
       });
-    }
+    },
   };
 }

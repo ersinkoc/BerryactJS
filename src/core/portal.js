@@ -14,7 +14,7 @@ let portalId = 0;
  * Creates a portal that renders content to a different DOM location
  * @param {Function} content - Component or content to render
  * @param {Element|string} target - Target DOM element or selector
- * @param {Object} options - Portal options
+ * @param {object} options - Portal options
  */
 export function createPortal(content, target, options = {}) {
   const id = ++portalId;
@@ -23,13 +23,11 @@ export function createPortal(content, target, options = {}) {
     prepend = false,
     className = null,
     onMount = null,
-    onUnmount = null
+    onUnmount = null,
   } = options;
 
   // Resolve target element
-  const targetElement = typeof target === 'string' 
-    ? document.querySelector(target) 
-    : target;
+  const targetElement = typeof target === 'string' ? document.querySelector(target) : target;
 
   if (!targetElement) {
     throw new Error(`Portal target not found: ${target}`);
@@ -38,7 +36,7 @@ export function createPortal(content, target, options = {}) {
   // Create portal container
   const container = document.createElement('div');
   container.setAttribute('data-berryact-portal', key);
-  
+
   if (className) {
     container.className = className;
   }
@@ -52,7 +50,7 @@ export function createPortal(content, target, options = {}) {
     container,
     instance: null,
     active: signal(true),
-    mounted: false
+    mounted: false,
   };
 
   // Mount portal
@@ -104,7 +102,7 @@ export function createPortal(content, target, options = {}) {
     if (!portal.mounted) return;
 
     portal.content = newContent;
-    
+
     // Re-render content
     if (portal.instance) {
       unmount(portal.instance);
@@ -130,8 +128,8 @@ export function createPortal(content, target, options = {}) {
     mount,
     unmount: unmountPortal,
     update,
-    activate: () => portal.active.value = true,
-    deactivate: () => portal.active.value = false,
+    activate: () => (portal.active.value = true),
+    deactivate: () => (portal.active.value = false),
     isActive: () => portal.active.value,
     isMounted: () => portal.mounted,
     getContainer: () => container,
@@ -139,25 +137,29 @@ export function createPortal(content, target, options = {}) {
     dispose: () => {
       unmountPortal();
       portal.active.dispose();
-    }
+    },
   };
 }
 
 /**
  * Portal component wrapper
+ * @param root0
+ * @param root0.to
+ * @param root0.children
  */
 export function Portal({ to, children, ...options }) {
   const portal = createPortal(() => children, to, options);
-  
+
   // Return a cleanup function that will be called on unmount
   return {
     _portal: portal,
-    dispose: () => portal.dispose()
+    dispose: () => portal.dispose(),
   };
 }
 
 /**
  * Get a portal by key
+ * @param key
  */
 export function getPortal(key) {
   return portals.get(key);
@@ -172,6 +174,7 @@ export function getAllPortals() {
 
 /**
  * Close a portal by key
+ * @param key
  */
 export function closePortal(key) {
   const portal = portals.get(key);
@@ -184,7 +187,7 @@ export function closePortal(key) {
  * Close all portals
  */
 export function closeAllPortals() {
-  portals.forEach(portal => portal.unmount());
+  portals.forEach((portal) => portal.unmount());
 }
 
 // Common portal targets
@@ -194,11 +197,13 @@ export const PortalTargets = {
   ROOT: '#root',
   MODAL: '#modal-root',
   TOOLTIP: '#tooltip-root',
-  DROPDOWN: '#dropdown-root'
+  DROPDOWN: '#dropdown-root',
 };
 
 /**
  * Create modal portal helper
+ * @param content
+ * @param options
  */
 export function createModal(content, options = {}) {
   const {
@@ -260,14 +265,14 @@ export function createModal(content, options = {}) {
         render(content, modalElement);
 
         return modalElement;
-      }
+      },
     };
   };
 
   // Create portal
   portal = createPortal(modalWrapper, document.body, {
     className,
-    ...portalOptions
+    ...portalOptions,
   });
 
   // Handle escape key
@@ -301,12 +306,15 @@ export function createModal(content, options = {}) {
   return {
     portal,
     close,
-    update: (newContent) => portal.update(() => modalWrapper(newContent))
+    update: (newContent) => portal.update(() => modalWrapper(newContent)),
   };
 }
 
 /**
  * Create tooltip portal helper
+ * @param content
+ * @param anchor
+ * @param options
  */
 export function createTooltip(content, anchor, options = {}) {
   const {
@@ -326,23 +334,23 @@ export function createTooltip(content, anchor, options = {}) {
       top: {
         left: rect.left + rect.width / 2,
         top: rect.top - offset,
-        transform: 'translate(-50%, -100%)'
+        transform: 'translate(-50%, -100%)',
       },
       bottom: {
         left: rect.left + rect.width / 2,
         top: rect.bottom + offset,
-        transform: 'translate(-50%, 0)'
+        transform: 'translate(-50%, 0)',
       },
       left: {
         left: rect.left - offset,
         top: rect.top + rect.height / 2,
-        transform: 'translate(-100%, -50%)'
+        transform: 'translate(-100%, -50%)',
       },
       right: {
         left: rect.right + offset,
         top: rect.top + rect.height / 2,
-        transform: 'translate(0, -50%)'
-      }
+        transform: 'translate(0, -50%)',
+      },
     };
 
     return positions[position] || positions.top;
@@ -354,7 +362,7 @@ export function createTooltip(content, anchor, options = {}) {
     timeoutId = setTimeout(() => {
       const tooltipWrapper = () => {
         const pos = calculatePosition();
-        
+
         return {
           render: () => {
             const tooltipElement = document.createElement('div');
@@ -370,13 +378,13 @@ export function createTooltip(content, anchor, options = {}) {
 
             render(content, tooltipElement);
             return tooltipElement;
-          }
+          },
         };
       };
 
       portal = createPortal(tooltipWrapper, document.body, {
         className,
-        ...portalOptions
+        ...portalOptions,
       });
     }, delay);
   }
@@ -415,6 +423,6 @@ export function createTooltip(content, anchor, options = {}) {
       anchor.removeEventListener('mouseleave', hide);
       anchor.removeEventListener('focus', show);
       anchor.removeEventListener('blur', hide);
-    }
+    },
   };
 }

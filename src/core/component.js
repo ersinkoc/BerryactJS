@@ -9,56 +9,66 @@ let hookIndex = 0;
 // Simple VNode to DOM conversion
 function vNodeToDOM(vnode) {
   if (!vnode) return null;
-  
+
   // Handle text nodes
   if (typeof vnode === 'string' || typeof vnode === 'number') {
     return document.createTextNode(String(vnode));
   }
-  
+
   // Handle signals - read their value to establish reactive dependency
-  if (vnode && typeof vnode === 'object' && vnode.value !== undefined && typeof vnode.peek === 'function') {
+  if (
+    vnode &&
+    typeof vnode === 'object' &&
+    vnode.value !== undefined &&
+    typeof vnode.peek === 'function'
+  ) {
     return document.createTextNode(String(vnode.value));
   }
-  
+
   // Handle null, undefined, boolean
   if (vnode === null || vnode === undefined || typeof vnode === 'boolean') {
     return document.createTextNode('');
   }
-  
+
   // Handle arrays
   if (Array.isArray(vnode)) {
     const fragment = document.createDocumentFragment();
-    vnode.forEach(child => {
+    vnode.forEach((child) => {
       const childDOM = vNodeToDOM(child);
       if (childDOM) fragment.appendChild(childDOM);
     });
     return fragment;
   }
-  
+
   // Handle VNodes
   if (isVNode(vnode)) {
     // Handle text VNodes
     if (vnode.type === '#text') {
       const nodeValue = vnode.props.nodeValue;
       // If nodeValue is a signal, read its value
-      if (nodeValue && typeof nodeValue === 'object' && nodeValue.value !== undefined && typeof nodeValue.peek === 'function') {
+      if (
+        nodeValue &&
+        typeof nodeValue === 'object' &&
+        nodeValue.value !== undefined &&
+        typeof nodeValue.peek === 'function'
+      ) {
         return document.createTextNode(String(nodeValue.value));
       }
       return document.createTextNode(String(nodeValue || ''));
     }
-    
+
     // Handle Fragment VNodes
     if (vnode.type === Fragment) {
       const fragment = document.createDocumentFragment();
       if (vnode.children) {
-        vnode.children.forEach(child => {
+        vnode.children.forEach((child) => {
           const childDOM = vNodeToDOM(child);
           if (childDOM) fragment.appendChild(childDOM);
         });
       }
       return fragment;
     }
-    
+
     // Handle component VNodes
     if (typeof vnode.type === 'function') {
       // Create an instance of the component
@@ -72,14 +82,14 @@ function vNodeToDOM(vnode) {
         // Component instance creation
         instance = new ComponentClass(vnode.props);
       }
-      
+
       // Render the component synchronously to get the VNode
       const prevComponent = currentComponent;
       const prevHookIndex = hookIndex;
-      
+
       currentComponent = instance;
       hookIndex = 0;
-      
+
       try {
         const childVNode = instance.render();
         const childDOM = vNodeToDOM(childVNode);
@@ -89,11 +99,11 @@ function vNodeToDOM(vnode) {
         hookIndex = prevHookIndex;
       }
     }
-    
+
     // Handle DOM element VNodes
     if (typeof vnode.type === 'string') {
       const element = document.createElement(vnode.type);
-      
+
       // Set props
       if (vnode.props) {
         Object.entries(vnode.props).forEach(([key, value]) => {
@@ -109,19 +119,19 @@ function vNodeToDOM(vnode) {
           }
         });
       }
-      
+
       // Handle children
       if (vnode.children) {
-        vnode.children.forEach(child => {
+        vnode.children.forEach((child) => {
           const childDOM = vNodeToDOM(child);
           if (childDOM) element.appendChild(childDOM);
         });
       }
-      
+
       return element;
     }
   }
-  
+
   // Fallback for other types
   return document.createTextNode(String(vnode));
 }
@@ -142,57 +152,60 @@ export class Component {
     throw new Error('Component must implement render method');
   }
 
-
   unmount() {
     this.isMounted = false;
-    
+
     // Clean up the render effect
     if (this.renderEffect) {
       this.renderEffect.dispose();
       this.renderEffect = null;
     }
-    
+
     // Clean up effects first
     cleanupComponentEffects(this);
-    
-    this.effects.forEach(effect => effect.dispose());
+
+    this.effects.forEach((effect) => effect.dispose());
     this.effects.length = 0;
     this.hooks.length = 0;
-    
+
     if (this.element && this.element.parentNode) {
       this.element.parentNode.removeChild(this.element);
     }
-    
-    this.children.forEach(child => {
+
+    this.children.forEach((child) => {
       if (child.unmount) child.unmount();
     });
   }
 
   update() {
     if (!this.isMounted) return;
-    
+
     const prevComponent = currentComponent;
     const prevHookIndex = hookIndex;
-    
+
     currentComponent = this;
     hookIndex = 0;
-    
+
     try {
       const vnode = this.render();
       const newElement = vNodeToDOM(vnode);
-      
+
       // If we had a fragment before, remove its nodes
       if (this.fragmentNodes) {
-        this.fragmentNodes.forEach(node => {
+        this.fragmentNodes.forEach((node) => {
           if (node.parentNode) {
             node.parentNode.removeChild(node);
           }
         });
         this.fragmentNodes = null;
       }
-      
+
       // Replace the old element with the new one
-      if (this.element && this.element.parentNode && this.element.nodeType !== Node.DOCUMENT_FRAGMENT_NODE) {
+      if (
+        this.element &&
+        this.element.parentNode &&
+        this.element.nodeType !== Node.DOCUMENT_FRAGMENT_NODE
+      ) {
         this.element.parentNode.replaceChild(newElement, this.element);
       } else if (this.container && newElement) {
         // Handle fragment replacement by appending to container
@@ -203,23 +216,23 @@ export class Component {
           this.container.appendChild(newElement);
         }
       }
-      
+
       this.element = newElement;
     } finally {
       currentComponent = prevComponent;
       hookIndex = prevHookIndex;
     }
   }
-  
+
   mount(container) {
     this.isMounted = true;
     this.container = container;
-    
+
     // Create a reactive effect that tracks signal dependencies
     this.renderEffect = effect(() => {
       this.update();
     });
-    
+
     if (container && this.element) {
       if (this.element.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
         // For fragments, we need to track the actual DOM nodes before they're moved

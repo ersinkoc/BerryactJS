@@ -10,7 +10,7 @@ import { createPlugin } from '../core/plugin.js';
 const ConformanceLevel = {
   A: 'A',
   AA: 'AA',
-  AAA: 'AAA'
+  AAA: 'AAA',
 };
 
 // Common accessibility issues
@@ -24,9 +24,9 @@ const A11yRules = {
       if (element.tagName !== 'IMG') return { pass: true };
       return {
         pass: element.hasAttribute('alt'),
-        message: 'Image missing alt attribute'
+        message: 'Image missing alt attribute',
       };
-    }
+    },
   },
 
   // Form labels
@@ -37,17 +37,17 @@ const A11yRules = {
     test: (element) => {
       const needsLabel = ['INPUT', 'SELECT', 'TEXTAREA'].includes(element.tagName);
       if (!needsLabel || element.type === 'hidden') return { pass: true };
-      
+
       const id = element.id;
       const hasLabel = id && document.querySelector(`label[for="${id}"]`);
-      const hasAriaLabel = element.hasAttribute('aria-label') || 
-                          element.hasAttribute('aria-labelledby');
-      
+      const hasAriaLabel =
+        element.hasAttribute('aria-label') || element.hasAttribute('aria-labelledby');
+
       return {
         pass: hasLabel || hasAriaLabel,
-        message: 'Form input missing associated label'
+        message: 'Form input missing associated label',
       };
-    }
+    },
   },
 
   // Headings
@@ -57,20 +57,20 @@ const A11yRules = {
     level: ConformanceLevel.AA,
     test: (element, context) => {
       if (!/^H[1-6]$/.test(element.tagName)) return { pass: true };
-      
+
       const level = parseInt(element.tagName[1]);
       const lastLevel = context.lastHeadingLevel || 0;
-      
+
       if (lastLevel > 0 && level > lastLevel + 1) {
         return {
           pass: false,
-          message: `Heading jumped from H${lastLevel} to H${level}`
+          message: `Heading jumped from H${lastLevel} to H${level}`,
         };
       }
-      
+
       context.lastHeadingLevel = level;
       return { pass: true };
-    }
+    },
   },
 
   // Color contrast
@@ -81,28 +81,28 @@ const A11yRules = {
     test: (element) => {
       const text = element.textContent?.trim();
       if (!text) return { pass: true };
-      
+
       const style = window.getComputedStyle(element);
       const bgColor = style.backgroundColor;
       const fgColor = style.color;
-      
+
       // Skip if colors are not set
       if (!bgColor || !fgColor || bgColor === 'transparent') {
         return { pass: true };
       }
-      
+
       const contrast = calculateContrast(fgColor, bgColor);
       const fontSize = parseFloat(style.fontSize);
       const isBold = parseInt(style.fontWeight) >= 700;
-      
+
       // WCAG AA requirements
-      const requiredContrast = (fontSize >= 18 || (fontSize >= 14 && isBold)) ? 3 : 4.5;
-      
+      const requiredContrast = fontSize >= 18 || (fontSize >= 14 && isBold) ? 3 : 4.5;
+
       return {
         pass: contrast >= requiredContrast,
-        message: `Contrast ratio ${contrast.toFixed(2)}:1 (required: ${requiredContrast}:1)`
+        message: `Contrast ratio ${contrast.toFixed(2)}:1 (required: ${requiredContrast}:1)`,
       };
-    }
+    },
   },
 
   // Keyboard navigation
@@ -113,20 +113,20 @@ const A11yRules = {
     test: (element) => {
       const interactive = ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'].includes(element.tagName);
       if (!interactive) return { pass: true };
-      
+
       const tabindex = element.getAttribute('tabindex');
       const disabled = element.hasAttribute('disabled');
-      
+
       if (disabled) return { pass: true };
-      
+
       // Check if element is focusable
       const isFocusable = tabindex !== '-1';
-      
+
       return {
         pass: isFocusable,
-        message: 'Interactive element is not keyboard accessible'
+        message: 'Interactive element is not keyboard accessible',
       };
-    }
+    },
   },
 
   // ARIA roles
@@ -135,45 +135,55 @@ const A11yRules = {
     description: 'ARIA attributes must be valid',
     level: ConformanceLevel.A,
     test: (element) => {
-      const ariaAttrs = Array.from(element.attributes)
-        .filter(attr => attr.name.startsWith('aria-'));
-        
+      const ariaAttrs = Array.from(element.attributes).filter((attr) =>
+        attr.name.startsWith('aria-')
+      );
+
       if (ariaAttrs.length === 0) return { pass: true };
-      
+
       // Check for valid ARIA attributes
       const validAriaAttrs = [
-        'aria-label', 'aria-labelledby', 'aria-describedby',
-        'aria-hidden', 'aria-live', 'aria-atomic', 'aria-busy',
-        'aria-checked', 'aria-disabled', 'aria-expanded',
-        'aria-haspopup', 'aria-invalid', 'aria-pressed',
-        'aria-selected', 'aria-required', 'aria-readonly'
+        'aria-label',
+        'aria-labelledby',
+        'aria-describedby',
+        'aria-hidden',
+        'aria-live',
+        'aria-atomic',
+        'aria-busy',
+        'aria-checked',
+        'aria-disabled',
+        'aria-expanded',
+        'aria-haspopup',
+        'aria-invalid',
+        'aria-pressed',
+        'aria-selected',
+        'aria-required',
+        'aria-readonly',
       ];
-      
-      const invalidAttrs = ariaAttrs.filter(
-        attr => !validAriaAttrs.includes(attr.name)
-      );
-      
+
+      const invalidAttrs = ariaAttrs.filter((attr) => !validAriaAttrs.includes(attr.name));
+
       return {
         pass: invalidAttrs.length === 0,
-        message: `Invalid ARIA attributes: ${invalidAttrs.map(a => a.name).join(', ')}`
+        message: `Invalid ARIA attributes: ${invalidAttrs.map((a) => a.name).join(', ')}`,
       };
-    }
-  }
+    },
+  },
 };
 
 // Calculate color contrast ratio
 function calculateContrast(color1, color2) {
   const rgb1 = parseColor(color1);
   const rgb2 = parseColor(color2);
-  
+
   if (!rgb1 || !rgb2) return 21; // Assume good contrast if can't parse
-  
+
   const l1 = relativeLuminance(rgb1);
   const l2 = relativeLuminance(rgb2);
-  
+
   const lighter = Math.max(l1, l2);
   const darker = Math.min(l1, l2);
-  
+
   return (lighter + 0.05) / (darker + 0.05);
 }
 
@@ -184,14 +194,14 @@ function parseColor(color) {
     return {
       r: parseInt(match[1]),
       g: parseInt(match[2]),
-      b: parseInt(match[3])
+      b: parseInt(match[3]),
     };
   }
   return null;
 }
 
 function relativeLuminance({ r, g, b }) {
-  const [rs, gs, bs] = [r, g, b].map(c => {
+  const [rs, gs, bs] = [r, g, b].map((c) => {
     c = c / 255;
     return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
   });
@@ -201,7 +211,7 @@ function relativeLuminance({ r, g, b }) {
 export const A11yPlugin = createPlugin({
   name: 'a11y',
   version: '1.0.0',
-  
+
   setup(app, context) {
     const options = this.options || {};
     const {
@@ -210,7 +220,7 @@ export const A11yPlugin = createPlugin({
       announceRouteChanges = true,
       enableKeyboardShortcuts = true,
       focusTrap = true,
-      skipLinks = true
+      skipLinks = true,
     } = options;
 
     // State
@@ -219,14 +229,14 @@ export const A11yPlugin = createPlugin({
     const focusableElements = signal([]);
     const currentFocusIndex = signal(-1);
     const announcements = signal([]);
-    
+
     // Live region for announcements
     let liveRegion = null;
-    
+
     // Initialize live region
     function initializeLiveRegion() {
       if (typeof document === 'undefined') return;
-      
+
       liveRegion = document.createElement('div');
       liveRegion.setAttribute('role', 'status');
       liveRegion.setAttribute('aria-live', 'polite');
@@ -244,21 +254,24 @@ export const A11yPlugin = createPlugin({
     // Announce message to screen readers
     function announce(message, priority = 'polite') {
       if (!liveRegion) return;
-      
+
       liveRegion.setAttribute('aria-live', priority);
       liveRegion.textContent = message;
-      
+
       // Clear after delay
       setTimeout(() => {
         liveRegion.textContent = '';
       }, 1000);
-      
+
       // Track announcements
-      announcements.value = [...announcements.value, {
-        message,
-        priority,
-        timestamp: Date.now()
-      }].slice(-10); // Keep last 10
+      announcements.value = [
+        ...announcements.value,
+        {
+          message,
+          priority,
+          timestamp: Date.now(),
+        },
+      ].slice(-10); // Keep last 10
     }
 
     // Scan for accessibility issues
@@ -266,16 +279,16 @@ export const A11yPlugin = createPlugin({
       scanning.value = true;
       const foundIssues = [];
       const context = {};
-      
+
       try {
         const elements = rootElement.querySelectorAll('*');
-        
-        elements.forEach(element => {
-          Object.values(A11yRules).forEach(rule => {
+
+        elements.forEach((element) => {
+          Object.values(A11yRules).forEach((rule) => {
             // Check if rule applies to current level
             if (shouldCheckRule(rule, level)) {
               const result = rule.test(element, context);
-              
+
               if (!result.pass) {
                 foundIssues.push({
                   rule: rule.id,
@@ -283,23 +296,22 @@ export const A11yPlugin = createPlugin({
                   message: result.message,
                   description: rule.description,
                   level: rule.level,
-                  path: getElementPath(element)
+                  path: getElementPath(element),
                 });
               }
             }
           });
         });
-        
+
         issues.value = foundIssues;
-        
+
         if (foundIssues.length > 0) {
           console.warn(`[a11y] Found ${foundIssues.length} accessibility issues`);
         }
-        
       } finally {
         scanning.value = false;
       }
-      
+
       return foundIssues;
     }
 
@@ -315,7 +327,7 @@ export const A11yPlugin = createPlugin({
     function getElementPath(element) {
       const path = [];
       let current = element;
-      
+
       while (current && current !== document.body) {
         const selector = current.tagName.toLowerCase();
         if (current.id) {
@@ -328,7 +340,7 @@ export const A11yPlugin = createPlugin({
         }
         current = current.parentElement;
       }
-      
+
       return path.join(' > ');
     }
 
@@ -340,24 +352,25 @@ export const A11yPlugin = createPlugin({
         'input:not([disabled]):not([type="hidden"])',
         'select:not([disabled])',
         'textarea:not([disabled])',
-        '[tabindex]:not([tabindex="-1"])'
+        '[tabindex]:not([tabindex="-1"])',
       ].join(', ');
-      
-      return Array.from(container.querySelectorAll(selector))
-        .filter(el => el.offsetParent !== null); // Visible elements only
+
+      return Array.from(container.querySelectorAll(selector)).filter(
+        (el) => el.offsetParent !== null
+      ); // Visible elements only
     }
 
     // Trap focus within container
     function trapFocus(container) {
       const elements = getFocusableElements(container);
       if (elements.length === 0) return;
-      
+
       const firstElement = elements[0];
       const lastElement = elements[elements.length - 1];
-      
+
       function handleTab(e) {
         if (e.key !== 'Tab') return;
-        
+
         if (e.shiftKey) {
           // Shift + Tab
           if (document.activeElement === firstElement) {
@@ -372,12 +385,12 @@ export const A11yPlugin = createPlugin({
           }
         }
       }
-      
+
       container.addEventListener('keydown', handleTab);
-      
+
       // Focus first element
       firstElement.focus();
-      
+
       // Return cleanup function
       return () => {
         container.removeEventListener('keydown', handleTab);
@@ -387,7 +400,7 @@ export const A11yPlugin = createPlugin({
     // Skip links implementation
     function createSkipLinks() {
       if (typeof document === 'undefined' || !skipLinks) return;
-      
+
       const skipLink = document.createElement('a');
       skipLink.href = '#main';
       skipLink.textContent = 'Skip to main content';
@@ -401,7 +414,7 @@ export const A11yPlugin = createPlugin({
         overflow: hidden;
         z-index: 10000;
       `;
-      
+
       // Show on focus
       skipLink.addEventListener('focus', () => {
         skipLink.style.cssText = `
@@ -418,29 +431,29 @@ export const A11yPlugin = createPlugin({
           z-index: 10000;
         `;
       });
-      
+
       skipLink.addEventListener('blur', () => {
         skipLink.style.left = '-10000px';
         skipLink.style.width = '1px';
         skipLink.style.height = '1px';
       });
-      
+
       document.body.insertBefore(skipLink, document.body.firstChild);
     }
 
     // Keyboard shortcuts
     const shortcuts = new Map();
-    
+
     function registerShortcut(key, handler, description) {
       shortcuts.set(key, { handler, description });
     }
-    
+
     function handleKeyboard(e) {
       if (!enableKeyboardShortcuts) return;
-      
+
       const key = `${e.ctrlKey ? 'Ctrl+' : ''}${e.altKey ? 'Alt+' : ''}${e.shiftKey ? 'Shift+' : ''}${e.key}`;
       const shortcut = shortcuts.get(key);
-      
+
       if (shortcut) {
         e.preventDefault();
         shortcut.handler(e);
@@ -452,34 +465,34 @@ export const A11yPlugin = createPlugin({
       label(element, label) {
         element.setAttribute('aria-label', label);
       },
-      
+
       describedBy(element, id) {
         element.setAttribute('aria-describedby', id);
       },
-      
+
       live(element, politeness = 'polite') {
         element.setAttribute('aria-live', politeness);
       },
-      
+
       hidden(element, hidden = true) {
         element.setAttribute('aria-hidden', String(hidden));
       },
-      
+
       expanded(element, expanded) {
         element.setAttribute('aria-expanded', String(expanded));
       },
-      
+
       selected(element, selected) {
         element.setAttribute('aria-selected', String(selected));
       },
-      
+
       checked(element, checked) {
         element.setAttribute('aria-checked', String(checked));
       },
-      
+
       current(element, current = 'page') {
         element.setAttribute('aria-current', current);
-      }
+      },
     };
 
     // Component-level a11y
@@ -506,15 +519,23 @@ export const A11yPlugin = createPlugin({
     }
 
     // Default shortcuts
-    registerShortcut('Alt+/', () => {
-      console.log('Keyboard shortcuts:', Array.from(shortcuts.entries()));
-    }, 'Show keyboard shortcuts');
-    
-    registerShortcut('Alt+a', () => {
-      scan().then(issues => {
-        console.log(`Found ${issues.length} accessibility issues:`, issues);
-      });
-    }, 'Run accessibility scan');
+    registerShortcut(
+      'Alt+/',
+      () => {
+        console.log('Keyboard shortcuts:', Array.from(shortcuts.entries()));
+      },
+      'Show keyboard shortcuts'
+    );
+
+    registerShortcut(
+      'Alt+a',
+      () => {
+        scan().then((issues) => {
+          console.log(`Found ${issues.length} accessibility issues:`, issues);
+        });
+      },
+      'Run accessibility scan'
+    );
 
     // A11y API
     const a11y = {
@@ -522,65 +543,65 @@ export const A11yPlugin = createPlugin({
       issues,
       scanning,
       announcements,
-      
+
       // Methods
       scan,
       announce,
       aria,
       trapFocus,
       getFocusableElements,
-      
+
       // Shortcuts
       registerShortcut,
       shortcuts,
-      
+
       // Configuration
       level,
-      
+
       // Utilities
       calculateContrast,
-      
+
       // Rules
       rules: A11yRules,
-      
+
       // Check specific element
       check(element, rules = Object.values(A11yRules)) {
         const issues = [];
         const context = {};
-        
-        rules.forEach(rule => {
+
+        rules.forEach((rule) => {
           if (shouldCheckRule(rule, level)) {
             const result = rule.test(element, context);
             if (!result.pass) {
               issues.push({
                 rule: rule.id,
                 message: result.message,
-                element
+                element,
               });
             }
           }
         });
-        
+
         return issues;
-      }
+      },
     };
 
     // Provide API
     this.provide('a11y', a11y);
-    
+
     // Global access
     app.a11y = a11y;
-  }
+  },
 });
 
 // A11y directive
 export function createA11yDirective(a11y) {
   return {
     name: 'a11y',
-    
+
     mounted(el, binding) {
       const { value, modifiers } = binding;
-      
+
       // Apply ARIA attributes
       if (typeof value === 'object') {
         Object.entries(value).forEach(([attr, val]) => {
@@ -589,37 +610,37 @@ export function createA11yDirective(a11y) {
           }
         });
       }
-      
+
       // Handle modifiers
       if (modifiers.hidden) {
         a11y.aria.hidden(el, true);
       }
-      
+
       if (modifiers.live) {
         a11y.aria.live(el, value || 'polite');
       }
-      
+
       if (modifiers.trap) {
         el._cleanupTrap = a11y.trapFocus(el);
       }
-      
+
       if (modifiers.announce) {
         a11y.announce(el.textContent);
       }
     },
-    
+
     updated(el, binding) {
       if (binding.modifiers.announce && el.textContent !== el._lastAnnounced) {
         a11y.announce(el.textContent);
         el._lastAnnounced = el.textContent;
       }
     },
-    
+
     unmounted(el) {
       if (el._cleanupTrap) {
         el._cleanupTrap();
       }
-    }
+    },
   };
 }
 

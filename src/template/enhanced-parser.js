@@ -13,10 +13,10 @@ export class TemplateParser {
   parse(strings, values) {
     // Combine strings and values with placeholders
     const template = this.combineTemplate(strings, values);
-    
+
     // Parse the template
     const ast = this.parseTemplate(template, values);
-    
+
     // Transform to VNodes
     return this.transformToVNode(ast, values);
   }
@@ -31,17 +31,17 @@ export class TemplateParser {
   parseTemplate(template, values) {
     // Handle component syntax <${Component} />
     template = this.parseComponents(template, values);
-    
+
     // Handle fragments <>...</>
     template = this.parseFragments(template);
-    
+
     // Handle spread attributes
     template = this.parseSpread(template, values);
-    
+
     // Replace @ event handlers with data- attributes to preserve them during parsing
     template = template.replace(/@(\w+)=/g, 'data-event-$1=');
     // DEBUG: console.log('Template after @ replacement:', template);
-    
+
     // Parse HTML - handle SSR environment
     let doc, templateEl;
     if (typeof DOMParser !== 'undefined') {
@@ -60,11 +60,11 @@ export class TemplateParser {
       const root = parseHTML(`<template>${template}</template>`);
       templateEl = root.querySelector('template');
     }
-    
+
     if (!templateEl) {
       throw new Error('Invalid template structure');
     }
-    
+
     return this.parseNode(templateEl.content, values);
   }
 
@@ -74,7 +74,7 @@ export class TemplateParser {
       if (placeholderMatch) {
         const index = parseInt(placeholderMatch[1]);
         const component = values[index];
-        
+
         if (isFunction(component)) {
           // Store component reference for later processing
           return `<berryact-component data-component-index="${index}"${attrs}>`;
@@ -86,14 +86,13 @@ export class TemplateParser {
 
   parseFragments(template) {
     // Convert <>...</> to <berryact-fragment>...</berryact-fragment>
-    return template
-      .replace(/<>/g, '<berryact-fragment>')
-      .replace(/<\/>/g, '</berryact-fragment>');
+    return template.replace(/<>/g, '<berryact-fragment>').replace(/<\/>/g, '</berryact-fragment>');
   }
 
   parseSpread(template, values) {
     // Handle spread attributes like <div ...${props}>
-    return template.replace(/<(\w+)([^>]*)\.\.\.\$\{([^}]+)\}([^>]*)>/g, 
+    return template.replace(
+      /<(\w+)([^>]*)\.\.\.\$\{([^}]+)\}([^>]*)>/g,
       (match, tag, beforeSpread, placeholder, afterSpread) => {
         const placeholderMatch = placeholder.match(/__BERRYACT_PLACEHOLDER_(\d+)__/);
         if (placeholderMatch) {
@@ -122,12 +121,12 @@ export class TemplateParser {
   parseTextNode(node, values) {
     const text = node.textContent || '';
     const parts = text.split(this.placeholderRegex);
-    
+
     if (parts.length === 1) {
       // No placeholders, return plain text
       return text.trim() ? text : null;
     }
-    
+
     // Process placeholders
     const result = [];
     for (let i = 0; i < parts.length; i++) {
@@ -140,50 +139,50 @@ export class TemplateParser {
         // Placeholder
         const index = parseInt(parts[i]);
         const value = values[index];
-        
+
         if (value != null) {
           result.push(value);
         }
       }
     }
-    
+
     return result.length === 1 ? result[0] : result;
   }
 
   parseElementNode(node, values) {
     const tagName = node.tagName.toLowerCase();
-    
+
     // Handle special elements
     if (tagName === 'berryact-fragment') {
       const children = this.parseChildren(node, values);
       return createVNode(Fragment, null, children);
     }
-    
+
     if (tagName === 'berryact-component') {
       const componentIndex = node.getAttribute('data-component-index');
       if (componentIndex != null) {
         const component = values[parseInt(componentIndex)];
         const props = this.parseAttributes(node, values);
         const children = this.parseChildren(node, values);
-        
+
         // Remove internal attributes
         delete props['data-component-index'];
-        
+
         return createVNode(component, props, children);
       }
     }
-    
+
     // Handle portal
     if (tagName === 'portal' || node.hasAttribute('portal-to')) {
       const to = node.getAttribute('to') || node.getAttribute('portal-to') || 'body';
       const children = this.parseChildren(node, values);
       return createVNode(Portal, { container: to }, children);
     }
-    
+
     // Parse regular elements
     const props = this.parseAttributes(node, values);
     const children = this.parseChildren(node, values);
-    
+
     return createVNode(tagName, props, children);
   }
 
@@ -195,7 +194,7 @@ export class TemplateParser {
   parseAttributes(node, values) {
     const props = {};
     const spreadIndex = node.getAttribute('data-spread-index');
-    
+
     // Handle spread props
     if (spreadIndex != null) {
       const spreadProps = values[parseInt(spreadIndex)];
@@ -203,18 +202,18 @@ export class TemplateParser {
         Object.assign(props, spreadProps);
       }
     }
-    
+
     // Parse individual attributes
     // DEBUG: console.log('Parsing attributes for', node.tagName, 'Attributes:', Array.from(node.attributes).map(a => `${a.name}="${a.value}"`));
-    Array.from(node.attributes).forEach(attr => {
+    Array.from(node.attributes).forEach((attr) => {
       const name = attr.name;
-      let value = attr.value;
-      
+      const value = attr.value;
+
       // Skip internal attributes
       if (name.startsWith('data-spread-') || name === 'data-component-index') {
         return;
       }
-      
+
       // Handle event listeners (including data-event- attributes from @ syntax)
       if (name.startsWith('data-event-') || name.startsWith('@') || name.startsWith('on')) {
         let eventName;
@@ -225,15 +224,15 @@ export class TemplateParser {
         } else {
           eventName = name.slice(2).toLowerCase();
         }
-        
+
         const placeholderMatch = value.match(this.placeholderRegex);
-        
+
         if (placeholderMatch) {
           const fullMatch = placeholderMatch[0];
           const indexMatch = fullMatch.match(/\d+/);
           const index = indexMatch ? parseInt(indexMatch[0]) : -1;
           const handler = values[index];
-          
+
           if (isFunction(handler)) {
             // Ensure event name is lowercase for consistency
             props[`on${eventName}`] = handler;
@@ -241,7 +240,7 @@ export class TemplateParser {
         }
         return;
       }
-      
+
       // Handle refs
       if (name === 'ref') {
         const placeholderMatch = value.match(this.placeholderRegex);
@@ -251,7 +250,7 @@ export class TemplateParser {
         }
         return;
       }
-      
+
       // Handle dynamic attributes
       if (value.includes('__BERRYACT_PLACEHOLDER_')) {
         // Use exec instead of match to get capture groups properly
@@ -268,16 +267,16 @@ export class TemplateParser {
         props[this.normalizeAttributeName(name)] = this.parseAttributeValue(value);
       }
     });
-    
+
     return props;
   }
 
   parseChildren(node, values) {
     const children = [];
-    
-    node.childNodes.forEach(child => {
+
+    node.childNodes.forEach((child) => {
       const parsed = this.parseNode(child, values);
-      
+
       if (parsed != null) {
         if (isArray(parsed)) {
           children.push(...parsed);
@@ -286,7 +285,7 @@ export class TemplateParser {
         }
       }
     });
-    
+
     return normalizeChildren(children);
   }
 
@@ -294,12 +293,12 @@ export class TemplateParser {
     // Handle special cases
     if (name === 'class') return 'class';
     if (name === 'for') return 'for';
-    
+
     // Convert data-* and aria-* attributes
     if (name.startsWith('data-') || name.startsWith('aria-')) {
       return name;
     }
-    
+
     // Convert kebab-case to camelCase for other attributes
     return name.replace(/-([a-z])/g, (_, char) => char.toUpperCase());
   }
@@ -308,17 +307,17 @@ export class TemplateParser {
     // Handle boolean attributes
     if (value === '' || value === 'true') return true;
     if (value === 'false') return false;
-    
+
     // Handle numbers
     if (/^\d+$/.test(value)) return parseInt(value);
     if (/^\d*\.\d+$/.test(value)) return parseFloat(value);
-    
+
     return value;
   }
 
   transformToVNode(parsed, values) {
     if (isArray(parsed)) {
-      return parsed.map(p => this.transformSingleNode(p, values));
+      return parsed.map((p) => this.transformSingleNode(p, values));
     }
     return this.transformSingleNode(parsed, values);
   }
@@ -327,12 +326,12 @@ export class TemplateParser {
     if (isPrimitive(node) || isSignal(node)) {
       return node;
     }
-    
+
     if (node && node.$$typeof) {
       // Already a VNode
       return node;
     }
-    
+
     return node;
   }
 }

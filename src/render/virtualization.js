@@ -7,16 +7,16 @@ export class VirtualList {
     this.buffer = options.buffer || 5;
     this.items = options.items || [];
     this.renderItem = options.renderItem;
-    
+
     this.scrollTop = 0;
     this.visibleStart = 0;
     this.visibleEnd = 0;
     this.totalHeight = 0;
-    
+
     this.container = null;
     this.viewport = null;
     this.content = null;
-    
+
     this.updateVisibleRange();
   }
 
@@ -30,7 +30,10 @@ export class VirtualList {
   updateVisibleRange() {
     const itemsInView = Math.ceil(this.containerHeight / this.itemHeight);
     this.visibleStart = Math.max(0, Math.floor(this.scrollTop / this.itemHeight) - this.buffer);
-    this.visibleEnd = Math.min(this.items.length, this.visibleStart + itemsInView + this.buffer * 2);
+    this.visibleEnd = Math.min(
+      this.items.length,
+      this.visibleStart + itemsInView + this.buffer * 2
+    );
   }
 
   handleScroll(event) {
@@ -98,21 +101,21 @@ export class VirtualGrid {
     this.gap = options.gap || 0;
     this.items = options.items || [];
     this.renderItem = options.renderItem;
-    
+
     this.scrollTop = 0;
     this.scrollLeft = 0;
     this.cols = Math.floor(this.containerWidth / (this.itemWidth + this.gap));
     this.rows = Math.ceil(this.items.length / this.cols);
-    
+
     this.visibleStartRow = 0;
     this.visibleEndRow = 0;
     this.visibleStartCol = 0;
     this.visibleEndCol = 0;
-    
+
     this.container = null;
     this.viewport = null;
     this.content = null;
-    
+
     this.updateVisibleRange();
   }
 
@@ -126,10 +129,10 @@ export class VirtualGrid {
   updateVisibleRange() {
     const rowsInView = Math.ceil(this.containerHeight / (this.itemHeight + this.gap));
     const colsInView = Math.ceil(this.containerWidth / (this.itemWidth + this.gap));
-    
+
     this.visibleStartRow = Math.max(0, Math.floor(this.scrollTop / (this.itemHeight + this.gap)));
     this.visibleEndRow = Math.min(this.rows, this.visibleStartRow + rowsInView + 1);
-    
+
     this.visibleStartCol = Math.max(0, Math.floor(this.scrollLeft / (this.itemWidth + this.gap)));
     this.visibleEndCol = Math.min(this.cols, this.visibleStartCol + colsInView + 1);
   }
@@ -153,13 +156,13 @@ export class VirtualGrid {
 
         const item = this.items[index];
         const element = this.renderItem(item, index);
-        
+
         element.style.position = 'absolute';
         element.style.width = `${this.itemWidth}px`;
         element.style.height = `${this.itemHeight}px`;
         element.style.left = `${col * (this.itemWidth + this.gap)}px`;
         element.style.top = `${row * (this.itemHeight + this.gap)}px`;
-        
+
         this.content.appendChild(element);
       }
     }
@@ -200,37 +203,39 @@ export class VirtualGrid {
 export function createWindowingDirective() {
   return {
     name: 'window',
-    
+
     mounted(element, binding) {
       const options = binding.value || {};
       const virtualList = new VirtualList({
         containerHeight: element.clientHeight,
         itemHeight: options.itemHeight || 50,
         items: options.items || [],
-        renderItem: options.renderItem || ((item) => {
-          const div = document.createElement('div');
-          div.textContent = String(item);
-          return div;
-        })
+        renderItem:
+          options.renderItem ||
+          ((item) => {
+            const div = document.createElement('div');
+            div.textContent = String(item);
+            return div;
+          }),
       });
-      
+
       virtualList.mount(element);
       element._virtualList = virtualList;
     },
-    
+
     updated(element, binding) {
       const virtualList = element._virtualList;
       if (virtualList && binding.value.items) {
         virtualList.setItems(binding.value.items);
       }
     },
-    
+
     unmounted(element) {
       if (element._virtualList) {
         element._virtualList.unmount();
         delete element._virtualList;
       }
-    }
+    },
   };
 }
 
@@ -241,23 +246,20 @@ export class LazyLoader {
     this.threshold = options.threshold || 0.1;
     this.onEnter = options.onEnter || (() => {});
     this.onExit = options.onExit || (() => {});
-    
-    this.observer = new IntersectionObserver(
-      this.handleIntersection.bind(this),
-      {
-        rootMargin: this.rootMargin,
-        threshold: this.threshold
-      }
-    );
-    
+
+    this.observer = new IntersectionObserver(this.handleIntersection.bind(this), {
+      rootMargin: this.rootMargin,
+      threshold: this.threshold,
+    });
+
     this.observedElements = new Map();
   }
 
   handleIntersection(entries) {
-    entries.forEach(entry => {
+    entries.forEach((entry) => {
       const element = entry.target;
       const data = this.observedElements.get(element);
-      
+
       if (entry.isIntersecting) {
         this.onEnter(element, data);
       } else {
@@ -299,7 +301,7 @@ export class ElementPool {
       }
       return element;
     }
-    
+
     return document.createElement(this.tagName);
   }
 
@@ -309,15 +311,15 @@ export class ElementPool {
       element.innerHTML = '';
       element.className = '';
       element.style.cssText = '';
-      
+
       // Remove all attributes except standard ones
       const attributes = Array.from(element.attributes);
-      attributes.forEach(attr => {
+      attributes.forEach((attr) => {
         if (!['id', 'class', 'style'].includes(attr.name)) {
           element.removeAttribute(attr.name);
         }
       });
-      
+
       this.pool.push(element);
     }
   }
@@ -336,7 +338,7 @@ export const elementPools = {
   input: new ElementPool('input'),
   li: new ElementPool('li'),
   tr: new ElementPool('tr'),
-  td: new ElementPool('td')
+  td: new ElementPool('td'),
 };
 
 export function getPooledElement(tagName) {

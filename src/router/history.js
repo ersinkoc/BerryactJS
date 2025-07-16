@@ -2,12 +2,12 @@ export class HistoryManager {
   constructor(mode = 'history') {
     this.mode = mode;
     this.listeners = [];
-    
+
     // Only set current if not in memory mode (will be set by child)
     if (mode !== 'memory') {
       this.current = this.getCurrentLocation();
     }
-    
+
     if (typeof window !== 'undefined') {
       this.setupListeners();
     }
@@ -36,25 +36,25 @@ export class HistoryManager {
       return {
         pathname: '/',
         search: '',
-        hash: ''
+        hash: '',
       };
     }
 
     if (this.mode === 'hash') {
       const hash = window.location.hash.slice(1) || '/';
       const [pathname, search = ''] = hash.split('?');
-      
+
       return {
         pathname: pathname || '/',
         search: search ? '?' + search : '',
-        hash: ''
+        hash: '',
       };
     }
 
     return {
       pathname: window.location.pathname,
       search: window.location.search,
-      hash: window.location.hash
+      hash: window.location.hash,
     };
   }
 
@@ -103,7 +103,7 @@ export class HistoryManager {
 
   listen(callback) {
     this.listeners.push(callback);
-    
+
     return () => {
       const index = this.listeners.indexOf(callback);
       if (index >= 0) {
@@ -113,7 +113,7 @@ export class HistoryManager {
   }
 
   notifyListeners() {
-    this.listeners.forEach(listener => {
+    this.listeners.forEach((listener) => {
       try {
         listener(this.current);
       } catch (error) {
@@ -137,30 +137,30 @@ export class MemoryHistory extends HistoryManager {
 
   getCurrentLocation() {
     const path = this.entries[this.index] || '/';
-    
+
     // Parse pathname, search, and hash
     let pathname = path;
     let search = '';
     let hash = '';
-    
+
     // Extract hash first
     const hashIndex = path.indexOf('#');
     if (hashIndex !== -1) {
       hash = path.substring(hashIndex);
       pathname = path.substring(0, hashIndex);
     }
-    
+
     // Extract search params
     const searchIndex = pathname.indexOf('?');
     if (searchIndex !== -1) {
       search = pathname.substring(searchIndex);
       pathname = pathname.substring(0, searchIndex);
     }
-    
+
     return {
       pathname,
       search,
-      hash
+      hash,
     };
   }
 
@@ -180,7 +180,7 @@ export class MemoryHistory extends HistoryManager {
 
   go(delta) {
     const newIndex = this.index + delta;
-    
+
     if (newIndex >= 0 && newIndex < this.entries.length) {
       this.index = newIndex;
       this.current = this.getCurrentLocation();

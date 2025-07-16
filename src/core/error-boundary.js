@@ -32,6 +32,7 @@ class ErrorInfo {
 
 /**
  * Global error handler registration
+ * @param handler
  */
 export function onError(handler) {
   errorHandlers.add(handler);
@@ -40,9 +41,10 @@ export function onError(handler) {
 
 /**
  * Emit error to all handlers
+ * @param errorInfo
  */
 function emitError(errorInfo) {
-  errorHandlers.forEach(handler => {
+  errorHandlers.forEach((handler) => {
     try {
       handler(errorInfo);
     } catch (e) {
@@ -60,7 +62,7 @@ export class ErrorBoundary {
       hasError: false,
       error: null,
       errorInfo: null,
-      errorCount: 0
+      errorCount: 0,
     });
 
     this.options = {
@@ -70,7 +72,7 @@ export class ErrorBoundary {
       resetOnPropsChange: true,
       maxRetries: 3,
       retryDelay: 1000,
-      ...options
+      ...options,
     };
 
     this.retryCount = 0;
@@ -87,7 +89,7 @@ export class ErrorBoundary {
     return {
       hasError: true,
       error,
-      errorCount: (this.state?.errorCount || 0) + 1
+      errorCount: (this.state?.errorCount || 0) + 1,
     };
   }
 
@@ -95,7 +97,7 @@ export class ErrorBoundary {
     const info = new ErrorInfo(error, {
       ...errorInfo,
       errorBoundary: this,
-      errorBoundaryFound: true
+      errorBoundaryFound: true,
     });
 
     // Update state
@@ -104,7 +106,7 @@ export class ErrorBoundary {
       hasError: true,
       error,
       errorInfo: info,
-      errorCount: this.state.value.errorCount + 1
+      errorCount: this.state.value.errorCount + 1,
     };
 
     // Call custom error handler
@@ -128,7 +130,7 @@ export class ErrorBoundary {
       hasError: false,
       error: null,
       errorInfo: null,
-      errorCount: 0
+      errorCount: 0,
     };
   }
 
@@ -139,7 +141,7 @@ export class ErrorBoundary {
     }
 
     this.retryCount++;
-    
+
     setTimeout(() => {
       this.reset();
     }, this.options.retryDelay * this.retryCount);
@@ -148,8 +150,8 @@ export class ErrorBoundary {
   watchResetKeys() {
     effect(() => {
       const currentKeys = new Set();
-      
-      this.resetKeys.forEach(key => {
+
+      this.resetKeys.forEach((key) => {
         if (typeof key === 'function') {
           currentKeys.add(key());
         } else {
@@ -159,9 +161,9 @@ export class ErrorBoundary {
 
       // Check if keys changed
       if (this.previousResetKeys.size > 0) {
-        const keysChanged = 
+        const keysChanged =
           currentKeys.size !== this.previousResetKeys.size ||
-          [...currentKeys].some(key => !this.previousResetKeys.has(key));
+          [...currentKeys].some((key) => !this.previousResetKeys.has(key));
 
         if (keysChanged && this.state.value.hasError) {
           this.reset();
@@ -182,7 +184,7 @@ export class ErrorBoundary {
           error,
           errorInfo,
           retry: () => this.retry(),
-          reset: () => this.reset()
+          reset: () => this.reset(),
         });
       }
 
@@ -209,18 +211,20 @@ export class ErrorBoundary {
 
 /**
  * Error Boundary component wrapper
+ * @param Component
+ * @param errorBoundaryOptions
  */
 export function withErrorBoundary(Component, errorBoundaryOptions = {}) {
   return function ErrorBoundaryWrapper(props) {
     const boundary = new ErrorBoundary(errorBoundaryOptions);
-    
+
     try {
       return boundary.render(Component(props));
     } catch (error) {
       boundary.componentDidCatch(error, {
         componentStack: getComponentStack(),
         props,
-        phase: 'render'
+        phase: 'render',
       });
       return boundary.render(null);
     }
@@ -232,17 +236,17 @@ export function withErrorBoundary(Component, errorBoundaryOptions = {}) {
  */
 export function useErrorHandler() {
   const component = getCurrentComponent();
-  
+
   return (error) => {
     const errorInfo = new ErrorInfo(error, {
       componentStack: getComponentStack(),
       phase: 'effect',
-      component
+      component,
     });
 
     // Find nearest error boundary
-    let boundary = findNearestErrorBoundary(component);
-    
+    const boundary = findNearestErrorBoundary(component);
+
     if (boundary) {
       boundary.componentDidCatch(error, errorInfo);
     } else {
@@ -255,10 +259,14 @@ export function useErrorHandler() {
 
 /**
  * Async error boundary for handling promise rejections
+ * @param root0
+ * @param root0.children
+ * @param root0.fallback
+ * @param root0.onError
  */
 export function AsyncErrorBoundary({ children, fallback, onError }) {
   const [asyncError, setAsyncError] = useState(null);
-  
+
   // Catch unhandled promise rejections
   useEffect(() => {
     const handleUnhandledRejection = (event) => {
@@ -267,7 +275,7 @@ export function AsyncErrorBoundary({ children, fallback, onError }) {
     };
 
     window.addEventListener('unhandledrejection', handleUnhandledRejection);
-    
+
     return () => {
       window.removeEventListener('unhandledrejection', handleUnhandledRejection);
     };
@@ -279,9 +287,9 @@ export function AsyncErrorBoundary({ children, fallback, onError }) {
     }
 
     if (fallback) {
-      return fallback({ 
-        error: asyncError, 
-        reset: () => setAsyncError(null) 
+      return fallback({
+        error: asyncError,
+        reset: () => setAsyncError(null),
       });
     }
 
@@ -300,7 +308,7 @@ export function AsyncErrorBoundary({ children, fallback, onError }) {
     if (error instanceof Promise) {
       throw error; // Let Suspense handle it
     }
-    
+
     setAsyncError(error);
     return null;
   }
@@ -308,6 +316,10 @@ export function AsyncErrorBoundary({ children, fallback, onError }) {
 
 /**
  * Development error overlay
+ * @param root0
+ * @param root0.error
+ * @param root0.errorInfo
+ * @param root0.onClose
  */
 export function ErrorOverlay({ error, errorInfo, onClose }) {
   if (process.env.NODE_ENV === 'production') {
@@ -321,31 +333,29 @@ export function ErrorOverlay({ error, errorInfo, onClose }) {
       <div class="berryact-error-overlay-header">
         <h3>Runtime Error</h3>
         <div class="berryact-error-overlay-actions">
-          <button @click=${() => setIsMinimized(!isMinimized)}>
-            ${isMinimized ? '▲' : '▼'}
-          </button>
+          <button @click=${() => setIsMinimized(!isMinimized)}>${isMinimized ? '▲' : '▼'}</button>
           <button @click=${onClose}>✕</button>
         </div>
       </div>
-      
-      ${!isMinimized && html`
+
+      ${!isMinimized &&
+      html`
         <div class="berryact-error-overlay-content">
-          <div class="berryact-error-message">
-            <strong>${error.name}:</strong> ${error.message}
-          </div>
-          
+          <div class="berryact-error-message"><strong>${error.name}:</strong> ${error.message}</div>
+
           <div class="berryact-error-stack">
             <h4>Stack Trace:</h4>
             <pre>${error.stack}</pre>
           </div>
-          
-          ${errorInfo && html`
+
+          ${errorInfo &&
+          html`
             <div class="berryact-error-component-stack">
               <h4>Component Stack:</h4>
               <pre>${errorInfo.componentStack}</pre>
             </div>
           `}
-          
+
           <div class="berryact-error-tips">
             <h4>Debugging Tips:</h4>
             <ul>
@@ -373,6 +383,7 @@ function getComponentStack() {
 
 /**
  * Find nearest error boundary
+ * @param component
  */
 function findNearestErrorBoundary(component) {
   // Walk up component tree to find error boundary
@@ -382,13 +393,14 @@ function findNearestErrorBoundary(component) {
 
 /**
  * Create error logger plugin
+ * @param options
  */
 export function createErrorLogger(options = {}) {
   const {
     logToConsole = true,
     logToService = null,
     filter = null,
-    transformError = null
+    transformError = null,
   } = options;
 
   return {
@@ -400,9 +412,7 @@ export function createErrorLogger(options = {}) {
         }
 
         // Transform error if needed
-        const transformed = transformError 
-          ? transformError(errorInfo) 
-          : errorInfo;
+        const transformed = transformError ? transformError(errorInfo) : errorInfo;
 
         // Log to console
         if (logToConsole) {
@@ -414,7 +424,7 @@ export function createErrorLogger(options = {}) {
           logToService(transformed);
         }
       });
-    }
+    },
   };
 }
 

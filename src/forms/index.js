@@ -11,23 +11,23 @@ export class FormField {
     this.focused = signal(false);
     this.dirty = signal(false);
     this.validating = signal(false);
-    
+
     this.options = {
       validateOnChange: true,
       validateOnBlur: true,
       debounceMs: 300,
-      ...options
+      ...options,
     };
-    
+
     this.errors = signal([]);
     this.isValid = computed(() => this.errors.value.length === 0);
     this.isInvalid = computed(() => !this.isValid.value && this.touched.value);
-    
+
     this.initialValue = initialValue;
     this.debounceTimer = null;
-    
+
     this.setupValidation();
-    
+
     // Run initial validation if there are validators
     if (this.validators.length > 0) {
       this.validate();
@@ -67,7 +67,7 @@ export class FormField {
 
     this.errors.value = errors;
     this.validating.value = false;
-    
+
     return errors.length === 0;
   }
 
@@ -75,7 +75,7 @@ export class FormField {
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
     }
-    
+
     this.debounceTimer = setTimeout(() => {
       this.validate();
     }, this.options.debounceMs);
@@ -128,26 +128,26 @@ export class Form {
       validateOnSubmit: true,
       preventSubmitOnError: true,
       resetOnSubmit: false,
-      ...options
+      ...options,
     };
-    
+
     this.submitting = signal(false);
     this.submitAttempted = signal(false);
-    
+
     this.setupFields(fields);
-    
+
     this.isValid = computed(() => {
-      return Object.values(this.fields).every(field => field.isValid.value);
+      return Object.values(this.fields).every((field) => field.isValid.value);
     });
-    
+
     this.isDirty = computed(() => {
-      return Object.values(this.fields).some(field => field.dirty.value);
+      return Object.values(this.fields).some((field) => field.dirty.value);
     });
-    
+
     this.isTouched = computed(() => {
-      return Object.values(this.fields).some(field => field.touched.value);
+      return Object.values(this.fields).some((field) => field.touched.value);
     });
-    
+
     this.errors = computed(() => {
       const allErrors = {};
       Object.entries(this.fields).forEach(([name, field]) => {
@@ -212,12 +212,10 @@ export class Form {
   }
 
   async validate() {
-    const validationPromises = Object.values(this.fields).map(field => 
-      field.validate()
-    );
-    
+    const validationPromises = Object.values(this.fields).map((field) => field.validate());
+
     const results = await Promise.all(validationPromises);
-    return results.every(result => result);
+    return results.every((result) => result);
   }
 
   async submit(onSubmit) {
@@ -226,7 +224,7 @@ export class Form {
 
     try {
       // Touch all fields to show validation errors
-      Object.values(this.fields).forEach(field => {
+      Object.values(this.fields).forEach((field) => {
         field.setTouched(true);
       });
 
@@ -248,7 +246,6 @@ export class Form {
       }
 
       return result;
-
     } catch (error) {
       throw error;
     } finally {
@@ -257,7 +254,7 @@ export class Form {
   }
 
   reset() {
-    Object.values(this.fields).forEach(field => field.reset());
+    Object.values(this.fields).forEach((field) => field.reset());
     this.submitAttempted.value = false;
   }
 
@@ -271,7 +268,7 @@ export class Form {
   }
 
   clearErrors() {
-    Object.values(this.fields).forEach(field => {
+    Object.values(this.fields).forEach((field) => {
       field.errors.value = [];
     });
   }
@@ -391,7 +388,7 @@ export const Validators = {
     return async (value, field) => {
       try {
         const result = await fn(value, field);
-        return result === true ? true : (result || message);
+        return result === true ? true : result || message;
       } catch (error) {
         return error.message || message;
       }
@@ -401,7 +398,7 @@ export const Validators = {
   asyncUnique(checkFn, message = 'Value must be unique') {
     return async (value) => {
       if (!value) return true;
-      
+
       try {
         const isUnique = await checkFn(value);
         return isUnique ? true : message;
@@ -417,7 +414,7 @@ export const Validators = {
       // Implementation depends on how fields access each other
       return true; // Placeholder
     };
-  }
+  },
 };
 
 // Form validation utilities
@@ -436,10 +433,8 @@ export class ValidationRules {
 
   static conditional(condition, validator) {
     return async (value, field) => {
-      const shouldValidate = typeof condition === 'function' 
-        ? condition(value, field) 
-        : condition;
-      
+      const shouldValidate = typeof condition === 'function' ? condition(value, field) : condition;
+
       if (shouldValidate) {
         return validator(value, field);
       }
@@ -457,13 +452,13 @@ export class ValidationRules {
 
   static debounced(validator, delay = 300) {
     let timeoutId = null;
-    
+
     return (value, field) => {
       return new Promise((resolve) => {
         if (timeoutId) {
           clearTimeout(timeoutId);
         }
-        
+
         timeoutId = setTimeout(async () => {
           const result = await validator(value, field);
           resolve(result);
@@ -486,11 +481,17 @@ export class PasswordField extends FormField {
     const validators = [
       Validators.required(),
       Validators.minLength(options.minLength || 8),
-      ...(options.requireUppercase ? [Validators.pattern(/[A-Z]/, 'Must contain uppercase letter')] : []),
-      ...(options.requireLowercase ? [Validators.pattern(/[a-z]/, 'Must contain lowercase letter')] : []),
+      ...(options.requireUppercase
+        ? [Validators.pattern(/[A-Z]/, 'Must contain uppercase letter')]
+        : []),
+      ...(options.requireLowercase
+        ? [Validators.pattern(/[a-z]/, 'Must contain lowercase letter')]
+        : []),
       ...(options.requireNumbers ? [Validators.pattern(/\d/, 'Must contain number')] : []),
-      ...(options.requireSpecial ? [Validators.pattern(/[!@#$%^&*]/, 'Must contain special character')] : []),
-      ...(options.additionalValidators || [])
+      ...(options.requireSpecial
+        ? [Validators.pattern(/[!@#$%^&*]/, 'Must contain special character')]
+        : []),
+      ...(options.additionalValidators || []),
     ];
     super(initialValue, validators, options);
   }
@@ -503,7 +504,7 @@ export class NumberField extends FormField {
       ...(options.min !== undefined ? [Validators.min(options.min)] : []),
       ...(options.max !== undefined ? [Validators.max(options.max)] : []),
       ...(options.integer ? [Validators.integer()] : []),
-      ...(options.additionalValidators || [])
+      ...(options.additionalValidators || []),
     ];
     super(initialValue, validators, options);
   }
@@ -513,8 +514,8 @@ export class SelectField extends FormField {
   constructor(initialValue = '', options = [], fieldOptions = {}) {
     const validators = [
       ...(fieldOptions.required ? [Validators.required()] : []),
-      Validators.oneOf(options.map(opt => opt.value || opt)),
-      ...(fieldOptions.additionalValidators || [])
+      Validators.oneOf(options.map((opt) => opt.value || opt)),
+      ...(fieldOptions.additionalValidators || []),
     ];
     super(initialValue, validators, fieldOptions);
     this.options = options;
@@ -556,10 +557,10 @@ export class FormBuilder {
 
   build() {
     const fields = {};
-    
+
     Object.entries(this.fieldDefinitions).forEach(([name, definition]) => {
       const { type, value = '', validators = [], ...options } = definition;
-      
+
       switch (type) {
         case 'email':
           fields[name] = new EmailField(value, validators, options);
@@ -577,7 +578,7 @@ export class FormBuilder {
           fields[name] = new FormField(value, validators, options);
       }
     });
-    
+
     return new Form(fields, this.formOptions);
   }
 }
@@ -586,12 +587,12 @@ export function createForm(definition) {
   if (definition instanceof FormBuilder) {
     return definition.build();
   }
-  
+
   if (typeof definition === 'function') {
     const builder = new FormBuilder();
     definition(builder);
     return builder.build();
   }
-  
+
   return new Form(definition);
 }

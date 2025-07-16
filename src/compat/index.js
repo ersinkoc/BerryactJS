@@ -1,18 +1,12 @@
 // React Compatibility Layer for Berryact
 // This module provides React-compatible APIs to ease migration
 
-import {
-  signal,
-  computed,
-  effect,
-  batch,
-  untrack
-} from '../core/signal.js';
+import { signal, computed, effect, batch, untrack } from '../core/signal.js';
 
 import {
   defineComponent,
   createComponent,
-  Component as BerryactComponent
+  Component as BerryactComponent,
 } from '../core/component.js';
 
 import {
@@ -23,7 +17,7 @@ import {
   useCallback as useBerryactCallback,
   useRef as useBerryactRef,
   useContext as useBerryactContext,
-  createContext as createBerryactContext
+  createContext as createBerryactContext,
 } from '../core/hooks.js';
 
 import {
@@ -32,17 +26,15 @@ import {
   Fragment,
   isValidElement,
   cloneElement,
-  createElement
+  createElement,
 } from '../jsx-runtime.js';
 
 import { createVNode } from '../core/vdom.js';
 
 // React-compatible hooks
 export function useState(initialValue) {
-  const sig = useSignal(
-    typeof initialValue === 'function' ? initialValue() : initialValue
-  );
-  
+  const sig = useSignal(typeof initialValue === 'function' ? initialValue() : initialValue);
+
   const setter = (newValue) => {
     if (typeof newValue === 'function') {
       sig.value = newValue(sig.value);
@@ -50,20 +42,18 @@ export function useState(initialValue) {
       sig.value = newValue;
     }
   };
-  
+
   // Return array like React
   return [sig.value, setter];
 }
 
 export function useReducer(reducer, initialState, init) {
-  const state = useSignal(
-    init ? init(initialState) : initialState
-  );
-  
+  const state = useSignal(init ? init(initialState) : initialState);
+
   const dispatch = (action) => {
     state.value = reducer(state.value, action);
   };
-  
+
   return [state.value, dispatch];
 }
 
@@ -120,9 +110,7 @@ export function useDebugValue(value, format) {
     const currentComponent = getCurrentComponent();
     if (currentComponent) {
       currentComponent._debugValues = currentComponent._debugValues || [];
-      currentComponent._debugValues.push(
-        format ? format(value) : value
-      );
+      currentComponent._debugValues.push(format ? format(value) : value);
     }
   }
 }
@@ -138,7 +126,7 @@ export function useId() {
 // React 18 concurrent features (simplified implementations)
 export function useTransition() {
   const [isPending, setIsPending] = useState(false);
-  
+
   const startTransition = (callback) => {
     setIsPending(true);
     // In Berryact, we'll use setTimeout to defer the update
@@ -149,40 +137,40 @@ export function useTransition() {
       });
     }, 0);
   };
-  
+
   return [isPending, startTransition];
 }
 
 export function useDeferredValue(value) {
   const [deferredValue, setDeferredValue] = useState(value);
-  
+
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       setDeferredValue(value);
     }, 0);
-    
+
     return () => clearTimeout(timeoutId);
   }, [value]);
-  
+
   return deferredValue;
 }
 
 export function useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot) {
   const value = useSignal(getSnapshot());
-  
+
   useEffect(() => {
     const handleChange = () => {
       value.value = getSnapshot();
     };
-    
+
     const unsubscribe = subscribe(handleChange);
-    
+
     // Check for changes that might have happened between render and effect
     handleChange();
-    
+
     return unsubscribe;
   }, [subscribe, getSnapshot]);
-  
+
   return value.value;
 }
 
@@ -194,7 +182,7 @@ export class Component {
     this._stateSignal = signal(this.state);
     this._mounted = false;
   }
-  
+
   setState(updater, callback) {
     batch(() => {
       if (typeof updater === 'function') {
@@ -203,20 +191,20 @@ export class Component {
         this.state = { ...this.state, ...updater };
       }
       this._stateSignal.value = this.state;
-      
+
       if (callback) {
         setTimeout(callback, 0);
       }
     });
   }
-  
+
   forceUpdate(callback) {
     this._stateSignal.notify();
     if (callback) {
       setTimeout(callback, 0);
     }
   }
-  
+
   // Lifecycle methods (will be called by the framework)
   componentDidMount() {}
   componentDidUpdate(prevProps, prevState) {}
@@ -225,7 +213,7 @@ export class Component {
     return true;
   }
   componentDidCatch(error, errorInfo) {}
-  
+
   render() {
     throw new Error('Component must implement render method');
   }
@@ -240,16 +228,16 @@ export class PureComponent extends Component {
 // Helper function for shallow comparison
 function shallowEqual(obj1, obj2) {
   if (obj1 === obj2) return true;
-  
+
   const keys1 = Object.keys(obj1);
   const keys2 = Object.keys(obj2);
-  
+
   if (keys1.length !== keys2.length) return false;
-  
+
   for (const key of keys1) {
     if (obj1[key] !== obj2[key]) return false;
   }
-  
+
   return true;
 }
 
@@ -266,21 +254,21 @@ export function createSyntheticEvent(nativeEvent, eventType) {
     eventPhase: nativeEvent.eventPhase,
     isTrusted: nativeEvent.isTrusted,
     timeStamp: nativeEvent.timeStamp,
-    
+
     preventDefault() {
       this.defaultPrevented = true;
       nativeEvent.preventDefault();
     },
-    
+
     stopPropagation() {
       nativeEvent.stopPropagation();
     },
-    
+
     persist() {
       // No-op - Berryact doesn't pool events
-    }
+    },
   };
-  
+
   // Copy event-specific properties
   if (nativeEvent instanceof MouseEvent) {
     Object.assign(syntheticEvent, {
@@ -295,7 +283,7 @@ export function createSyntheticEvent(nativeEvent, eventType) {
       ctrlKey: nativeEvent.ctrlKey,
       shiftKey: nativeEvent.shiftKey,
       altKey: nativeEvent.altKey,
-      metaKey: nativeEvent.metaKey
+      metaKey: nativeEvent.metaKey,
     });
   } else if (nativeEvent instanceof KeyboardEvent) {
     Object.assign(syntheticEvent, {
@@ -306,15 +294,15 @@ export function createSyntheticEvent(nativeEvent, eventType) {
       ctrlKey: nativeEvent.ctrlKey,
       shiftKey: nativeEvent.shiftKey,
       altKey: nativeEvent.altKey,
-      metaKey: nativeEvent.metaKey
+      metaKey: nativeEvent.metaKey,
     });
   } else if (nativeEvent instanceof Event && nativeEvent.target instanceof HTMLInputElement) {
     Object.assign(syntheticEvent, {
       value: nativeEvent.target.value,
-      checked: nativeEvent.target.checked
+      checked: nativeEvent.target.checked,
     });
   }
-  
+
   return syntheticEvent;
 }
 
@@ -328,7 +316,7 @@ export const Children = {
     });
     return result;
   },
-  
+
   forEach(children, fn, thisArg) {
     if (children == null) return;
     const childrenArray = Array.isArray(children) ? children : [children];
@@ -336,23 +324,23 @@ export const Children = {
       fn.call(thisArg, child, index);
     });
   },
-  
+
   count(children) {
     if (children == null) return 0;
     return Array.isArray(children) ? children.length : 1;
   },
-  
+
   only(children) {
     if (!isValidElement(children)) {
       throw new Error('React.Children.only expected to receive a single React element child.');
     }
     return children;
   },
-  
+
   toArray(children) {
     if (children == null) return [];
     return Array.isArray(children) ? children : [children];
-  }
+  },
 };
 
 // Portals
@@ -365,20 +353,24 @@ export function memo(Component, propsAreEqual) {
   const MemoizedComponent = (props) => {
     const prevPropsRef = useRef();
     const prevResultRef = useRef();
-    
-    if (prevPropsRef.current && 
-        (propsAreEqual ? propsAreEqual(prevPropsRef.current, props) : shallowEqual(prevPropsRef.current, props))) {
+
+    if (
+      prevPropsRef.current &&
+      (propsAreEqual
+        ? propsAreEqual(prevPropsRef.current, props)
+        : shallowEqual(prevPropsRef.current, props))
+    ) {
       return prevResultRef.current;
     }
-    
+
     prevPropsRef.current = props;
     prevResultRef.current = Component(props);
-    
+
     return prevResultRef.current;
   };
-  
+
   MemoizedComponent.displayName = `memo(${Component.displayName || Component.name || 'Component'})`;
-  
+
   return MemoizedComponent;
 }
 
@@ -386,11 +378,11 @@ export function forwardRef(render) {
   const ForwardRefComponent = (props, ref) => {
     return render(props, ref);
   };
-  
+
   ForwardRefComponent.displayName = `forwardRef(${render.displayName || render.name || 'Component'})`;
   ForwardRefComponent.$$typeof = Symbol.for('react.forward_ref');
   ForwardRefComponent.render = render;
-  
+
   return ForwardRefComponent;
 }
 
@@ -399,16 +391,16 @@ export function lazy(importFn) {
   let status = 'pending';
   let result;
   let promise;
-  
+
   const LazyComponent = (props) => {
     if (status === 'pending') {
       if (!promise) {
         promise = importFn().then(
-          module => {
+          (module) => {
             status = 'resolved';
             result = module.default || module;
           },
-          error => {
+          (error) => {
             status = 'rejected';
             result = error;
           }
@@ -416,16 +408,16 @@ export function lazy(importFn) {
       }
       throw promise;
     }
-    
+
     if (status === 'rejected') {
       throw result;
     }
-    
+
     return createElement(result, props);
   };
-  
+
   LazyComponent.$$typeof = Symbol.for('react.lazy');
-  
+
   return LazyComponent;
 }
 
@@ -444,26 +436,19 @@ export function StrictMode({ children }) {
 // Profiler (simplified)
 export function Profiler({ id, onRender, children }) {
   const startTime = performance.now();
-  
+
   useEffect(() => {
     const endTime = performance.now();
     if (onRender) {
       onRender(id, 'mount', endTime - startTime);
     }
   });
-  
+
   return children;
 }
 
 // Re-export JSX runtime functions
-export {
-  jsx,
-  jsxs,
-  Fragment,
-  isValidElement,
-  cloneElement,
-  createElement
-};
+export { jsx, jsxs, Fragment, isValidElement, cloneElement, createElement };
 
 // Main React namespace export
 const React = {
@@ -471,7 +456,7 @@ const React = {
   createElement,
   cloneElement,
   isValidElement,
-  
+
   // Components
   Component,
   PureComponent,
@@ -482,7 +467,7 @@ const React = {
   StrictMode,
   Profiler,
   Fragment,
-  
+
   // Hooks
   useState,
   useReducer,
@@ -499,13 +484,13 @@ const React = {
   useTransition,
   useDeferredValue,
   useSyncExternalStore,
-  
+
   // Utilities
   Children,
   createPortal,
-  
+
   // Version
-  version: '18.2.0-berryact'
+  version: '18.2.0-berryact',
 };
 
 export default React;

@@ -14,10 +14,7 @@ module.exports = function berryactLoader(source) {
 
   // Transform class components
   if (source.includes('extends Component') || source.includes('extends React.Component')) {
-    source = source.replace(
-      /extends\s+(React\.)?Component/g,
-      `extends Component`
-    );
+    source = source.replace(/extends\s+(React\.)?Component/g, `extends Component`);
   }
 
   // Optimize template literals
@@ -49,7 +46,7 @@ function optimizeTemplateLiterals(code) {
     const declarations = Array.from(staticTemplates.entries())
       .map(([varName, template]) => `const ${varName} = ${template};`)
       .join('\n');
-    
+
     code = declarations + '\n\n' + code;
   }
 

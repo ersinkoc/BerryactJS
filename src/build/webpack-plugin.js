@@ -5,7 +5,7 @@ export class BerryactWebpackPlugin {
       jsxImportSource: '@oxog/berryact',
       compat: false,
       optimize: true,
-      ...options
+      ...options,
     };
   }
 
@@ -17,18 +17,20 @@ export class BerryactWebpackPlugin {
     compiler.options.resolve.alias = {
       ...compiler.options.resolve.alias,
       // Add React compatibility aliases if enabled
-      ...(compat ? {
-        'react': `${jsxImportSource}/compat`,
-        'react-dom': `${jsxImportSource}/compat`,
-        'react/jsx-runtime': `${jsxImportSource}/jsx-runtime`,
-        'react/jsx-dev-runtime': `${jsxImportSource}/jsx-dev-runtime`
-      } : {})
+      ...(compat
+        ? {
+            react: `${jsxImportSource}/compat`,
+            'react-dom': `${jsxImportSource}/compat`,
+            'react/jsx-runtime': `${jsxImportSource}/jsx-runtime`,
+            'react/jsx-dev-runtime': `${jsxImportSource}/jsx-dev-runtime`,
+          }
+        : {}),
     };
 
     // Add Berryact loader
     compiler.options.module = compiler.options.module || {};
     compiler.options.module.rules = compiler.options.module.rules || [];
-    
+
     // Insert Berryact loader before babel-loader
     const jsRule = {
       test: /\.[jt]sx?$/,
@@ -36,9 +38,9 @@ export class BerryactWebpackPlugin {
       use: [
         {
           loader: require.resolve('./webpack-loader.js'),
-          options: this.options
-        }
-      ]
+          options: this.options,
+        },
+      ],
     };
 
     compiler.options.module.rules.unshift(jsRule);
@@ -46,9 +48,9 @@ export class BerryactWebpackPlugin {
     // Add optimization plugin
     if (this.options.optimize) {
       const { DefinePlugin } = compiler.webpack || require('webpack');
-      
+
       new DefinePlugin({
-        'process.env.BERRYACT_VERSION': JSON.stringify(require('../../package.json').version)
+        'process.env.BERRYACT_VERSION': JSON.stringify(require('../../package.json').version),
       }).apply(compiler);
     }
 
@@ -57,9 +59,9 @@ export class BerryactWebpackPlugin {
       // Optimize Berryact runtime chunks
       compilation.hooks.optimizeChunks.tap('BerryactWebpackPlugin', (chunks) => {
         // Group Berryact modules together
-        const berryactChunk = Array.from(chunks).find(chunk => 
-          Array.from(chunk.modulesIterable).some(module => 
-            module.resource && module.resource.includes(jsxImportSource)
+        const berryactChunk = Array.from(chunks).find((chunk) =>
+          Array.from(chunk.modulesIterable).some(
+            (module) => module.resource && module.resource.includes(jsxImportSource)
           )
         );
 
@@ -72,25 +74,24 @@ export class BerryactWebpackPlugin {
     // Add HTML plugin integration if present
     compiler.hooks.compilation.tap('BerryactWebpackPlugin', (compilation) => {
       const HtmlWebpackPlugin = compiler.options.plugins?.find(
-        p => p.constructor.name === 'HtmlWebpackPlugin'
+        (p) => p.constructor.name === 'HtmlWebpackPlugin'
       );
 
       if (HtmlWebpackPlugin) {
-        HtmlWebpackPlugin.constructor.getHooks(compilation).alterAssetTags.tapAsync(
-          'BerryactWebpackPlugin',
-          (data, cb) => {
+        HtmlWebpackPlugin.constructor
+          .getHooks(compilation)
+          .alterAssetTags.tapAsync('BerryactWebpackPlugin', (data, cb) => {
             // Add Berryact meta tag
             data.assetTags.meta.push({
               tagName: 'meta',
               voidTag: true,
               attributes: {
                 name: 'generator',
-                content: 'berryact-webpack'
-              }
+                content: 'berryact-webpack',
+              },
             });
             cb(null, data);
-          }
-        );
+          });
       }
     });
   }
@@ -112,10 +113,7 @@ export function berryactLoader(source) {
 
   // Transform class components
   if (source.includes('extends Component') || source.includes('extends React.Component')) {
-    source = source.replace(
-      /extends\s+(React\.)?Component/g,
-      `extends Component`
-    );
+    source = source.replace(/extends\s+(React\.)?Component/g, `extends Component`);
   }
 
   return source;
@@ -131,7 +129,7 @@ export function createBerryactWebpackConfig(options = {}) {
     output: {
       path: require('path').resolve(process.cwd(), 'dist'),
       filename: '[name].[contenthash].js',
-      clean: true
+      clean: true,
     },
     module: {
       rules: [
@@ -142,30 +140,31 @@ export function createBerryactWebpackConfig(options = {}) {
             loader: 'babel-loader',
             options: {
               presets: [
-                ['@babel/preset-react', {
-                  runtime: 'automatic',
-                  importSource: '@oxog/berryact'
-                }]
-              ]
-            }
-          }
+                [
+                  '@babel/preset-react',
+                  {
+                    runtime: 'automatic',
+                    importSource: '@oxog/berryact',
+                  },
+                ],
+              ],
+            },
+          },
         },
         {
           test: /\.css$/,
-          use: ['style-loader', 'css-loader']
-        }
-      ]
+          use: ['style-loader', 'css-loader'],
+        },
+      ],
     },
-    plugins: [
-      new BerryactWebpackPlugin({ compat })
-    ],
+    plugins: [new BerryactWebpackPlugin({ compat })],
     resolve: {
-      extensions: ['.js', '.jsx', '.json']
+      extensions: ['.js', '.jsx', '.json'],
     },
     devServer: {
       port: 3000,
       hot: true,
-      open: true
-    }
+      open: true,
+    },
   };
 }

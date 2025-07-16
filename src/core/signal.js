@@ -8,13 +8,13 @@
 
 let currentEffect = null;
 let batchDepth = 0;
-let batchedEffects = new Set();
+const batchedEffects = new Set();
 
 /**
  * Creates a reactive signal that can be observed and updated
  * @description Creates a signal that notifies observers when its value changes
  * @param {*} initialValue - The initial value of the signal
- * @returns {Object} A signal object with value getter/setter and utility methods
+ * @returns {object} A signal object with value getter/setter and utility methods
  * @throws {Error} If initialValue is a function (use computed instead)
  * @example
  * const count = signal(0);
@@ -26,7 +26,7 @@ export function signal(initialValue) {
   if (typeof initialValue === 'function') {
     throw new Error('Signal initialValue cannot be a function. Use computed() instead.');
   }
-  
+
   // Memory leak protection: Track disposal state
   const observers = new Set();
   let value = initialValue;
@@ -44,7 +44,7 @@ export function signal(initialValue) {
       if (isDisposed) {
         throw new Error('Cannot access disposed signal');
       }
-      
+
       // Establish reactive dependency if within an effect
       if (currentEffect && currentEffect.active) {
         observers.add(currentEffect);
@@ -52,7 +52,7 @@ export function signal(initialValue) {
           currentEffect.dependencies.add(signalObject);
         }
       }
-      
+
       return value;
     },
 
@@ -66,7 +66,7 @@ export function signal(initialValue) {
       if (isDisposed) {
         throw new Error('Cannot set value on disposed signal');
       }
-      
+
       // Only update if value actually changed (prevents unnecessary updates)
       if (!Object.is(value, newValue)) {
         value = newValue;
@@ -122,14 +122,14 @@ export function signal(initialValue) {
      */
     get isDisposed() {
       return isDisposed;
-    }
+    },
   };
 
   function notify() {
     if (batchDepth > 0) {
-      observers.forEach(observer => batchedEffects.add(observer));
+      observers.forEach((observer) => batchedEffects.add(observer));
     } else {
-      observers.forEach(observer => {
+      observers.forEach((observer) => {
         if (observer.active) {
           observer.execute();
         }
@@ -145,14 +145,14 @@ export function computed(fn) {
   let isValid = false;
   const dependencies = new Set();
   const observers = new Set();
-  
+
   const effectObject = {
     dependencies,
     active: true,
     execute: () => {
       isValid = false;
       notify();
-    }
+    },
   };
 
   function recompute() {
@@ -160,28 +160,28 @@ export function computed(fn) {
     currentEffect = effectObject;
 
     // Clean up old dependencies
-    dependencies.forEach(dep => {
+    dependencies.forEach((dep) => {
       if (dep.observers) {
         dep.observers.delete(effectObject);
       }
     });
     dependencies.clear();
-    
+
     try {
       cachedValue = fn();
       isValid = true;
     } finally {
       currentEffect = prevEffect;
     }
-    
+
     return cachedValue;
   }
 
   function notify() {
     if (batchDepth > 0) {
-      observers.forEach(observer => batchedEffects.add(observer));
+      observers.forEach((observer) => batchedEffects.add(observer));
     } else {
-      observers.forEach(observer => {
+      observers.forEach((observer) => {
         if (observer.active) {
           observer.execute();
         }
@@ -195,39 +195,39 @@ export function computed(fn) {
         observers.add(currentEffect);
         currentEffect.dependencies.add(computedSignal);
       }
-      
+
       if (!isValid) {
         recompute();
       }
       return cachedValue;
     },
-    
+
     set value(newValue) {
       throw new Error('Cannot set computed signal');
     },
-    
+
     get version() {
       return 0;
     },
-    
+
     peek() {
       return cachedValue;
     },
-    
+
     notify() {
       notify();
     },
-    
+
     dispose() {
       effectObject.active = false;
-      dependencies.forEach(dep => {
+      dependencies.forEach((dep) => {
         if (dep.observers) {
           dep.observers.delete(effectObject);
         }
       });
       dependencies.clear();
       observers.clear();
-    }
+    },
   };
 
   recompute();
@@ -245,17 +245,17 @@ export function effect(fn, options = {}) {
     active: isActive,
     execute() {
       if (!isActive) return;
-      
+
       // Run cleanup from previous execution
       if (cleanup) {
         cleanup();
         cleanup = null;
       }
-      
+
       const prevEffect = currentEffect;
       currentEffect = effectObject;
-      
-      dependencies.forEach(dep => {
+
+      dependencies.forEach((dep) => {
         if (dep.observers) {
           dep.observers.delete(effectObject);
         }
@@ -278,13 +278,13 @@ export function effect(fn, options = {}) {
         cleanup();
         cleanup = null;
       }
-      dependencies.forEach(dep => {
+      dependencies.forEach((dep) => {
         if (dep.observers) {
           dep.observers.delete(effectObject);
         }
       });
       dependencies.clear();
-    }
+    },
   };
 
   if (immediate) {
@@ -298,21 +298,21 @@ export function batch(fn) {
   if (batchDepth === 0) {
     batchedEffects.clear();
   }
-  
+
   batchDepth++;
-  
+
   try {
     const result = fn();
-    
+
     if (batchDepth === 1) {
-      batchedEffects.forEach(effect => {
+      batchedEffects.forEach((effect) => {
         if (effect.active) {
           effect.execute();
         }
       });
       batchedEffects.clear();
     }
-    
+
     return result;
   } finally {
     batchDepth--;

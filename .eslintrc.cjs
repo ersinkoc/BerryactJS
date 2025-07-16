@@ -9,6 +9,7 @@ module.exports = {
   extends: [
     'eslint:recommended'
   ],
+  parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 'latest',
     sourceType: 'module',
@@ -17,20 +18,25 @@ module.exports = {
     }
   },
   plugins: [
-    'jsdoc'
+    'jsdoc',
+    '@typescript-eslint'
   ],
   rules: {
     // Code Quality Rules
     'no-console': 'warn',
     'no-debugger': 'error',
-    'no-unused-vars': 'error',
+    'no-unused-vars': 'off', // Handled by TypeScript
+    '@typescript-eslint/no-unused-vars': 'error',
     'prefer-const': 'error',
     'no-var': 'error',
+    
+    // TypeScript Strict Rules (basic ones that don't require type info)
+    '@typescript-eslint/no-explicit-any': 'error',
+    '@typescript-eslint/no-non-null-assertion': 'error',
     
     // JSDoc Rules
     'jsdoc/check-alignment': 'error',
     'jsdoc/check-param-names': 'error',
-    'jsdoc/check-return-names': 'error',
     'jsdoc/check-types': 'error',
     'jsdoc/require-description': 'error',
     'jsdoc/require-param': 'error',
@@ -68,6 +74,12 @@ module.exports = {
     'space-in-parens': ['error', 'never']
   },
   overrides: [
+    {
+      files: ['*.js', '*.jsx'],
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'off'
+      }
+    },
     {
       files: ['*.test.js', '*.spec.js', 'tests/**/*.js'],
       rules: {

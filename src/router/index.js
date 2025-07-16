@@ -9,18 +9,19 @@ export class Router {
     this.params = signal({});
     this.query = signal({});
     this.hash = signal('');
-    this.history = options.mode === 'memory' 
-      ? new MemoryHistory() 
-      : new HistoryManager(options.mode || 'history');
+    this.history =
+      options.mode === 'memory'
+        ? new MemoryHistory()
+        : new HistoryManager(options.mode || 'history');
     this.guards = new RouteGuard();
     this.baseUrl = options.base || '';
     this.notFoundComponent = options.notFound || (() => 'Page not found');
-    
+
     // Add routes from options
     if (options.routes) {
       this.addRoutes(options.routes);
     }
-    
+
     this.init();
   }
 
@@ -32,7 +33,7 @@ export class Router {
         this.handleLocationChange();
       }
     });
-    
+
     // Initial route load
     if (this.history.mode === 'memory') {
       this.handleLocationChangeSync();
@@ -44,7 +45,7 @@ export class Router {
   addRoute(path, component, options = {}) {
     const normalizedPath = this.normalizePath(path);
     const routeData = this.pathToRegex(normalizedPath);
-    
+
     const route = {
       path: normalizedPath,
       component,
@@ -53,20 +54,20 @@ export class Router {
       meta: options.meta || {},
       children: options.children || [],
       regex: routeData.regex,
-      keys: routeData.keys
+      keys: routeData.keys,
     };
 
     if (options.children) {
-      route.children = options.children.map(child => {
+      route.children = options.children.map((child) => {
         const childPath = this.normalizePath(path + '/' + child.path);
         const childRouteData = this.pathToRegex(childPath);
-        
+
         return {
           ...child,
           path: childPath,
           regex: childRouteData.regex,
           keys: childRouteData.keys,
-          parent: route
+          parent: route,
         };
       });
     }
@@ -76,7 +77,7 @@ export class Router {
   }
 
   addRoutes(routes) {
-    routes.forEach(route => {
+    routes.forEach((route) => {
       this.addRoute(route.path, route.component, route);
     });
     return this;
@@ -86,17 +87,17 @@ export class Router {
     if (typeof to === 'string') {
       return this.push(to, options);
     }
-    
+
     if (to.name) {
       return this.pushNamed(to.name, to.params, to.query);
     }
-    
+
     return this.push(to.path, options);
   }
 
   push(path, options = {}) {
     const url = this.resolveUrl(path);
-    
+
     if (options.replace) {
       this.history.replace(url);
     } else {
@@ -121,7 +122,7 @@ export class Router {
   }
 
   pushNamed(name, params = {}, query = {}) {
-    const route = this.routes.find(r => r.name === name);
+    const route = this.routes.find((r) => r.name === name);
     if (!route) {
       throw new Error(`Route with name "${name}" not found`);
     }
@@ -133,27 +134,27 @@ export class Router {
 
     const queryString = this.buildQueryString(query);
     const fullPath = queryString ? `${path}?${queryString}` : path;
-    
+
     this.push(fullPath);
   }
 
   async handleLocationChange() {
     const location = this.history.getCurrentLocation();
     const { pathname, search, hash } = location;
-    
+
     // Parse hash properly (remove leading #)
     this.hash.value = hash.startsWith('#') ? hash.slice(1) : hash;
     this.query.value = this.parseQuery(search);
-    
+
     const route = this.matchRoute(pathname);
-    
+
     if (!route) {
       this.currentRoute.value = {
         path: pathname,
         component: this.notFoundComponent,
         params: {},
         meta: {},
-        matched: []
+        matched: [],
       };
       this.params.value = {};
       return;
@@ -161,7 +162,7 @@ export class Router {
 
     try {
       const canActivate = await this.guards.canActivate(route, this.currentRoute.value);
-      
+
       if (!canActivate) {
         return;
       }
@@ -176,25 +177,25 @@ export class Router {
       throw error;
     }
   }
-  
+
   // Synchronous version for memory history
   handleLocationChangeSync() {
     const location = this.history.getCurrentLocation();
     const { pathname, search, hash } = location;
-    
+
     // Parse hash properly (remove leading #)
     this.hash.value = hash.startsWith('#') ? hash.slice(1) : hash;
     this.query.value = this.parseQuery(search);
-    
+
     const route = this.matchRoute(pathname);
-    
+
     if (!route) {
       this.currentRoute.value = {
         path: pathname,
         component: this.notFoundComponent,
         params: {},
         meta: {},
-        matched: []
+        matched: [],
       };
       this.params.value = {};
       return;
@@ -205,7 +206,7 @@ export class Router {
       try {
         // Run guards synchronously
         const canActivate = this.runGuardsSync(route, this.currentRoute.value);
-        
+
         if (!canActivate) {
           return;
         }
@@ -225,19 +226,19 @@ export class Router {
     // Handle async guards for other modes
     this.handleLocationChange();
   }
-  
+
   // Synchronous guard runner for memory mode
   runGuardsSync(to, from) {
     const guards = [
       ...this.guards.globalGuards.beforeEach,
-      ...(to.beforeEnter ? [to.beforeEnter] : [])
+      ...(to.beforeEnter ? [to.beforeEnter] : []),
     ];
 
     for (const guard of guards) {
       try {
         let guardResult;
         let guardCalled = false;
-        
+
         const next = (result) => {
           guardCalled = true;
           guardResult = result;
@@ -245,16 +246,16 @@ export class Router {
 
         // Call guard synchronously
         const result = guard(to, from, next);
-        
+
         // If guard didn't call next, use the return value
         if (!guardCalled) {
           guardResult = result;
         }
-        
+
         if (guardResult === false) {
           return false;
         }
-        
+
         if (typeof guardResult === 'string') {
           throw new (class NavigationRedirect extends Error {
             constructor(location) {
@@ -267,19 +268,19 @@ export class Router {
       } catch (error) {
         // Handle guard errors
         this.guards.handleError(error, to, from);
-        
+
         // If it's a redirect, rethrow it
         if (error.name === 'NavigationRedirect') {
           throw error;
         }
-        
+
         // For other errors, stop navigation
         return false;
       }
     }
 
     // Execute afterEach guards
-    this.guards.globalGuards.afterEach.forEach(guard => {
+    this.guards.globalGuards.afterEach.forEach((guard) => {
       try {
         guard(to, from);
       } catch (error) {
@@ -292,13 +293,13 @@ export class Router {
 
   matchRoute(path) {
     const normalizedPath = this.normalizePath(path);
-    
+
     for (const route of this.routes) {
       const match = this.testRoute(route, normalizedPath);
       if (match) {
         return match;
       }
-      
+
       for (const child of route.children) {
         const childMatch = this.testRoute(child, normalizedPath);
         if (childMatch) {
@@ -307,13 +308,13 @@ export class Router {
         }
       }
     }
-    
+
     return null;
   }
 
   testRoute(route, path) {
     const match = route.regex.exec(path);
-    
+
     if (!match) {
       return null;
     }
@@ -329,25 +330,25 @@ export class Router {
       params,
       meta: route.meta,
       matched: [route],
-      name: route.name
+      name: route.name,
     };
   }
 
   pathToRegex(path) {
     const keys = [];
-    let regex = path
+    const regex = path
       .replace(/:([^\/]+)/g, (match, key) => {
         keys.push({ name: key });
         return '([^/]+)';
       })
       .replace(/\//g, '\\/')
       .replace(/\*/g, '.*');
-    
-    const routeData = { 
-      keys, 
-      regex: new RegExp(`^${regex}$`) 
+
+    const routeData = {
+      keys,
+      regex: new RegExp(`^${regex}$`),
     };
-    
+
     return routeData;
   }
 
@@ -355,11 +356,11 @@ export class Router {
     if (!path.startsWith('/')) {
       path = '/' + path;
     }
-    
+
     if (this.baseUrl) {
       path = this.baseUrl + path;
     }
-    
+
     return path.replace(/\/+/g, '/');
   }
 
@@ -367,35 +368,35 @@ export class Router {
     if (path.startsWith('http')) {
       return path;
     }
-    
+
     // Handle hash fragments in path
     if (path.includes('#')) {
       return path;
     }
-    
+
     return this.normalizePath(path);
   }
 
   parseQuery(search) {
     const query = {};
-    
+
     if (!search) {
       return query;
     }
-    
+
     if (search.startsWith('?')) {
       search = search.slice(1);
     }
-    
+
     if (search.trim()) {
-      search.split('&').forEach(param => {
+      search.split('&').forEach((param) => {
         const [key, value = ''] = param.split('=');
         if (key) {
           query[decodeURIComponent(key)] = decodeURIComponent(value);
         }
       });
     }
-    
+
     return query;
   }
 

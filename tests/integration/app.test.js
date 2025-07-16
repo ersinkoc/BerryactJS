@@ -37,10 +37,10 @@ describe('Application Integration', () => {
     expect(container.innerHTML).toContain('Count: 0');
 
     count.value = 5;
-    
+
     // Wait for next tick
-    await new Promise(resolve => setTimeout(resolve, 0));
-    
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
     expect(container.innerHTML).toContain('Count: 5');
   });
 
@@ -69,10 +69,10 @@ describe('Application Integration', () => {
     button.click();
 
     expect(clicked).toBe(true);
-    
+
     // Wait for update
-    await new Promise(resolve => setTimeout(resolve, 0));
-    
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
     expect(container.innerHTML).toContain('Count: 1');
   });
 

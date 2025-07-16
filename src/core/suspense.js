@@ -13,7 +13,7 @@ const SuspenseContext = createContext(null);
 const ResourceState = {
   PENDING: 'pending',
   SUCCESS: 'success',
-  ERROR: 'error'
+  ERROR: 'error',
 };
 
 // Global resource cache
@@ -27,7 +27,7 @@ const suspenseRegistry = new WeakMap();
  */
 export function createResource(fetcher, key = null) {
   const cacheKey = key || fetcher.toString();
-  
+
   // Check cache first
   if (resourceCache.has(cacheKey)) {
     return resourceCache.get(cacheKey);
@@ -40,7 +40,7 @@ export function createResource(fetcher, key = null) {
     promise: null,
     fetcher,
     key: cacheKey,
-    version: 0
+    version: 0,
   };
 
   // Start fetching immediately
@@ -50,14 +50,14 @@ export function createResource(fetcher, key = null) {
     resource.version++;
     resource.state.value = ResourceState.PENDING;
     resource.error.value = null;
-    
+
     resource.promise = Promise.resolve(fetcher())
-      .then(data => {
+      .then((data) => {
         resource.data.value = data;
         resource.state.value = ResourceState.SUCCESS;
         return data;
       })
-      .catch(error => {
+      .catch((error) => {
         resource.error.value = error;
         resource.state.value = ResourceState.ERROR;
         throw error;
@@ -70,17 +70,17 @@ export function createResource(fetcher, key = null) {
   const resourceAPI = {
     read() {
       const suspense = useContext(SuspenseContext);
-      
+
       switch (resource.state.value) {
         case ResourceState.PENDING:
           if (suspense) {
             suspense.register(resource);
           }
           throw resource.promise;
-          
+
         case ResourceState.ERROR:
           throw resource.error.value;
-          
+
         case ResourceState.SUCCESS:
           return resource.data.value;
       }
@@ -127,7 +127,7 @@ export function createResource(fetcher, key = null) {
         callback({
           state: resource.state.value,
           data: resource.data.value,
-          error: resource.error.value
+          error: resource.error.value,
         });
       });
     },
@@ -135,7 +135,7 @@ export function createResource(fetcher, key = null) {
     // Clear from cache
     clear() {
       resourceCache.delete(cacheKey);
-    }
+    },
   };
 
   // Cache the resource
@@ -146,41 +146,45 @@ export function createResource(fetcher, key = null) {
 
 /**
  * Suspense component
+ * @param root0
+ * @param root0.fallback
+ * @param root0.children
+ * @param root0.onError
  */
 export function Suspense({ fallback, children, onError }) {
   const suspendedResources = signal(new Set());
   const hasError = signal(false);
   const error = signal(null);
-  
+
   // Suspense state
   const suspenseState = {
     register(resource) {
       suspendedResources.value = new Set([...suspendedResources.value, resource]);
     },
-    
+
     unregister(resource) {
       const newSet = new Set(suspendedResources.value);
       newSet.delete(resource);
       suspendedResources.value = newSet;
     },
-    
+
     reset() {
       suspendedResources.value = new Set();
       hasError.value = false;
       error.value = null;
-    }
+    },
   };
 
   // Check if all resources are ready
   const isReady = computed(() => {
     if (hasError.value) return false;
-    
+
     for (const resource of suspendedResources.value) {
       if (resource.state.value === ResourceState.PENDING) {
         return false;
       }
     }
-    
+
     return true;
   });
 
@@ -190,7 +194,7 @@ export function Suspense({ fallback, children, onError }) {
       if (resource.state.value === ResourceState.ERROR) {
         hasError.value = true;
         error.value = resource.error.value;
-        
+
         if (onError) {
           onError(resource.error.value);
         }
@@ -212,9 +216,9 @@ export function Suspense({ fallback, children, onError }) {
   // Render function
   return () => {
     if (hasError.value) {
-      return ErrorBoundary({ 
-        error: error.value, 
-        resetError: () => suspenseState.reset() 
+      return ErrorBoundary({
+        error: error.value,
+        resetError: () => suspenseState.reset(),
       });
     }
 
@@ -233,37 +237,41 @@ export function Suspense({ fallback, children, onError }) {
 
 /**
  * Hook to use a resource with suspense
+ * @param fetcher
+ * @param deps
  */
 export function useResource(fetcher, deps = []) {
   const [resource, setResource] = useState(null);
-  
+
   useEffect(() => {
     const newResource = createResource(fetcher);
     setResource(newResource);
-    
+
     return () => {
       newResource.clear();
     };
   }, deps);
-  
+
   return resource;
 }
 
 /**
  * Hook to create a deferred value
+ * @param value
+ * @param options
  */
 export function useDeferredValue(value, options = {}) {
   const { delay = 0 } = options;
   const [deferredValue, setDeferredValue] = useState(value);
-  
+
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       setDeferredValue(value);
     }, delay);
-    
+
     return () => clearTimeout(timeoutId);
   }, [value, delay]);
-  
+
   return deferredValue;
 }
 
@@ -272,54 +280,56 @@ export function useDeferredValue(value, options = {}) {
  */
 export function useTransition() {
   const [isPending, setIsPending] = useState(false);
-  
+
   const startTransition = (callback) => {
     setIsPending(true);
-    
+
     // Use microtask to ensure state updates are batched
     Promise.resolve().then(() => {
       callback();
       setIsPending(false);
     });
   };
-  
+
   return [isPending, startTransition];
 }
 
 /**
  * Lazy loading helper
+ * @param importFn
  */
 export function lazy(importFn) {
   let Component = null;
   let promise = null;
   let error = null;
-  
+
   return function LazyComponent(props) {
     if (error) {
       throw error;
     }
-    
+
     if (Component) {
       return Component(props);
     }
-    
+
     if (!promise) {
       promise = importFn()
-        .then(module => {
+        .then((module) => {
           Component = module.default || module;
         })
-        .catch(err => {
+        .catch((err) => {
           error = err;
           throw err;
         });
     }
-    
+
     throw promise;
   };
 }
 
 /**
  * Preload a lazy component
+ * @param lazyComponent
  */
 export function preload(lazyComponent) {
   // Trigger the import by calling the component
@@ -335,6 +345,8 @@ export function preload(lazyComponent) {
 
 /**
  * Create a suspense-enabled data fetcher
+ * @param fetchFn
+ * @param options
  */
 export function createFetcher(fetchFn, options = {}) {
   const {
@@ -343,14 +355,14 @@ export function createFetcher(fetchFn, options = {}) {
     retries = 3,
     retryDelay = 1000,
     onSuccess = null,
-    onError = null
+    onError = null,
   } = options;
 
   const cacheMap = new Map();
 
   return function fetcher(...args) {
     const key = JSON.stringify(args);
-    
+
     // Check cache
     if (cache && cacheMap.has(key)) {
       const cached = cacheMap.get(key);
@@ -363,32 +375,30 @@ export function createFetcher(fetchFn, options = {}) {
     const fetchWithRetry = async (attempt = 0) => {
       try {
         const data = await fetchFn(...args);
-        
+
         // Cache result
         if (cache) {
           cacheMap.set(key, {
             data,
-            timestamp: Date.now()
+            timestamp: Date.now(),
           });
         }
-        
+
         if (onSuccess) {
           onSuccess(data);
         }
-        
+
         return data;
       } catch (error) {
         if (attempt < retries - 1) {
-          await new Promise(resolve => 
-            setTimeout(resolve, retryDelay * Math.pow(2, attempt))
-          );
+          await new Promise((resolve) => setTimeout(resolve, retryDelay * Math.pow(2, attempt)));
           return fetchWithRetry(attempt + 1);
         }
-        
+
         if (onError) {
           onError(error);
         }
-        
+
         throw error;
       }
     };
@@ -399,11 +409,15 @@ export function createFetcher(fetchFn, options = {}) {
 
 /**
  * Suspense list for coordinating multiple suspended items
+ * @param root0
+ * @param root0.children
+ * @param root0.revealOrder
+ * @param root0.tail
  */
 export function SuspenseList({ children, revealOrder = 'together', tail = 'hidden' }) {
   const items = Array.isArray(children) ? children : [children];
   const itemStates = items.map(() => signal(false));
-  
+
   // Coordinate reveal based on order
   switch (revealOrder) {
     case 'forwards':
@@ -414,7 +428,7 @@ export function SuspenseList({ children, revealOrder = 'together', tail = 'hidde
         }
       });
       break;
-      
+
     case 'backwards':
       // Reveal items from last to first
       items.reverse().forEach((item, index) => {
@@ -424,17 +438,17 @@ export function SuspenseList({ children, revealOrder = 'together', tail = 'hidde
         }
       });
       break;
-      
+
     case 'together':
     default:
       // Reveal all items at once when all are ready
-      const allReady = itemStates.every(state => state.value);
+      const allReady = itemStates.every((state) => state.value);
       if (allReady) {
-        itemStates.forEach(state => state.value = true);
+        itemStates.forEach((state) => (state.value = true));
       }
       break;
   }
-  
+
   // Handle tail behavior
   const visibleItems = items.filter((_, index) => {
     if (tail === 'collapsed') {
@@ -444,9 +458,9 @@ export function SuspenseList({ children, revealOrder = 'together', tail = 'hidde
       }
       return true;
     }
-    
+
     return tail === 'hidden' ? itemStates[index].value : true;
   });
-  
+
   return html`<div class="berryact-suspense-list">${visibleItems}</div>`;
 }

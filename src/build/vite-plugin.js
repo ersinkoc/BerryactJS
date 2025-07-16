@@ -5,7 +5,7 @@ export default function berryactPlugin(options = {}) {
     include = /\.[jt]sx?$/,
     exclude = /node_modules/,
     compat = false,
-    optimize = true
+    optimize = true,
   } = options;
 
   return {
@@ -20,30 +20,30 @@ export default function berryactPlugin(options = {}) {
           jsxImportSource,
           jsxFactory: 'jsx',
           jsxFragment: 'Fragment',
-          jsxInject: compat 
-            ? `import React from '${jsxImportSource}/compat'`
-            : undefined
+          jsxInject: compat ? `import React from '${jsxImportSource}/compat'` : undefined,
         },
         resolve: {
           alias: {
             ...config.resolve?.alias,
             // Add React compatibility aliases if enabled
-            ...(compat ? {
-              'react': `${jsxImportSource}/compat`,
-              'react-dom': `${jsxImportSource}/compat`,
-              'react/jsx-runtime': `${jsxImportSource}/jsx-runtime`,
-              'react/jsx-dev-runtime': `${jsxImportSource}/jsx-dev-runtime`
-            } : {})
-          }
+            ...(compat
+              ? {
+                  react: `${jsxImportSource}/compat`,
+                  'react-dom': `${jsxImportSource}/compat`,
+                  'react/jsx-runtime': `${jsxImportSource}/jsx-runtime`,
+                  'react/jsx-dev-runtime': `${jsxImportSource}/jsx-dev-runtime`,
+                }
+              : {}),
+          },
         },
         optimizeDeps: {
           include: [
             jsxImportSource,
             `${jsxImportSource}/jsx-runtime`,
-            `${jsxImportSource}/jsx-dev-runtime`
+            `${jsxImportSource}/jsx-dev-runtime`,
           ],
-          exclude: config.optimizeDeps?.exclude || []
-        }
+          exclude: config.optimizeDeps?.exclude || [],
+        },
       };
     },
 
@@ -54,7 +54,7 @@ export default function berryactPlugin(options = {}) {
       }
 
       // Handle React imports in compatibility mode
-      if (compat && code.includes('from "react"') || code.includes("from 'react'")) {
+      if ((compat && code.includes('from "react"')) || code.includes("from 'react'")) {
         code = code
           .replace(/from\s+["']react["']/g, `from '${jsxImportSource}/compat'`)
           .replace(/from\s+["']react-dom["']/g, `from '${jsxImportSource}/compat'`);
@@ -62,10 +62,7 @@ export default function berryactPlugin(options = {}) {
 
       // Transform class components to use Berryact's Component
       if (code.includes('extends Component') || code.includes('extends React.Component')) {
-        code = code.replace(
-          /extends\s+(React\.)?Component/g,
-          `extends Component`
-        );
+        code = code.replace(/extends\s+(React\.)?Component/g, `extends Component`);
       }
 
       // Optimize template literals if requested
@@ -75,16 +72,13 @@ export default function berryactPlugin(options = {}) {
 
       return {
         code,
-        map: null
+        map: null,
       };
     },
 
     transformIndexHtml(html) {
       // Add Berryact detection meta tag
-      return html.replace(
-        '</head>',
-        `  <meta name="generator" content="berryact-vite">\n</head>`
-      );
+      return html.replace('</head>', `  <meta name="generator" content="berryact-vite">\n</head>`);
     },
 
     handleHotUpdate({ file, server }) {
@@ -93,10 +87,10 @@ export default function berryactPlugin(options = {}) {
         server.ws.send({
           type: 'custom',
           event: 'berryact:update',
-          data: { file }
+          data: { file },
         });
       }
-    }
+    },
   };
 }
 
@@ -122,7 +116,7 @@ function optimizeTemplateLiterals(code) {
     const declarations = Array.from(staticTemplates.entries())
       .map(([varName, template]) => `const ${varName} = ${template};`)
       .join('\n');
-    
+
     code = declarations + '\n\n' + code;
   }
 
@@ -135,7 +129,7 @@ export function createBerryactApp() {
     plugins: [berryactPlugin()],
     server: {
       port: 3000,
-      open: true
-    }
+      open: true,
+    },
   };
 }

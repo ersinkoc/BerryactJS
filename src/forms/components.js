@@ -36,7 +36,7 @@ export function FormInput(props) {
   return html`
     <div class="form-field">
       ${label ? html`<label for=${inputId} class="form-label">${label}</label>` : ''}
-      
+
       <input
         id=${inputId}
         type=${type}
@@ -49,20 +49,16 @@ export function FormInput(props) {
         @focus=${handleFocus}
         ${rest}
       />
-      
+
       ${help ? html`<div class="form-help">${help}</div>` : ''}
-      
-      ${showErrors && hasError ? html`
-        <div class="form-errors">
-          ${field.errors.value.map(error => html`
-            <div class="form-error">${error}</div>
-          `)}
-        </div>
-      ` : ''}
-      
-      ${field.validating.value ? html`
-        <div class="form-validating">Validating...</div>
-      ` : ''}
+      ${showErrors && hasError
+        ? html`
+            <div class="form-errors">
+              ${field.errors.value.map((error) => html` <div class="form-error">${error}</div> `)}
+            </div>
+          `
+        : ''}
+      ${field.validating.value ? html` <div class="form-validating">Validating...</div> ` : ''}
     </div>
   `;
 }
@@ -100,7 +96,7 @@ export function FormTextarea(props) {
   return html`
     <div class="form-field">
       ${label ? html`<label for=${textareaId} class="form-label">${label}</label>` : ''}
-      
+
       <textarea
         id=${textareaId}
         class=${textareaClass}
@@ -111,17 +107,18 @@ export function FormTextarea(props) {
         @blur=${handleBlur}
         @focus=${handleFocus}
         ${rest}
-      >${field.value}</textarea>
-      
+      >
+${field.value}</textarea
+      >
+
       ${help ? html`<div class="form-help">${help}</div>` : ''}
-      
-      ${showErrors && hasError ? html`
-        <div class="form-errors">
-          ${field.errors.value.map(error => html`
-            <div class="form-error">${error}</div>
-          `)}
-        </div>
-      ` : ''}
+      ${showErrors && hasError
+        ? html`
+            <div class="form-errors">
+              ${field.errors.value.map((error) => html` <div class="form-error">${error}</div> `)}
+            </div>
+          `
+        : ''}
     </div>
   `;
 }
@@ -147,7 +144,7 @@ export function FormSelect(props) {
 
   const handleChange = (event) => {
     if (multiple) {
-      const selectedOptions = Array.from(event.target.selectedOptions, option => option.value);
+      const selectedOptions = Array.from(event.target.selectedOptions, (option) => option.value);
       field.setValue(selectedOptions);
     } else {
       field.setValue(event.target.value);
@@ -165,7 +162,7 @@ export function FormSelect(props) {
   return html`
     <div class="form-field">
       ${label ? html`<label for=${selectId} class="form-label">${label}</label>` : ''}
-      
+
       <select
         id=${selectId}
         class=${selectClass}
@@ -176,36 +173,28 @@ export function FormSelect(props) {
         @focus=${handleFocus}
         ${rest}
       >
-        ${!multiple && placeholder ? html`
-          <option value="" disabled selected=${!field.value.value}>
-            ${placeholder}
-          </option>
-        ` : ''}
-        
-        ${options.map(option => {
+        ${!multiple && placeholder
+          ? html` <option value="" disabled selected=${!field.value.value}>${placeholder}</option> `
+          : ''}
+        ${options.map((option) => {
           const value = option.value ?? option;
           const label = option.label ?? option.text ?? option;
-          const isSelected = multiple 
+          const isSelected = multiple
             ? field.value.value.includes(value)
             : field.value.value === value;
-          
-          return html`
-            <option value=${value} selected=${isSelected}>
-              ${label}
-            </option>
-          `;
+
+          return html` <option value=${value} selected=${isSelected}>${label}</option> `;
         })}
       </select>
-      
+
       ${help ? html`<div class="form-help">${help}</div>` : ''}
-      
-      ${showErrors && hasError ? html`
-        <div class="form-errors">
-          ${field.errors.value.map(error => html`
-            <div class="form-error">${error}</div>
-          `)}
-        </div>
-      ` : ''}
+      ${showErrors && hasError
+        ? html`
+            <div class="form-errors">
+              ${field.errors.value.map((error) => html` <div class="form-error">${error}</div> `)}
+            </div>
+          `
+        : ''}
     </div>
   `;
 }
@@ -249,16 +238,15 @@ export function FormCheckbox(props) {
         />
         ${label ? html`<label for=${checkboxId} class="form-label">${label}</label>` : ''}
       </div>
-      
+
       ${help ? html`<div class="form-help">${help}</div>` : ''}
-      
-      ${showErrors && hasError ? html`
-        <div class="form-errors">
-          ${field.errors.value.map(error => html`
-            <div class="form-error">${error}</div>
-          `)}
-        </div>
-      ` : ''}
+      ${showErrors && hasError
+        ? html`
+            <div class="form-errors">
+              ${field.errors.value.map((error) => html` <div class="form-error">${error}</div> `)}
+            </div>
+          `
+        : ''}
     </div>
   `;
 }
@@ -279,7 +267,8 @@ export function FormRadioGroup(props) {
 
   const groupName = `radio-group-${Math.random().toString(36).substr(2, 9)}`;
   const hasError = field.isInvalid.value;
-  const groupClass = `form-radio-group ${className} ${hasError ? 'error' : ''} ${inline ? 'inline' : ''}`.trim();
+  const groupClass =
+    `form-radio-group ${className} ${hasError ? 'error' : ''} ${inline ? 'inline' : ''}`.trim();
 
   const handleChange = (event) => {
     field.setValue(event.target.value);
@@ -292,14 +281,14 @@ export function FormRadioGroup(props) {
   return html`
     <div class="form-field">
       ${label ? html`<div class="form-label">${label}</div>` : ''}
-      
+
       <div class=${groupClass}>
         ${options.map((option, index) => {
           const value = option.value ?? option;
           const optionLabel = option.label ?? option.text ?? option;
           const radioId = `${groupName}-${index}`;
           const isChecked = field.value.value === value;
-          
+
           return html`
             <div class="radio-option">
               <input
@@ -318,16 +307,15 @@ export function FormRadioGroup(props) {
           `;
         })}
       </div>
-      
+
       ${help ? html`<div class="form-help">${help}</div>` : ''}
-      
-      ${showErrors && hasError ? html`
-        <div class="form-errors">
-          ${field.errors.value.map(error => html`
-            <div class="form-error">${error}</div>
-          `)}
-        </div>
-      ` : ''}
+      ${showErrors && hasError
+        ? html`
+            <div class="form-errors">
+              ${field.errors.value.map((error) => html` <div class="form-error">${error}</div> `)}
+            </div>
+          `
+        : ''}
     </div>
   `;
 }
@@ -348,12 +336,7 @@ export function FormSubmitButton(props) {
   const displayText = form.submitting.value ? loadingText : children;
 
   return html`
-    <button
-      type="submit"
-      class=${buttonClass}
-      disabled=${isDisabled}
-      ${rest}
-    >
+    <button type="submit" class=${buttonClass} disabled=${isDisabled} ${rest}>
       ${displayText}
     </button>
   `;
@@ -361,18 +344,11 @@ export function FormSubmitButton(props) {
 
 // Complete form component
 export function FormComponent(props) {
-  const {
-    form,
-    onSubmit,
-    children,
-    className = '',
-    noValidate = true,
-    ...rest
-  } = props;
+  const { form, onSubmit, children, className = '', noValidate = true, ...rest } = props;
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    
+
     if (onSubmit) {
       try {
         await form.submit(onSubmit);
@@ -385,12 +361,7 @@ export function FormComponent(props) {
   const formClass = `berryact-form ${className} ${form.isValid.value ? 'valid' : 'invalid'}`.trim();
 
   return html`
-    <form
-      class=${formClass}
-      novalidate=${noValidate}
-      @submit=${handleSubmit}
-      ${rest}
-    >
+    <form class=${formClass} novalidate=${noValidate} @submit=${handleSubmit} ${rest}>
       ${children}
     </form>
   `;
@@ -405,7 +376,7 @@ export function FormFieldWrapper(props) {
     showErrors = true,
     required = false,
     className = '',
-    children
+    children,
   } = props;
 
   const hasError = field.isInvalid.value;
@@ -413,33 +384,32 @@ export function FormFieldWrapper(props) {
 
   return html`
     <div class=${wrapperClass}>
-      ${label ? html`
-        <div class="form-label">
-          ${label}
-          ${required ? html`<span class="required">*</span>` : ''}
-        </div>
-      ` : ''}
-      
-      <div class="form-control">
-        ${children}
-      </div>
-      
+      ${label
+        ? html`
+            <div class="form-label">
+              ${label} ${required ? html`<span class="required">*</span>` : ''}
+            </div>
+          `
+        : ''}
+
+      <div class="form-control">${children}</div>
+
       ${help ? html`<div class="form-help">${help}</div>` : ''}
-      
-      ${showErrors && hasError ? html`
-        <div class="form-errors">
-          ${field.errors.value.map(error => html`
-            <div class="form-error">${error}</div>
-          `)}
-        </div>
-      ` : ''}
-      
-      ${field.validating.value ? html`
-        <div class="form-validating">
-          <span class="spinner"></span>
-          Validating...
-        </div>
-      ` : ''}
+      ${showErrors && hasError
+        ? html`
+            <div class="form-errors">
+              ${field.errors.value.map((error) => html` <div class="form-error">${error}</div> `)}
+            </div>
+          `
+        : ''}
+      ${field.validating.value
+        ? html`
+            <div class="form-validating">
+              <span class="spinner"></span>
+              Validating...
+            </div>
+          `
+        : ''}
     </div>
   `;
 }
@@ -450,25 +420,25 @@ export function AutoGrowTextarea(props) {
 
   const handleInput = (event) => {
     field.setValue(event.target.value);
-    
+
     // Auto-grow functionality
     const textarea = event.target;
     textarea.style.height = 'auto';
-    
+
     const lineHeight = parseInt(getComputedStyle(textarea).lineHeight, 10);
     const minHeight = lineHeight * minRows;
     const maxHeight = lineHeight * maxRows;
-    
+
     const scrollHeight = textarea.scrollHeight;
     const newHeight = Math.min(Math.max(scrollHeight, minHeight), maxHeight);
-    
+
     textarea.style.height = `${newHeight}px`;
   };
 
   return FormTextarea({
     ...rest,
     field,
-    handleInput
+    handleInput,
   });
 }
 
@@ -480,7 +450,7 @@ export function MultiStepForm(props) {
     onStepChange,
     onComplete,
     className = '',
-    showProgress = true
+    showProgress = true,
   } = props;
 
   const currentStepData = steps[currentStep];
@@ -492,7 +462,7 @@ export function MultiStepForm(props) {
       const isValid = await currentStepData.form.validate();
       if (!isValid) return;
     }
-    
+
     if (isLastStep) {
       if (onComplete) {
         onComplete();
@@ -512,39 +482,43 @@ export function MultiStepForm(props) {
 
   return html`
     <div class="multi-step-form ${className}">
-      ${showProgress ? html`
-        <div class="form-progress">
-          <div class="progress-bar">
-            <div class="progress-fill" style="width: ${progress}%"></div>
-          </div>
-          <div class="step-indicators">
-            ${steps.map((step, index) => html`
-              <div class="step-indicator ${index <= currentStep ? 'completed' : ''}">
-                ${index + 1}
+      ${showProgress
+        ? html`
+            <div class="form-progress">
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: ${progress}%"></div>
               </div>
-            `)}
-          </div>
-        </div>
-      ` : ''}
-      
+              <div class="step-indicators">
+                ${steps.map(
+                  (step, index) => html`
+                    <div class="step-indicator ${index <= currentStep ? 'completed' : ''}">
+                      ${index + 1}
+                    </div>
+                  `
+                )}
+              </div>
+            </div>
+          `
+        : ''}
+
       <div class="step-content">
         <h2 class="step-title">${currentStepData.title}</h2>
-        ${currentStepData.description ? html`
-          <p class="step-description">${currentStepData.description}</p>
-        ` : ''}
-        
-        <div class="step-form">
-          ${currentStepData.component}
-        </div>
+        ${currentStepData.description
+          ? html` <p class="step-description">${currentStepData.description}</p> `
+          : ''}
+
+        <div class="step-form">${currentStepData.component}</div>
       </div>
-      
+
       <div class="step-actions">
-        ${currentStep > 0 ? html`
-          <button type="button" class="btn btn-secondary" @click=${handlePrevious}>
-            Previous
-          </button>
-        ` : ''}
-        
+        ${currentStep > 0
+          ? html`
+              <button type="button" class="btn btn-secondary" @click=${handlePrevious}>
+                Previous
+              </button>
+            `
+          : ''}
+
         <button type="button" class="btn btn-primary" @click=${handleNext}>
           ${isLastStep ? 'Complete' : 'Next'}
         </button>
@@ -558,10 +532,10 @@ registerDirective('field', (element, field) => {
   if (!field || typeof field !== 'object') return;
 
   const tagName = element.tagName.toLowerCase();
-  
+
   if (tagName === 'input') {
     const type = element.type;
-    
+
     if (type === 'checkbox') {
       element.checked = field.value.value;
       element.addEventListener('change', () => {
@@ -573,32 +547,32 @@ registerDirective('field', (element, field) => {
         field.setValue(element.value);
       });
     }
-    
+
     element.addEventListener('blur', () => {
       field.setTouched(true);
     });
-    
+
     element.addEventListener('focus', () => {
       field.setFocused(true);
     });
   }
-  
+
   if (tagName === 'select' || tagName === 'textarea') {
     element.value = field.value.value;
-    
+
     element.addEventListener('change', () => {
       field.setValue(element.value);
     });
-    
+
     element.addEventListener('blur', () => {
       field.setTouched(true);
     });
-    
+
     element.addEventListener('focus', () => {
       field.setFocused(true);
     });
   }
-  
+
   // Add error class when field is invalid
   effect(() => {
     if (field.isInvalid.value) {
@@ -619,5 +593,5 @@ export {
   FormComponent,
   FormFieldWrapper,
   AutoGrowTextarea,
-  MultiStepForm
+  MultiStepForm,
 };

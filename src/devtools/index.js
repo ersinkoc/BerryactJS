@@ -6,9 +6,9 @@ export class DevTools {
     this.performance = {
       renders: [],
       mutations: [],
-      actions: []
+      actions: [],
     };
-    
+
     if (this.enabled && typeof window !== 'undefined') {
       window.__BERRYACT_DEVTOOLS__ = this;
       this.setupGlobalAPI();
@@ -20,13 +20,13 @@ export class DevTools {
       inspectComponent: (id) => this.inspectComponent(id),
       inspectStore: (name) => this.inspectStore(name),
       getPerformance: () => this.getPerformance(),
-      clearPerformance: () => this.clearPerformance()
+      clearPerformance: () => this.clearPerformance(),
     };
   }
 
   registerComponent(component) {
     if (!this.enabled) return;
-    
+
     const id = this.generateId();
     this.components.set(id, {
       id,
@@ -36,15 +36,15 @@ export class DevTools {
       state: component.state,
       hooks: component.hooks,
       renders: 0,
-      lastRender: null
+      lastRender: null,
     });
-    
+
     return id;
   }
 
   updateComponent(id, data) {
     if (!this.enabled) return;
-    
+
     const entry = this.components.get(id);
     if (entry) {
       entry.renders++;
@@ -55,58 +55,58 @@ export class DevTools {
 
   unregisterComponent(id) {
     if (!this.enabled) return;
-    
+
     this.components.delete(id);
   }
 
   registerStore(name, store) {
     if (!this.enabled) return;
-    
+
     this.stores.set(name, {
       name,
       store,
       state: store.state,
       mutations: store.mutations,
       actions: store.actions,
-      history: store.history
+      history: store.history,
     });
   }
 
   trackRender(componentId, duration) {
     if (!this.enabled) return;
-    
+
     this.performance.renders.push({
       componentId,
       duration,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
-    
+
     this.trimPerformanceData('renders');
   }
 
   trackMutation(type, payload, duration) {
     if (!this.enabled) return;
-    
+
     this.performance.mutations.push({
       type,
       payload,
       duration,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
-    
+
     this.trimPerformanceData('mutations');
   }
 
   trackAction(type, payload, duration) {
     if (!this.enabled) return;
-    
+
     this.performance.actions.push({
       type,
       payload,
       duration,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
-    
+
     this.trimPerformanceData('actions');
   }
 
@@ -139,7 +139,7 @@ export class DevTools {
     return {
       renders: this.performance.renders.slice(),
       mutations: this.performance.mutations.slice(),
-      actions: this.performance.actions.slice()
+      actions: this.performance.actions.slice(),
     };
   }
 
@@ -172,13 +172,13 @@ export class DevTools {
     if (!this.enabled) {
       return fn();
     }
-    
+
     const start = performance.now();
     const result = fn();
     const duration = performance.now() - start;
-    
+
     console.log(`${name} took ${duration.toFixed(2)}ms`);
-    
+
     return result;
   }
 
@@ -186,16 +186,16 @@ export class DevTools {
     if (!this.enabled) {
       return method;
     }
-    
+
     return (...args) => {
       const start = performance.now();
       const result = method.apply(component, args);
       const duration = performance.now() - start;
-      
+
       if (method.name === 'render') {
         this.trackRender(component._devtoolsId, duration);
       }
-      
+
       return result;
     };
   }

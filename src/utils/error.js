@@ -8,11 +8,7 @@ export class BerryactError extends Error {
 }
 
 export function createErrorHandler(options = {}) {
-  const {
-    logErrors = true,
-    captureStackTrace = true,
-    onError = null
-  } = options;
+  const { logErrors = true, captureStackTrace = true, onError = null } = options;
 
   return {
     handleError(error, component, info) {
@@ -24,7 +20,7 @@ export function createErrorHandler(options = {}) {
         error,
         component,
         info,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
 
       if (logErrors) {
@@ -55,21 +51,21 @@ export function createErrorHandler(options = {}) {
       return {
         hasError: false,
         error: null,
-        
+
         componentDidCatch(error, errorInfo) {
           this.hasError = true;
           this.error = error;
           this.handleError(error, null, errorInfo);
         },
-        
+
         render() {
           if (this.hasError) {
             return fallback(this.error);
           }
           return null;
-        }
+        },
       };
-    }
+    },
   };
 }
 

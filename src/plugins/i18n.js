@@ -9,10 +9,10 @@ import { createPlugin } from '../core/plugin.js';
 export const I18nPlugin = createPlugin({
   name: 'i18n',
   version: '1.0.0',
-  
+
   setup(app, context) {
     const options = this.options || {};
-    
+
     // Plugin state
     const state = {
       locale: signal(options.defaultLocale || 'en'),
@@ -21,7 +21,7 @@ export const I18nPlugin = createPlugin({
       numberFormats: signal(options.numberFormats || {}),
       dateFormats: signal(options.dateFormats || {}),
       loading: signal(false),
-      loadedLocales: new Set([options.defaultLocale || 'en'])
+      loadedLocales: new Set([options.defaultLocale || 'en']),
     };
 
     // Message loader
@@ -44,18 +44,18 @@ export const I18nPlugin = createPlugin({
       const currentLocale = locale || state.locale.value;
       const messages = state.messages.value[currentLocale] || {};
       const fallbackMessages = state.messages.value[state.fallbackLocale.value] || {};
-      
+
       let message = getNestedValue(messages, key);
-      
+
       if (!message && currentLocale !== state.fallbackLocale.value) {
         message = getNestedValue(fallbackMessages, key);
       }
-      
+
       if (!message) {
         console.warn(`[i18n] Translation missing for key: ${key}`);
         return key;
       }
-      
+
       // Handle pluralization
       if (typeof message === 'object' && params.count !== undefined) {
         const count = params.count;
@@ -73,7 +73,7 @@ export const I18nPlugin = createPlugin({
           message = message.other || key;
         }
       }
-      
+
       return interpolate(message, params);
     }
 
@@ -81,7 +81,7 @@ export const I18nPlugin = createPlugin({
     const t = computed(() => {
       // This computed depends on locale changes
       const locale = state.locale.value;
-      
+
       return (key, params) => translate(key, params, locale);
     });
 
@@ -90,7 +90,7 @@ export const I18nPlugin = createPlugin({
       const locale = state.locale.value;
       const formats = state.numberFormats.value[locale] || {};
       const formatOptions = formats[format] || {};
-      
+
       try {
         return new Intl.NumberFormat(locale, formatOptions).format(value);
       } catch (e) {
@@ -104,7 +104,7 @@ export const I18nPlugin = createPlugin({
       const locale = state.locale.value;
       const formats = state.dateFormats.value[locale] || {};
       const formatOptions = formats[format] || {};
-      
+
       try {
         const date = value instanceof Date ? value : new Date(value);
         return new Intl.DateTimeFormat(locale, formatOptions).format(date);
@@ -117,31 +117,36 @@ export const I18nPlugin = createPlugin({
     // Relative time formatting
     function formatRelativeTime(value, unit = 'auto') {
       const locale = state.locale.value;
-      
+
       try {
         const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
-        
+
         if (unit === 'auto') {
           // Auto-detect appropriate unit
           const date = value instanceof Date ? value : new Date(value);
           const diff = date.getTime() - Date.now();
           const absDiff = Math.abs(diff);
-          
-          if (absDiff < 60000) { // Less than 1 minute
+
+          if (absDiff < 60000) {
+            // Less than 1 minute
             return rtf.format(Math.round(diff / 1000), 'second');
-          } else if (absDiff < 3600000) { // Less than 1 hour
+          } else if (absDiff < 3600000) {
+            // Less than 1 hour
             return rtf.format(Math.round(diff / 60000), 'minute');
-          } else if (absDiff < 86400000) { // Less than 1 day
+          } else if (absDiff < 86400000) {
+            // Less than 1 day
             return rtf.format(Math.round(diff / 3600000), 'hour');
-          } else if (absDiff < 2592000000) { // Less than 30 days
+          } else if (absDiff < 2592000000) {
+            // Less than 30 days
             return rtf.format(Math.round(diff / 86400000), 'day');
-          } else if (absDiff < 31536000000) { // Less than 1 year
+          } else if (absDiff < 31536000000) {
+            // Less than 1 year
             return rtf.format(Math.round(diff / 2592000000), 'month');
           } else {
             return rtf.format(Math.round(diff / 31536000000), 'year');
           }
         }
-        
+
         return rtf.format(value, unit);
       } catch (e) {
         console.error('[i18n] Relative time formatting error:', e);
@@ -154,17 +159,17 @@ export const I18nPlugin = createPlugin({
       if (!messageLoader || state.loadedLocales.has(locale)) {
         return;
       }
-      
+
       state.loading.value = true;
-      
+
       try {
         const messages = await messageLoader(locale);
-        
+
         state.messages.value = {
           ...state.messages.value,
-          [locale]: messages
+          [locale]: messages,
         };
-        
+
         state.loadedLocales.add(locale);
       } catch (error) {
         console.error(`[i18n] Failed to load locale ${locale}:`, error);
@@ -176,18 +181,18 @@ export const I18nPlugin = createPlugin({
     // Change locale
     async function setLocale(locale) {
       if (locale === state.locale.value) return;
-      
+
       // Load locale if needed
       await loadLocale(locale);
-      
+
       // Update locale
       state.locale.value = locale;
-      
+
       // Update document lang attribute
       if (typeof document !== 'undefined') {
         document.documentElement.lang = locale;
       }
-      
+
       // Emit locale change event
       context.callHook('i18n:localeChanged', locale);
     }
@@ -198,8 +203,8 @@ export const I18nPlugin = createPlugin({
         ...state.messages.value,
         [locale]: {
           ...(state.messages.value[locale] || {}),
-          ...messages
-        }
+          ...messages,
+        },
       };
     }
 
@@ -212,7 +217,7 @@ export const I18nPlugin = createPlugin({
     function isRTL(locale = null) {
       const checkLocale = locale || state.locale.value;
       const rtlLocales = ['ar', 'he', 'fa', 'ur'];
-      return rtlLocales.some(rtl => checkLocale.startsWith(rtl));
+      return rtlLocales.some((rtl) => checkLocale.startsWith(rtl));
     }
 
     // Create scoped translator
@@ -231,7 +236,7 @@ export const I18nPlugin = createPlugin({
       messages: state.messages,
       loading: state.loading,
       availableLocales,
-      
+
       // Methods
       t: (key, params) => t.value(key, params),
       translate,
@@ -243,17 +248,17 @@ export const I18nPlugin = createPlugin({
       formatRelativeTime,
       isRTL,
       createScopedTranslator,
-      
+
       // Aliases
       n: formatNumber,
       d: formatDate,
-      rt: formatRelativeTime
+      rt: formatRelativeTime,
     };
 
     // Setup document lang attribute
     if (typeof document !== 'undefined') {
       document.documentElement.lang = state.locale.value;
-      
+
       // Watch for locale changes
       effect(() => {
         document.documentElement.lang = state.locale.value;
@@ -266,11 +271,11 @@ export const I18nPlugin = createPlugin({
       if (options.routeLocale) {
         router.beforeEach((to, from, next) => {
           const localeParam = to.params.locale;
-          
+
           if (localeParam && localeParam !== state.locale.value) {
             setLocale(localeParam);
           }
-          
+
           next();
         });
       }
@@ -278,31 +283,31 @@ export const I18nPlugin = createPlugin({
 
     // Provide i18n API
     this.provide('i18n', i18n);
-    
+
     // Global access
     app.i18n = i18n;
     app.$t = i18n.t;
-    
+
     // Component injection helper
     app.config = app.config || {};
     app.config.globalProperties = app.config.globalProperties || {};
     app.config.globalProperties.$t = i18n.t;
     app.config.globalProperties.$i18n = i18n;
-  }
+  },
 });
 
 // Helper component for translations
 export function T({ i18n, children }) {
   const key = children;
   const params = {};
-  
+
   // Extract parameters from attributes
-  Object.keys(i18n).forEach(key => {
+  Object.keys(i18n).forEach((key) => {
     if (key !== 'i18n' && key !== 'children') {
       params[key] = i18n[key];
     }
   });
-  
+
   return i18n.t(key, params);
 }
 
@@ -310,48 +315,48 @@ export function T({ i18n, children }) {
 export function createI18nDirective(i18n) {
   return {
     name: 'i18n',
-    
+
     mounted(el, binding) {
       const update = () => {
         const { value, arg, modifiers } = binding;
-        
+
         if (typeof value === 'string') {
           el.textContent = i18n.t(value);
         } else if (typeof value === 'object') {
           const { key, params } = value;
           el.textContent = i18n.t(key, params);
         }
-        
+
         // Handle modifiers
         if (modifiers.html) {
           el.innerHTML = el.textContent;
         }
-        
+
         if (modifiers.placeholder && el.placeholder !== undefined) {
           el.placeholder = el.textContent;
         }
-        
+
         if (modifiers.title) {
           el.title = el.textContent;
         }
       };
-      
+
       // Initial update
       update();
-      
+
       // Watch for locale changes
       el._i18nUnsubscribe = effect(update);
     },
-    
+
     updated(el, binding) {
       // Re-run translation on update
       el._i18nUnsubscribe?.();
       this.mounted(el, binding);
     },
-    
+
     unmounted(el) {
       el._i18nUnsubscribe?.();
-    }
+    },
   };
 }
 
@@ -360,6 +365,6 @@ export function createI18n(options = {}) {
   return {
     install(app) {
       app.use(I18nPlugin, options);
-    }
+    },
   };
 }

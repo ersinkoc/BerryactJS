@@ -2,16 +2,16 @@ export function createLogger(options = {}) {
   const {
     collapsed = true,
     filter = () => true,
-    transformer = state => state,
-    mutationTransformer = mut => mut,
+    transformer = (state) => state,
+    mutationTransformer = (mut) => mut,
     actionFilter = () => true,
-    actionTransformer = act => act,
+    actionTransformer = (act) => act,
     logMutations = true,
     logActions = true,
-    logger = console
+    logger = console,
   } = options;
 
-  return store => {
+  return (store) => {
     let prevState = transformer(store.state.value);
 
     if (logMutations) {
@@ -62,8 +62,8 @@ export function createPersistedState(options = {}) {
   const {
     key = 'berryact-store',
     paths = [],
-    reducer = state => state,
-    subscriber = store => handler => store.subscribe(handler),
+    reducer = (state) => state,
+    subscriber = (store) => (handler) => store.subscribe(handler),
     storage = localStorage,
     getState = (key, storage) => {
       const value = storage.getItem(key);
@@ -71,39 +71,36 @@ export function createPersistedState(options = {}) {
     },
     setState = (key, state, storage) => {
       storage.setItem(key, JSON.stringify(state));
-    }
+    },
   } = options;
 
-  return store => {
+  return (store) => {
     const savedState = getState(key, storage);
-    
+
     if (savedState) {
       store.replaceState(Object.assign({}, store.state.value, savedState));
     }
 
     subscriber(store)((mutation, state) => {
       let stateToSave = state;
-      
+
       if (paths.length > 0) {
         stateToSave = {};
-        paths.forEach(path => {
+        paths.forEach((path) => {
           const value = getNestedProperty(state, path);
           setNestedProperty(stateToSave, path, value);
         });
       }
-      
+
       setState(key, reducer(stateToSave), storage);
     });
   };
 }
 
 export function createMultiTabSync(options = {}) {
-  const {
-    key = 'berryact-store-sync',
-    storage = localStorage
-  } = options;
+  const { key = 'berryact-store-sync', storage = localStorage } = options;
 
-  return store => {
+  return (store) => {
     const handleStorageChange = (e) => {
       if (e.key === key && e.newValue) {
         try {
@@ -134,27 +131,27 @@ export function createMultiTabSync(options = {}) {
 export function createSnapshot(options = {}) {
   const {
     maxSnapshots = 10,
-    snapshotInterval = 1000 * 60 // 1 minute
+    snapshotInterval = 1000 * 60, // 1 minute
   } = options;
 
-  return store => {
+  return (store) => {
     const snapshots = [];
     let lastSnapshotTime = 0;
 
     const takeSnapshot = () => {
       const now = Date.now();
-      
+
       if (now - lastSnapshotTime < snapshotInterval) {
         return;
       }
 
       const snapshot = {
         state: JSON.parse(JSON.stringify(store.state.value)),
-        timestamp: now
+        timestamp: now,
       };
 
       snapshots.push(snapshot);
-      
+
       if (snapshots.length > maxSnapshots) {
         snapshots.shift();
       }
@@ -167,7 +164,7 @@ export function createSnapshot(options = {}) {
     });
 
     store.getSnapshots = () => snapshots.slice();
-    
+
     store.restoreSnapshot = (index) => {
       if (index >= 0 && index < snapshots.length) {
         const snapshot = snapshots[index];
@@ -180,19 +177,16 @@ export function createSnapshot(options = {}) {
 }
 
 export function createDevtools(options = {}) {
-  const {
-    name = 'Berryact Store',
-    maxAge = 50
-  } = options;
+  const { name = 'Berryact Store', maxAge = 50 } = options;
 
-  return store => {
+  return (store) => {
     if (typeof window === 'undefined' || !window.__REDUX_DEVTOOLS_EXTENSION__) {
       return;
     }
 
     const devtools = window.__REDUX_DEVTOOLS_EXTENSION__.connect({
       name,
-      maxAge
+      maxAge,
     });
 
     devtools.init(store.state.value);
@@ -227,20 +221,16 @@ export function createDevtools(options = {}) {
 }
 
 export function createThrottledUpdates(options = {}) {
-  const {
-    delay = 100,
-    leading = true,
-    trailing = true
-  } = options;
+  const { delay = 100, leading = true, trailing = true } = options;
 
-  return store => {
+  return (store) => {
     let timeoutId = null;
     let lastCallTime = 0;
     const callbacks = [];
 
     const throttledSubscribe = (callback) => {
       callbacks.push(callback);
-      
+
       return () => {
         const index = callbacks.indexOf(callback);
         if (index >= 0) {
@@ -250,7 +240,7 @@ export function createThrottledUpdates(options = {}) {
     };
 
     const executeCallbacks = (mutation, state) => {
-      callbacks.forEach(callback => {
+      callbacks.forEach((callback) => {
         try {
           callback(mutation, state);
         } catch (error) {
@@ -261,20 +251,23 @@ export function createThrottledUpdates(options = {}) {
 
     store.subscribe((mutation, state) => {
       const now = Date.now();
-      
-      if (leading && (now - lastCallTime) >= delay) {
+
+      if (leading && now - lastCallTime >= delay) {
         executeCallbacks(mutation, state);
         lastCallTime = now;
       }
 
       if (trailing) {
         clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => {
-          if ((Date.now() - lastCallTime) >= delay) {
-            executeCallbacks(mutation, state);
-            lastCallTime = Date.now();
-          }
-        }, delay - (now - lastCallTime));
+        timeoutId = setTimeout(
+          () => {
+            if (Date.now() - lastCallTime >= delay) {
+              executeCallbacks(mutation, state);
+              lastCallTime = Date.now();
+            }
+          },
+          delay - (now - lastCallTime)
+        );
       }
     });
 
@@ -297,6 +290,6 @@ function setNestedProperty(obj, path, value) {
     }
     return current[key];
   }, obj);
-  
+
   target[lastKey] = value;
 }

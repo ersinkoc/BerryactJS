@@ -9,7 +9,7 @@ import { signal, computed } from '../core/signal-enhanced.js';
 export const BuildOptimizerPlugin = createPlugin({
   name: 'build-optimizer',
   version: '1.0.0',
-  
+
   setup(app, context) {
     const options = this.options || {};
     const {
@@ -21,8 +21,8 @@ export const BuildOptimizerPlugin = createPlugin({
       enablePreloading = true,
       enablePrefetching = true,
       chunkSizeWarning = 244 * 1024, // 244kb
-      assetSizeWarning = 100 * 1024,  // 100kb
-      reportPath = './build-report.html'
+      assetSizeWarning = 100 * 1024, // 100kb
+      reportPath = './build-report.html',
     } = options;
 
     // Build stats
@@ -34,7 +34,7 @@ export const BuildOptimizerPlugin = createPlugin({
       moduleCount: 0,
       warnings: [],
       errors: [],
-      buildTime: 0
+      buildTime: 0,
     });
 
     // Optimization suggestions
@@ -47,7 +47,7 @@ export const BuildOptimizerPlugin = createPlugin({
         results.push({
           severity: 'warning',
           message: 'Bundle size exceeds 500KB. Consider code splitting.',
-          suggestion: 'Use dynamic imports for large dependencies'
+          suggestion: 'Use dynamic imports for large dependencies',
         });
       }
 
@@ -56,17 +56,17 @@ export const BuildOptimizerPlugin = createPlugin({
         results.push({
           severity: 'info',
           message: 'High number of chunks detected.',
-          suggestion: 'Consider combining smaller chunks'
+          suggestion: 'Consider combining smaller chunks',
         });
       }
 
       // Check for large assets
-      const largeAssets = stats.warnings.filter(w => w.type === 'asset-size');
+      const largeAssets = stats.warnings.filter((w) => w.type === 'asset-size');
       if (largeAssets.length > 0) {
         results.push({
           severity: 'warning',
           message: `${largeAssets.length} large assets detected.`,
-          suggestion: 'Optimize images and use appropriate formats (WebP, AVIF)'
+          suggestion: 'Optimize images and use appropriate formats (WebP, AVIF)',
         });
       }
 
@@ -83,7 +83,7 @@ export const BuildOptimizerPlugin = createPlugin({
           options.treeshake = {
             moduleSideEffects: false,
             propertyReadSideEffects: false,
-            tryCatchDeoptimization: false
+            tryCatchDeoptimization: false,
           };
         }
 
@@ -94,7 +94,10 @@ export const BuildOptimizerPlugin = createPlugin({
       transform(code, id) {
         // Remove development-only code
         if (process.env.NODE_ENV === 'production') {
-          code = code.replace(/if\s*\(\s*process\.env\.NODE_ENV\s*!==?\s*['"]production['"]\s*\)\s*{[\s\S]*?}/g, '');
+          code = code.replace(
+            /if\s*\(\s*process\.env\.NODE_ENV\s*!==?\s*['"]production['"]\s*\)\s*{[\s\S]*?}/g,
+            ''
+          );
           code = code.replace(/console\.(log|debug|trace)\(.*?\);?/g, '');
         }
 
@@ -103,15 +106,15 @@ export const BuildOptimizerPlugin = createPlugin({
           // Simple unused import detection
           const importRegex = /import\s+{([^}]+)}\s+from\s+['"][^'"]+['"]/g;
           const imports = new Set();
-          
+
           let match;
           while ((match = importRegex.exec(code)) !== null) {
-            const imported = match[1].split(',').map(s => s.trim());
-            imported.forEach(imp => imports.add(imp.split(' as ')[0]));
+            const imported = match[1].split(',').map((s) => s.trim());
+            imported.forEach((imp) => imports.add(imp.split(' as ')[0]));
           }
 
           // Check usage
-          imports.forEach(imp => {
+          imports.forEach((imp) => {
             const usageRegex = new RegExp(`\\b${imp}\\b`, 'g');
             const matches = code.match(usageRegex);
             if (!matches || matches.length <= 1) {
@@ -132,7 +135,7 @@ export const BuildOptimizerPlugin = createPlugin({
           assetCount: 0,
           moduleCount: 0,
           warnings: [],
-          errors: []
+          errors: [],
         };
 
         // Analyze bundle
@@ -140,7 +143,7 @@ export const BuildOptimizerPlugin = createPlugin({
           if (chunk.type === 'chunk') {
             stats.chunkCount++;
             stats.moduleCount += Object.keys(chunk.modules || {}).length;
-            
+
             const size = chunk.code.length;
             stats.totalSize += size;
 
@@ -150,7 +153,7 @@ export const BuildOptimizerPlugin = createPlugin({
                 type: 'chunk-size',
                 fileName,
                 size,
-                message: `Chunk "${fileName}" exceeds size limit (${(size / 1024).toFixed(2)}KB)`
+                message: `Chunk "${fileName}" exceeds size limit (${(size / 1024).toFixed(2)}KB)`,
               });
             }
 
@@ -158,14 +161,14 @@ export const BuildOptimizerPlugin = createPlugin({
             stats.gzipSize += estimateGzipSize(chunk.code);
           } else if (chunk.type === 'asset') {
             stats.assetCount++;
-            
+
             const size = chunk.source.length;
             if (size > assetSizeWarning) {
               stats.warnings.push({
                 type: 'asset-size',
                 fileName,
                 size,
-                message: `Asset "${fileName}" exceeds size limit (${(size / 1024).toFixed(2)}KB)`
+                message: `Asset "${fileName}" exceeds size limit (${(size / 1024).toFixed(2)}KB)`,
               });
             }
           }
@@ -178,10 +181,10 @@ export const BuildOptimizerPlugin = createPlugin({
           this.emitFile({
             type: 'asset',
             fileName: reportPath,
-            source: generateBuildReport(stats, bundle)
+            source: generateBuildReport(stats, bundle),
           });
         }
-      }
+      },
     };
 
     // Webpack plugin for build optimization
@@ -193,27 +196,29 @@ export const BuildOptimizerPlugin = createPlugin({
           usedExports: enableTreeShaking,
           sideEffects: false,
           minimize: enableMinification,
-          splitChunks: enableCodeSplitting ? {
-            chunks: 'all',
-            minSize: 20000,
-            minRemainingSize: 0,
-            minChunks: 1,
-            maxAsyncRequests: 30,
-            maxInitialRequests: 30,
-            enforceSizeThreshold: 50000,
-            cacheGroups: {
-              defaultVendors: {
-                test: /[\\/]node_modules[\\/]/,
-                priority: -10,
-                reuseExistingChunk: true
-              },
-              default: {
-                minChunks: 2,
-                priority: -20,
-                reuseExistingChunk: true
+          splitChunks: enableCodeSplitting
+            ? {
+                chunks: 'all',
+                minSize: 20000,
+                minRemainingSize: 0,
+                minChunks: 1,
+                maxAsyncRequests: 30,
+                maxInitialRequests: 30,
+                enforceSizeThreshold: 50000,
+                cacheGroups: {
+                  defaultVendors: {
+                    test: /[\\/]node_modules[\\/]/,
+                    priority: -10,
+                    reuseExistingChunk: true,
+                  },
+                  default: {
+                    minChunks: 2,
+                    priority: -20,
+                    reuseExistingChunk: true,
+                  },
+                },
               }
-            }
-          } : false
+            : false,
         };
 
         // Add compression plugin
@@ -225,7 +230,7 @@ export const BuildOptimizerPlugin = createPlugin({
               algorithm: 'gzip',
               test: /\.(js|css|html|svg)$/,
               threshold: 8192,
-              minRatio: 0.8
+              minRatio: 0.8,
             })
           );
         }
@@ -237,7 +242,7 @@ export const BuildOptimizerPlugin = createPlugin({
             new BundleAnalyzerPlugin({
               analyzerMode: 'static',
               reportFilename: reportPath,
-              openAnalyzer: false
+              openAnalyzer: false,
             })
           );
         }
@@ -246,15 +251,15 @@ export const BuildOptimizerPlugin = createPlugin({
         compiler.options.performance = {
           hints: 'warning',
           maxEntrypointSize: chunkSizeWarning,
-          maxAssetSize: assetSizeWarning
+          maxAssetSize: assetSizeWarning,
         };
-      }
+      },
     };
 
     // Vite plugin for build optimization
     const vitePlugin = {
       name: 'berryact-build-optimizer',
-      
+
       config(config, { mode }) {
         if (mode === 'production') {
           return {
@@ -265,26 +270,28 @@ export const BuildOptimizerPlugin = createPlugin({
                 compress: {
                   drop_console: true,
                   drop_debugger: true,
-                  pure_funcs: ['console.log', 'console.debug']
-                }
+                  pure_funcs: ['console.log', 'console.debug'],
+                },
               },
               rollupOptions: {
                 output: {
-                  manualChunks: enableCodeSplitting ? (id) => {
-                    if (id.includes('node_modules')) {
-                      return 'vendor';
-                    }
-                    if (id.includes('src/core')) {
-                      return 'core';
-                    }
-                    if (id.includes('src/plugins')) {
-                      return 'plugins';
-                    }
-                  } : undefined
-                }
+                  manualChunks: enableCodeSplitting
+                    ? (id) => {
+                        if (id.includes('node_modules')) {
+                          return 'vendor';
+                        }
+                        if (id.includes('src/core')) {
+                          return 'core';
+                        }
+                        if (id.includes('src/plugins')) {
+                          return 'plugins';
+                        }
+                      }
+                    : undefined,
+                },
               },
-              chunkSizeWarningLimit: chunkSizeWarning / 1024
-            }
+              chunkSizeWarningLimit: chunkSizeWarning / 1024,
+            },
           };
         }
       },
@@ -296,7 +303,7 @@ export const BuildOptimizerPlugin = createPlugin({
 
         // Add resource hints
         const hints = [];
-        
+
         if (enablePreloading) {
           hints.push(
             '<link rel="preload" href="/js/core.js" as="script">',
@@ -312,7 +319,7 @@ export const BuildOptimizerPlugin = createPlugin({
         }
 
         return html.replace('</head>', `${hints.join('\n')}\n</head>`);
-      }
+      },
     };
 
     // Helper functions
@@ -413,16 +420,24 @@ export const BuildOptimizerPlugin = createPlugin({
       </div>
     </div>
     
-    ${stats.warnings.length > 0 ? `
+    ${
+      stats.warnings.length > 0
+        ? `
       <div class="card">
         <h2>Warnings</h2>
-        ${stats.warnings.map(w => `
+        ${stats.warnings
+          .map(
+            (w) => `
           <div class="warning">
             <strong>${w.type}:</strong> ${w.message}
           </div>
-        `).join('')}
+        `
+          )
+          .join('')}
       </div>
-    ` : ''}
+    `
+        : ''
+    }
     
     <div class="card">
       <h2>Bundle Contents</h2>
@@ -436,31 +451,39 @@ export const BuildOptimizerPlugin = createPlugin({
           </tr>
         </thead>
         <tbody>
-          ${Object.entries(bundle).map(([fileName, chunk]) => `
+          ${Object.entries(bundle)
+            .map(
+              ([fileName, chunk]) => `
             <tr>
               <td>${fileName}</td>
               <td>${((chunk.code || chunk.source || '').length / 1024).toFixed(2)}KB</td>
               <td>${(estimateGzipSize(chunk.code || chunk.source || '') / 1024).toFixed(2)}KB</td>
               <td>${chunk.type}</td>
             </tr>
-          `).join('')}
+          `
+            )
+            .join('')}
         </tbody>
       </table>
     </div>
     
     <div class="card">
       <h2>Optimization Suggestions</h2>
-      ${suggestions.value.map(s => `
+      ${suggestions.value
+        .map(
+          (s) => `
         <div class="suggestion">
           <strong>${s.severity}:</strong> ${s.message}<br>
           <em>${s.suggestion}</em>
         </div>
-      `).join('')}
+      `
+        )
+        .join('')}
     </div>
   </div>
 </body>
 </html>`;
-      
+
       return html;
     }
 
@@ -471,37 +494,37 @@ export const BuildOptimizerPlugin = createPlugin({
       rollupPlugin,
       webpackPlugin,
       vitePlugin,
-      
+
       // Manual optimization helpers
       analyzeBundle(bundle) {
         // Analyze bundle for optimization opportunities
         const analysis = {
           duplicates: findDuplicateModules(bundle),
           largeModules: findLargeModules(bundle),
-          unusedExports: findUnusedExports(bundle)
+          unusedExports: findUnusedExports(bundle),
         };
-        
+
         return analysis;
       },
-      
+
       optimizeChunks(chunks) {
         // Optimize chunk distribution
         return optimizeChunkGraph(chunks);
-      }
+      },
     };
 
     // Helper functions for analysis
     function findDuplicateModules(bundle) {
       const modules = new Map();
       const duplicates = [];
-      
-      Object.values(bundle).forEach(chunk => {
+
+      Object.values(bundle).forEach((chunk) => {
         if (chunk.modules) {
           Object.entries(chunk.modules).forEach(([id, module]) => {
             if (modules.has(id)) {
               duplicates.push({
                 id,
-                chunks: [modules.get(id), chunk.fileName]
+                chunks: [modules.get(id), chunk.fileName],
               });
             } else {
               modules.set(id, chunk.fileName);
@@ -509,27 +532,27 @@ export const BuildOptimizerPlugin = createPlugin({
           });
         }
       });
-      
+
       return duplicates;
     }
 
     function findLargeModules(bundle, threshold = 50 * 1024) {
       const largeModules = [];
-      
-      Object.values(bundle).forEach(chunk => {
+
+      Object.values(bundle).forEach((chunk) => {
         if (chunk.modules) {
           Object.entries(chunk.modules).forEach(([id, module]) => {
             if (module.code && module.code.length > threshold) {
               largeModules.push({
                 id,
                 size: module.code.length,
-                chunk: chunk.fileName
+                chunk: chunk.fileName,
               });
             }
           });
         }
       });
-      
+
       return largeModules.sort((a, b) => b.size - a.size);
     }
 
@@ -537,25 +560,27 @@ export const BuildOptimizerPlugin = createPlugin({
       // Simplified unused export detection
       const exports = new Map();
       const imports = new Set();
-      
+
       // Collect exports and imports
-      Object.values(bundle).forEach(chunk => {
+      Object.values(bundle).forEach((chunk) => {
         if (chunk.code) {
           // Find exports
-          const exportMatches = chunk.code.matchAll(/export\s+(?:const|let|var|function|class)\s+(\w+)/g);
+          const exportMatches = chunk.code.matchAll(
+            /export\s+(?:const|let|var|function|class)\s+(\w+)/g
+          );
           for (const match of exportMatches) {
             exports.set(match[1], chunk.fileName);
           }
-          
+
           // Find imports
           const importMatches = chunk.code.matchAll(/import\s+{([^}]+)}/g);
           for (const match of importMatches) {
-            const imported = match[1].split(',').map(s => s.trim().split(' as ')[0]);
-            imported.forEach(imp => imports.add(imp));
+            const imported = match[1].split(',').map((s) => s.trim().split(' as ')[0]);
+            imported.forEach((imp) => imports.add(imp));
           }
         }
       });
-      
+
       // Find unused exports
       const unused = [];
       exports.forEach((file, name) => {
@@ -563,7 +588,7 @@ export const BuildOptimizerPlugin = createPlugin({
           unused.push({ name, file });
         }
       });
-      
+
       return unused;
     }
 
@@ -575,8 +600,8 @@ export const BuildOptimizerPlugin = createPlugin({
 
     // Provide API
     this.provide('buildOptimizer', optimizer);
-    
+
     // Global access
     app.buildOptimizer = optimizer;
-  }
+  },
 });

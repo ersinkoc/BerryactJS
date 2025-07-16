@@ -6,7 +6,7 @@ module.exports = function babelPluginReactCompat({ types: t }) {
       // Transform React imports
       ImportDeclaration(path, state) {
         const importSource = state.opts.importSource || '@oxog/berryact';
-        
+
         if (path.node.source.value === 'react') {
           path.node.source.value = `${importSource}/compat`;
         } else if (path.node.source.value === 'react-dom') {
@@ -20,9 +20,11 @@ module.exports = function babelPluginReactCompat({ types: t }) {
 
       // Transform React.createElement calls
       CallExpression(path) {
-        if (path.node.callee.type === 'MemberExpression' &&
-            path.node.callee.object.name === 'React' &&
-            path.node.callee.property.name === 'createElement') {
+        if (
+          path.node.callee.type === 'MemberExpression' &&
+          path.node.callee.object.name === 'React' &&
+          path.node.callee.property.name === 'createElement'
+        ) {
           // Replace with jsx function
           path.node.callee = t.identifier('jsx');
         }
@@ -31,18 +33,22 @@ module.exports = function babelPluginReactCompat({ types: t }) {
       // Transform class components
       ClassDeclaration(path) {
         const superClass = path.node.superClass;
-        
+
         if (superClass) {
           // Transform React.Component
-          if (superClass.type === 'MemberExpression' &&
-              superClass.object.name === 'React' &&
-              superClass.property.name === 'Component') {
+          if (
+            superClass.type === 'MemberExpression' &&
+            superClass.object.name === 'React' &&
+            superClass.property.name === 'Component'
+          ) {
             path.node.superClass = t.identifier('Component');
           }
           // Transform React.PureComponent
-          else if (superClass.type === 'MemberExpression' &&
-                   superClass.object.name === 'React' &&
-                   superClass.property.name === 'PureComponent') {
+          else if (
+            superClass.type === 'MemberExpression' &&
+            superClass.object.name === 'React' &&
+            superClass.property.name === 'PureComponent'
+          ) {
             path.node.superClass = t.identifier('PureComponent');
           }
         }
@@ -50,8 +56,10 @@ module.exports = function babelPluginReactCompat({ types: t }) {
 
       // Transform prop types
       AssignmentExpression(path) {
-        if (path.node.left.type === 'MemberExpression' &&
-            path.node.left.property.name === 'propTypes') {
+        if (
+          path.node.left.type === 'MemberExpression' &&
+          path.node.left.property.name === 'propTypes'
+        ) {
           // Remove propTypes in production
           if (process.env.NODE_ENV === 'production') {
             path.remove();
@@ -61,11 +69,13 @@ module.exports = function babelPluginReactCompat({ types: t }) {
 
       // Transform default props
       MemberExpression(path) {
-        if (path.node.property.name === 'defaultProps' &&
-            path.parent.type === 'AssignmentExpression') {
+        if (
+          path.node.property.name === 'defaultProps' &&
+          path.parent.type === 'AssignmentExpression'
+        ) {
           const componentName = path.node.object.name;
           const defaultProps = path.parent.right;
-          
+
           // Convert to default parameters in function component
           const binding = path.scope.getBinding(componentName);
           if (binding && binding.path.isFunctionDeclaration()) {
@@ -74,22 +84,17 @@ module.exports = function babelPluginReactCompat({ types: t }) {
               // Add default values to destructured props
               const propsParam = func.params[0];
               const defaultPropsObj = t.objectPattern(
-                defaultProps.properties.map(prop => 
-                  t.objectProperty(
-                    prop.key,
-                    propsParam,
-                    false,
-                    true
-                  )
+                defaultProps.properties.map((prop) =>
+                  t.objectProperty(prop.key, propsParam, false, true)
                 )
               );
-              
+
               func.params[0] = t.assignmentPattern(propsParam, defaultPropsObj);
               path.parent.remove();
             }
           }
         }
-      }
-    }
+      },
+    },
   };
 };

@@ -12,7 +12,7 @@ export const CacheStrategy = {
   NETWORK_FIRST: 'network-first',
   CACHE_ONLY: 'cache-only',
   NETWORK_ONLY: 'network-only',
-  STALE_WHILE_REVALIDATE: 'stale-while-revalidate'
+  STALE_WHILE_REVALIDATE: 'stale-while-revalidate',
 };
 
 // Service Worker states
@@ -21,13 +21,13 @@ export const WorkerState = {
   INSTALLED: 'installed',
   ACTIVATING: 'activating',
   ACTIVATED: 'activated',
-  REDUNDANT: 'redundant'
+  REDUNDANT: 'redundant',
 };
 
 export const ServiceWorkerPlugin = createPlugin({
   name: 'service-worker',
   version: '1.0.0',
-  
+
   setup(app, context) {
     const options = this.options || {};
     const {
@@ -39,7 +39,7 @@ export const ServiceWorkerPlugin = createPlugin({
       enablePushNotifications = false,
       onUpdate = null,
       onOffline = null,
-      onOnline = null
+      onOnline = null,
     } = options;
 
     // State
@@ -49,7 +49,7 @@ export const ServiceWorkerPlugin = createPlugin({
     const isUpdateAvailable = signal(false);
     const syncTags = signal([]);
     const cachedRequests = signal([]);
-    
+
     // Computed states
     const isRegistered = computed(() => registration.value !== null);
     const isReady = computed(() => workerState.value === WorkerState.ACTIVATED);
@@ -66,18 +66,18 @@ export const ServiceWorkerPlugin = createPlugin({
       try {
         const reg = await navigator.serviceWorker.register(swUrl, { scope });
         registration.value = reg;
-        
+
         console.log('[ServiceWorker] Registered successfully');
-        
+
         // Set up update checking
         setupUpdateChecking(reg);
-        
+
         // Set up message handling
         setupMessageHandling();
-        
+
         // Check for updates immediately
         checkForUpdates();
-        
+
         return reg;
       } catch (error) {
         console.error('[ServiceWorker] Registration failed:', error);
@@ -89,7 +89,7 @@ export const ServiceWorkerPlugin = createPlugin({
     async function unregister() {
       const reg = registration.value;
       if (!reg) return;
-      
+
       try {
         await reg.unregister();
         registration.value = null;
@@ -105,7 +105,7 @@ export const ServiceWorkerPlugin = createPlugin({
     async function checkForUpdates() {
       const reg = registration.value;
       if (!reg) return;
-      
+
       try {
         await reg.update();
       } catch (error) {
@@ -117,7 +117,7 @@ export const ServiceWorkerPlugin = createPlugin({
     function skipWaiting() {
       const reg = registration.value;
       if (!reg || !reg.waiting) return;
-      
+
       // Send skip waiting message
       reg.waiting.postMessage({ type: 'SKIP_WAITING' });
     }
@@ -127,33 +127,33 @@ export const ServiceWorkerPlugin = createPlugin({
       // Listen for state changes
       const trackState = (worker) => {
         if (!worker) return;
-        
+
         worker.addEventListener('statechange', () => {
           workerState.value = worker.state;
-          
+
           if (worker.state === 'installed' && navigator.serviceWorker.controller) {
             // New update available
             isUpdateAvailable.value = true;
-            
+
             if (onUpdate) {
               onUpdate({
-                skipWaiting: () => skipWaiting()
+                skipWaiting: () => skipWaiting(),
               });
             }
           }
         });
       };
-      
+
       // Track all workers
       trackState(reg.installing);
       trackState(reg.waiting);
       trackState(reg.active);
-      
+
       // Listen for new installations
       reg.addEventListener('updatefound', () => {
         trackState(reg.installing);
       });
-      
+
       // Periodic update checks
       if (updateInterval > 0) {
         setInterval(() => checkForUpdates(), updateInterval);
@@ -164,19 +164,19 @@ export const ServiceWorkerPlugin = createPlugin({
     function setupMessageHandling() {
       navigator.serviceWorker.addEventListener('message', (event) => {
         const { type, data } = event.data;
-        
+
         switch (type) {
           case 'CACHE_UPDATED':
             console.log('[ServiceWorker] Cache updated:', data);
             break;
-            
+
           case 'OFFLINE_READY':
             console.log('[ServiceWorker] Offline ready');
             break;
-            
+
           case 'BACKGROUND_SYNC_COMPLETE':
             console.log('[ServiceWorker] Background sync complete:', data);
-            syncTags.value = syncTags.value.filter(tag => tag !== data.tag);
+            syncTags.value = syncTags.value.filter((tag) => tag !== data.tag);
             break;
         }
       });
@@ -186,7 +186,7 @@ export const ServiceWorkerPlugin = createPlugin({
     function sendMessage(message) {
       const controller = navigator.serviceWorker.controller;
       if (!controller) return;
-      
+
       controller.postMessage(message);
     }
 
@@ -196,28 +196,28 @@ export const ServiceWorkerPlugin = createPlugin({
         sendMessage({
           type: 'CACHE_ADD',
           request: request.url || request,
-          response: response
+          response: response,
         });
       },
-      
+
       async delete(request) {
         sendMessage({
           type: 'CACHE_DELETE',
-          request: request.url || request
+          request: request.url || request,
         });
       },
-      
+
       async clear(cacheName) {
         sendMessage({
           type: 'CACHE_CLEAR',
-          cacheName
+          cacheName,
         });
       },
-      
+
       async match(request) {
         const cache = await caches.open('berryact-cache-v1');
         return cache.match(request);
-      }
+      },
     };
 
     // Background sync
@@ -225,85 +225,88 @@ export const ServiceWorkerPlugin = createPlugin({
       async register(tag, options = {}) {
         const reg = registration.value;
         if (!reg || !enableBackgroundSync) return;
-        
+
         try {
           await reg.sync.register(tag);
           syncTags.value = [...syncTags.value, tag];
           console.log('[ServiceWorker] Sync registered:', tag);
         } catch (error) {
           console.error('[ServiceWorker] Sync registration failed:', error);
-          
+
           // Fallback: store for later
-          cachedRequests.value = [...cachedRequests.value, {
-            tag,
-            options,
-            timestamp: Date.now()
-          }];
+          cachedRequests.value = [
+            ...cachedRequests.value,
+            {
+              tag,
+              options,
+              timestamp: Date.now(),
+            },
+          ];
         }
       },
-      
+
       async getTags() {
         const reg = registration.value;
         if (!reg || !reg.sync) return [];
-        
+
         return reg.sync.getTags();
-      }
+      },
     };
 
     // Push notifications
     const push = {
       async subscribe(options = {}) {
         if (!enablePushNotifications) return;
-        
+
         const reg = registration.value;
         if (!reg) throw new Error('Service worker not registered');
-        
+
         const permission = await Notification.requestPermission();
         if (permission !== 'granted') {
           throw new Error('Notification permission denied');
         }
-        
+
         const subscription = await reg.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: options.vapidKey
+          applicationServerKey: options.vapidKey,
         });
-        
+
         return subscription;
       },
-      
+
       async unsubscribe() {
         const reg = registration.value;
         if (!reg) return;
-        
+
         const subscription = await reg.pushManager.getSubscription();
         if (subscription) {
           await subscription.unsubscribe();
         }
       },
-      
+
       async getSubscription() {
         const reg = registration.value;
         if (!reg) return null;
-        
+
         return reg.pushManager.getSubscription();
-      }
+      },
     };
 
     // Network status handling
     function handleOnline() {
       isOnline.value = true;
-      
+
       if (onOnline) {
         onOnline();
       }
-      
+
       // Process cached requests
       processCachedRequests();
     }
 
     function handleOffline() {
       isOnline.value = false;
-      
+
       if (onOffline) {
         onOffline();
       }
@@ -313,7 +316,7 @@ export const ServiceWorkerPlugin = createPlugin({
     async function processCachedRequests() {
       const requests = cachedRequests.value;
       if (requests.length === 0) return;
-      
+
       for (const request of requests) {
         try {
           await sync.register(request.tag, request.options);
@@ -321,7 +324,7 @@ export const ServiceWorkerPlugin = createPlugin({
           console.error('[ServiceWorker] Failed to process cached request:', error);
         }
       }
-      
+
       // Clear processed requests
       cachedRequests.value = [];
     }
@@ -334,7 +337,7 @@ export const ServiceWorkerPlugin = createPlugin({
     async function prefetch(urls) {
       sendMessage({
         type: 'PREFETCH',
-        urls: Array.isArray(urls) ? urls : [urls]
+        urls: Array.isArray(urls) ? urls : [urls],
       });
     }
 
@@ -342,17 +345,17 @@ export const ServiceWorkerPlugin = createPlugin({
     async function getCacheStats() {
       const cacheNames = await caches.keys();
       const stats = {};
-      
+
       for (const name of cacheNames) {
         const cache = await caches.open(name);
         const requests = await cache.keys();
-        
+
         stats[name] = {
           count: requests.length,
-          urls: requests.map(r => r.url)
+          urls: requests.map((r) => r.url),
         };
       }
-      
+
       return stats;
     }
 
@@ -366,7 +369,7 @@ export const ServiceWorkerPlugin = createPlugin({
       isRegistered,
       isReady,
       hasOfflineSupport,
-      
+
       // Methods
       register,
       unregister,
@@ -375,16 +378,16 @@ export const ServiceWorkerPlugin = createPlugin({
       sendMessage,
       prefetch,
       getCacheStats,
-      
+
       // Sub-APIs
       cache,
       sync,
-      push
+      push,
     };
 
     // Auto-register on app mount
     this.registerAppHook('mounted', () => {
-      register().catch(error => {
+      register().catch((error) => {
         console.error('[ServiceWorker] Auto-registration failed:', error);
       });
     });
@@ -397,10 +400,10 @@ export const ServiceWorkerPlugin = createPlugin({
 
     // Provide API
     this.provide('serviceWorker', sw);
-    
+
     // Global access
     app.serviceWorker = sw;
-  }
+  },
 });
 
 // Service Worker script generator
@@ -410,7 +413,7 @@ export function generateServiceWorker(config = {}) {
     precacheUrls = [],
     cacheStrategies = {},
     skipWaiting = true,
-    clientsClaim = true
+    clientsClaim = true,
   } = config;
 
   return `

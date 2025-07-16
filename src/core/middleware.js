@@ -7,6 +7,7 @@ import { signal } from './signal-enhanced.js';
 
 /**
  * Compose multiple middleware functions into a single function
+ * @param {...any} middleware
  */
 export function compose(...middleware) {
   if (middleware.length === 0) {
@@ -52,24 +53,26 @@ export class MiddlewarePipeline {
     this.options = {
       async: true,
       errorHandler: null,
-      ...options
+      ...options,
     };
   }
 
   /**
    * Add middleware to the pipeline
+   * @param middleware
    */
   use(middleware) {
     if (typeof middleware !== 'function') {
       throw new TypeError('Middleware must be a function');
     }
-    
+
     this.middleware.push(middleware);
     return this;
   }
 
   /**
    * Remove middleware from the pipeline
+   * @param middleware
    */
   remove(middleware) {
     const index = this.middleware.indexOf(middleware);
@@ -89,6 +92,8 @@ export class MiddlewarePipeline {
 
   /**
    * Execute the middleware pipeline
+   * @param context
+   * @param finalHandler
    */
   async execute(context, finalHandler) {
     const chain = compose(...this.middleware);
@@ -109,6 +114,7 @@ export class MiddlewarePipeline {
 
   /**
    * Create a bound execute function
+   * @param finalHandler
    */
   createExecutor(finalHandler) {
     return (context) => this.execute(context, finalHandler);
@@ -121,13 +127,10 @@ export class MiddlewarePipeline {
 export const RouterMiddleware = {
   /**
    * Authentication guard
+   * @param options
    */
   auth: (options = {}) => {
-    const { 
-      isAuthenticated, 
-      redirectTo = '/login',
-      message = 'Authentication required'
-    } = options;
+    const { isAuthenticated, redirectTo = '/login', message = 'Authentication required' } = options;
 
     return async (context, next) => {
       const { to, from, router } = context;
@@ -138,7 +141,7 @@ export const RouterMiddleware = {
         }
 
         router.push(redirectTo, {
-          query: { redirect: to.path }
+          query: { redirect: to.path },
         });
 
         return false;
@@ -150,13 +153,10 @@ export const RouterMiddleware = {
 
   /**
    * Role-based access control
+   * @param options
    */
   rbac: (options = {}) => {
-    const {
-      getUserRole,
-      allowedRoles = [],
-      redirectTo = '/forbidden'
-    } = options;
+    const { getUserRole, allowedRoles = [], redirectTo = '/forbidden' } = options;
 
     return async (context, next) => {
       const { to, router } = context;
@@ -173,6 +173,7 @@ export const RouterMiddleware = {
 
   /**
    * Logging middleware
+   * @param options
    */
   logger: (options = {}) => {
     const { logger = console, level = 'info' } = options;
@@ -194,6 +195,7 @@ export const RouterMiddleware = {
 
   /**
    * Progress bar middleware
+   * @param options
    */
   progress: (options = {}) => {
     const { delay = 100 } = options;
@@ -211,7 +213,7 @@ export const RouterMiddleware = {
 
       try {
         const result = await next();
-        
+
         clearTimeout(timeoutId);
         if (router.progress) {
           router.progress.finish();
@@ -230,12 +232,13 @@ export const RouterMiddleware = {
 
   /**
    * Cache middleware
+   * @param options
    */
   cache: (options = {}) => {
-    const { 
-      storage = sessionStorage, 
+    const {
+      storage = sessionStorage,
       key = 'router-cache',
-      ttl = 5 * 60 * 1000 // 5 minutes
+      ttl = 5 * 60 * 1000, // 5 minutes
     } = options;
 
     const cache = new Map();
@@ -253,11 +256,11 @@ export const RouterMiddleware = {
 
       // Execute and cache
       const result = await next();
-      
+
       cache.set(cacheKey, {
         result,
         data: context.data,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
 
       // Persist to storage
@@ -269,7 +272,7 @@ export const RouterMiddleware = {
 
       return result;
     };
-  }
+  },
 };
 
 /**
@@ -278,16 +281,12 @@ export const RouterMiddleware = {
 export const StoreMiddleware = {
   /**
    * Logger middleware
+   * @param options
    */
   logger: (options = {}) => {
-    const { 
-      logger = console, 
-      collapsed = true,
-      filter = null,
-      transformer = null
-    } = options;
+    const { logger = console, collapsed = true, filter = null, transformer = null } = options;
 
-    return store => next => action => {
+    return (store) => (next) => (action) => {
       if (filter && !filter(action, store.getState())) {
         return next(action);
       }
@@ -300,17 +299,19 @@ export const StoreMiddleware = {
       const duration = Date.now() - started;
       const nextState = store.getState();
 
-      const data = transformer ? transformer({
-        action,
-        prevState,
-        nextState,
-        duration
-      }) : {
-        action,
-        prevState,
-        nextState,
-        duration
-      };
+      const data = transformer
+        ? transformer({
+            action,
+            prevState,
+            nextState,
+            duration,
+          })
+        : {
+            action,
+            prevState,
+            nextState,
+            duration,
+          };
 
       if (collapsed) {
         logger.groupCollapsed(`${action.type} (${duration}ms)`);
@@ -331,11 +332,12 @@ export const StoreMiddleware = {
 
   /**
    * Thunk middleware for async actions
+   * @param options
    */
   thunk: (options = {}) => {
     const { extraArgument } = options;
 
-    return store => next => action => {
+    return (store) => (next) => (action) => {
       if (typeof action === 'function') {
         return action(store.dispatch, store.getState, extraArgument);
       }
@@ -348,7 +350,7 @@ export const StoreMiddleware = {
    * Promise middleware
    */
   promise: () => {
-    return store => next => action => {
+    return (store) => (next) => (action) => {
       if (!action.promise) {
         return next(action);
       }
@@ -359,12 +361,12 @@ export const StoreMiddleware = {
       next({ ...rest, type: `${type}_PENDING` });
 
       return promise
-        .then(result => {
+        .then((result) => {
           // Dispatch success action
           next({ ...rest, type: `${type}_SUCCESS`, payload: result });
           return result;
         })
-        .catch(error => {
+        .catch((error) => {
           // Dispatch error action
           next({ ...rest, type: `${type}_ERROR`, error: true, payload: error });
           throw error;
@@ -374,11 +376,12 @@ export const StoreMiddleware = {
 
   /**
    * Validation middleware
+   * @param options
    */
   validator: (options = {}) => {
     const { rules = {} } = options;
 
-    return store => next => action => {
+    return (store) => (next) => (action) => {
       const rule = rules[action.type];
 
       if (rule) {
@@ -397,6 +400,7 @@ export const StoreMiddleware = {
 
   /**
    * Persistence middleware
+   * @param options
    */
   persist: (options = {}) => {
     const {
@@ -404,12 +408,12 @@ export const StoreMiddleware = {
       storage = localStorage,
       whitelist = null,
       blacklist = null,
-      throttle = 1000
+      throttle = 1000,
     } = options;
 
     let timeoutId;
 
-    return store => {
+    return (store) => {
       // Load initial state
       try {
         const savedState = storage.getItem(key);
@@ -421,7 +425,7 @@ export const StoreMiddleware = {
         console.error('Failed to load persisted state:', e);
       }
 
-      return next => action => {
+      return (next) => (action) => {
         const result = next(action);
 
         // Save state (throttled)
@@ -443,13 +447,14 @@ export const StoreMiddleware = {
 
   /**
    * Undo/Redo middleware
+   * @param options
    */
   undoable: (options = {}) => {
     const { limit = 10 } = options;
     const history = [];
     let currentIndex = -1;
 
-    return store => {
+    return (store) => {
       // Add undo/redo methods to store
       store.undo = () => {
         if (currentIndex > 0) {
@@ -468,7 +473,7 @@ export const StoreMiddleware = {
       store.canUndo = () => currentIndex > 0;
       store.canRedo = () => currentIndex < history.length - 1;
 
-      return next => action => {
+      return (next) => (action) => {
         // Skip undo/redo actions
         if (action.type === 'UNDO' || action.type === 'REDO') {
           return;
@@ -489,18 +494,20 @@ export const StoreMiddleware = {
         return result;
       };
     };
-  }
+  },
 };
 
 /**
  * Create custom middleware pipeline
+ * @param name
+ * @param options
  */
 export function createMiddlewarePipeline(name, options = {}) {
   const pipeline = new MiddlewarePipeline(options);
   const state = signal({
     executing: false,
     lastExecution: null,
-    errorCount: 0
+    errorCount: 0,
   });
 
   return {
@@ -516,16 +523,16 @@ export function createMiddlewarePipeline(name, options = {}) {
     async execute(context) {
       state.value = {
         ...state.value,
-        executing: true
+        executing: true,
       };
 
       try {
         const result = await pipeline.execute(context);
-        
+
         state.value = {
           executing: false,
           lastExecution: new Date(),
-          errorCount: 0
+          errorCount: 0,
         };
 
         return result;
@@ -533,7 +540,7 @@ export function createMiddlewarePipeline(name, options = {}) {
         state.value = {
           executing: false,
           lastExecution: new Date(),
-          errorCount: state.value.errorCount + 1
+          errorCount: state.value.errorCount + 1,
         };
 
         throw error;
@@ -544,7 +551,7 @@ export function createMiddlewarePipeline(name, options = {}) {
       return (context, next) => {
         return this.execute({ ...context, next });
       };
-    }
+    },
   };
 }
 
@@ -556,7 +563,7 @@ function filterState(state, whitelist, blacklist) {
 
   const filtered = {};
 
-  Object.keys(state).forEach(key => {
+  Object.keys(state).forEach((key) => {
     if (blacklist && blacklist.includes(key)) {
       return;
     }

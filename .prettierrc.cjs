@@ -3,7 +3,6 @@ module.exports = {
   semi: true,
   trailingComma: 'es5',
   singleQuote: true,
-  doubleQuote: false,
   
   // Indentation
   tabWidth: 2,
@@ -22,7 +21,6 @@ module.exports = {
   
   // JSX specific
   jsxSingleQuote: true,
-  jsxBracketSameLine: false,
   
   // Other
   quoteProps: 'as-needed',

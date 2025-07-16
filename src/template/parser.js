@@ -22,7 +22,7 @@ export function parseTemplate(strings, values) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(`<template>${template}</template>`, 'text/html');
   const templateElement = doc.querySelector('template');
-  
+
   if (!templateElement) {
     throw new Error('Invalid template');
   }
@@ -34,42 +34,42 @@ function parseNode(node, values) {
   if (node.nodeType === TEXT_NODE) {
     return parseTextNode(node.textContent, values);
   }
-  
+
   if (node.nodeType === ELEMENT_NODE) {
     return parseElementNode(node, values);
   }
-  
+
   if (node.nodeType === COMMENT_NODE) {
     return null;
   }
 
   if (node.hasChildNodes()) {
     const children = Array.from(node.childNodes)
-      .map(child => parseNode(child, values))
+      .map((child) => parseNode(child, values))
       .filter(Boolean);
-    
+
     if (children.length === 1) {
       return children[0];
     }
-    
+
     return new TemplateNode('fragment', null, {}, children);
   }
-  
+
   return null;
 }
 
 function parseTextNode(text, values) {
   const parts = text.split(/__PLACEHOLDER_(\d+)__/);
-  
+
   if (parts.length === 1) {
     // Skip whitespace-only text nodes
     const trimmed = text.trim();
     if (!trimmed) return null;
     return new TemplateNode('text', null, {}, [text]);
   }
-  
+
   const children = [];
-  
+
   for (let i = 0; i < parts.length; i++) {
     if (i % 2 === 0) {
       if (parts[i]) {
@@ -84,26 +84,26 @@ function parseTextNode(text, values) {
       }
     }
   }
-  
+
   if (children.length === 0) {
     return null;
   }
-  
+
   if (children.length === 1) {
     return children[0];
   }
-  
+
   return new TemplateNode('text', null, {}, children);
 }
 
 function parseElementNode(element, values) {
   const tag = element.tagName.toLowerCase();
   const props = {};
-  
-  Array.from(element.attributes).forEach(attr => {
+
+  Array.from(element.attributes).forEach((attr) => {
     const name = attr.name;
     const value = attr.value;
-    
+
     if (value.includes('__PLACEHOLDER_')) {
       const match = value.match(/__PLACEHOLDER_(\d+)__/);
       if (match) {
@@ -114,11 +114,11 @@ function parseElementNode(element, values) {
       props[name] = value;
     }
   });
-  
+
   const children = Array.from(element.childNodes)
-    .map(child => parseNode(child, values))
+    .map((child) => parseNode(child, values))
     .filter(Boolean);
-  
+
   return new TemplateNode('element', tag, props, children);
 }
 

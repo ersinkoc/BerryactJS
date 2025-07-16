@@ -16,7 +16,7 @@ export const PluginPhase = {
   UPDATED: 'updated',
   BEFORE_UNMOUNT: 'beforeUnmount',
   UNMOUNTED: 'unmounted',
-  ERROR: 'error'
+  ERROR: 'error',
 };
 
 // Plugin context for sharing data between plugins
@@ -243,7 +243,7 @@ export function createPlugin(options) {
       super({
         name: options.name,
         version: options.version,
-        dependencies: options.dependencies || []
+        dependencies: options.dependencies || [],
       });
     }
 
@@ -261,7 +261,7 @@ export function createPlugin(options) {
 export const DevToolsPlugin = createPlugin({
   name: 'devtools',
   version: '1.0.0',
-  
+
   setup(app, context) {
     // Track component tree
     const componentTree = signal([]);
@@ -276,11 +276,11 @@ export const DevToolsPlugin = createPlugin({
         name: component.constructor.name || 'Anonymous',
         props: component.props,
         state: {},
-        children: []
+        children: [],
       };
 
       componentMap.set(component, info);
-      
+
       // Add to tree
       componentTree.value = [...componentTree.value, info];
     });
@@ -291,7 +291,7 @@ export const DevToolsPlugin = createPlugin({
         // Update component info
         info.props = component.props;
         info.state = component.getState ? component.getState() : {};
-        
+
         // Trigger tree update
         componentTree.value = [...componentTree.value];
       }
@@ -300,7 +300,7 @@ export const DevToolsPlugin = createPlugin({
     this.registerComponentHook(PluginPhase.UNMOUNTED, (component) => {
       const info = componentMap.get(component);
       if (info) {
-        componentTree.value = componentTree.value.filter(c => c.id !== info.id);
+        componentTree.value = componentTree.value.filter((c) => c.id !== info.id);
         componentMap.delete(component);
       }
     });
@@ -311,40 +311,42 @@ export const DevToolsPlugin = createPlugin({
         version: app.version,
         componentTree,
         getComponent: (id) => {
-          return componentTree.value.find(c => c.id === id);
+          return componentTree.value.find((c) => c.id === id);
         },
         inspectComponent: (id) => {
-          const component = componentTree.value.find(c => c.id === id);
-          return component ? {
-            ...component,
-            hooks: component._hooks || []
-          } : null;
+          const component = componentTree.value.find((c) => c.id === id);
+          return component
+            ? {
+                ...component,
+                hooks: component._hooks || [],
+              }
+            : null;
         },
         getStore: () => app.store?.state,
-        getRouter: () => app.router?.currentRoute
+        getRouter: () => app.router?.currentRoute,
       };
     }
 
     // Provide devtools API
     this.provide('componentTree', componentTree);
     this.provide('enabled', true);
-  }
+  },
 });
 
 // Logger Plugin
 export const LoggerPlugin = createPlugin({
   name: 'logger',
   version: '1.0.0',
-  
+
   setup(app, context) {
     const logLevel = this.options.level || 'info';
     const logPrefix = this.options.prefix || '[Berryact]';
-    
+
     const levels = {
       debug: 0,
       info: 1,
       warn: 2,
-      error: 3
+      error: 3,
     };
 
     const logger = {
@@ -367,12 +369,12 @@ export const LoggerPlugin = createPlugin({
         if (levels[logLevel] <= levels.error) {
           console.error(logPrefix, ...args);
         }
-      }
+      },
     };
 
     // Log lifecycle events
     if (this.options.logLifecycle) {
-      Object.values(PluginPhase).forEach(phase => {
+      Object.values(PluginPhase).forEach((phase) => {
         this.registerComponentHook(phase, (component) => {
           logger.debug(`Component ${phase}:`, component);
         });
@@ -396,34 +398,34 @@ export const LoggerPlugin = createPlugin({
 
     // Provide logger
     this.provide('logger', logger);
-    
+
     // Also expose globally
     app.logger = logger;
-  }
+  },
 });
 
 // Performance Monitor Plugin
 export const PerformancePlugin = createPlugin({
   name: 'performance',
   version: '1.0.0',
-  
+
   setup(app, context) {
     const metrics = signal({
       components: {
         created: 0,
         updated: 0,
         destroyed: 0,
-        renderTime: []
+        renderTime: [],
       },
       signals: {
         created: 0,
         updated: 0,
-        computations: 0
+        computations: 0,
       },
       memory: {
         used: 0,
-        peak: 0
-      }
+        peak: 0,
+      },
     });
 
     // Component performance tracking
@@ -435,7 +437,7 @@ export const PerformancePlugin = createPlugin({
       const duration = performance.now() - component._perfStart;
       metrics.value.components.created++;
       metrics.value.components.renderTime.push(duration);
-      
+
       // Keep only last 100 render times
       if (metrics.value.components.renderTime.length > 100) {
         metrics.value.components.renderTime.shift();
@@ -490,10 +492,10 @@ export const PerformancePlugin = createPlugin({
         metrics.value = {
           components: { created: 0, updated: 0, destroyed: 0, renderTime: [] },
           signals: { created: 0, updated: 0, computations: 0 },
-          memory: { used: 0, peak: metrics.value.memory.peak }
+          memory: { used: 0, peak: metrics.value.memory.peak },
         };
       },
-      getAverageRenderTime: () => averageRenderTime.value
+      getAverageRenderTime: () => averageRenderTime.value,
     };
-  }
+  },
 });

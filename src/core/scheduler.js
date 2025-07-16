@@ -6,12 +6,12 @@ const scheduleUpdate = (() => {
     const port1 = channel.port1;
     const port2 = channel.port2;
     const callbacks = [];
-    
+
     port2.onmessage = () => {
       const cbs = callbacks.splice(0);
-      cbs.forEach(cb => cb());
+      cbs.forEach((cb) => cb());
     };
-    
+
     return (callback) => {
       callbacks.push(callback);
       port1.postMessage(null);
@@ -22,13 +22,13 @@ const scheduleUpdate = (() => {
 })();
 
 let isScheduled = false;
-let updateQueue = [];
+const updateQueue = [];
 
 export function scheduleComponentUpdate(component) {
   if (updateQueue.indexOf(component) === -1) {
     updateQueue.push(component);
   }
-  
+
   if (!isScheduled) {
     isScheduled = true;
     scheduleUpdate(flushUpdates);
@@ -39,8 +39,8 @@ function flushUpdates() {
   isScheduled = false;
   const queue = updateQueue.slice();
   updateQueue.length = 0;
-  
-  queue.forEach(component => {
+
+  queue.forEach((component) => {
     if (component.isMounted && component.shouldUpdate()) {
       component.update();
     }
@@ -48,7 +48,7 @@ function flushUpdates() {
 }
 
 export function nextTick(callback) {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     scheduleUpdate(() => {
       if (callback) callback();
       resolve();

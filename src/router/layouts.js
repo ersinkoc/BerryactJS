@@ -14,7 +14,7 @@ export class LayoutManager {
       keepAlive: options.keepAlive || false,
       persistent: options.persistent || false,
       transition: options.transition || null,
-      props: options.props || {}
+      props: options.props || {},
     });
   }
 
@@ -38,10 +38,10 @@ export class LayoutManager {
     // Create new layout instance
     const layoutInstance = this.createLayoutInstance(layout, props);
     layoutInstance.mount(container);
-    
+
     this.activeLayouts.set(name, layoutInstance);
     this.layoutComponents.set(container, layoutInstance);
-    
+
     return layoutInstance;
   }
 
@@ -49,11 +49,11 @@ export class LayoutManager {
     const layoutInstance = this.activeLayouts.get(name);
     if (layoutInstance) {
       const layout = this.getLayout(name);
-      
+
       if (!layout?.persistent) {
         layoutInstance.unmount();
         this.activeLayouts.delete(name);
-        
+
         // Remove from components map
         for (const [container, instance] of this.layoutComponents.entries()) {
           if (instance === layoutInstance) {
@@ -76,7 +76,7 @@ export class LayoutManager {
       },
       setProps: (newProps) => {
         // Update layout props
-      }
+      },
     };
   }
 
@@ -112,7 +112,7 @@ export class RouteLayout {
     return layout.component({
       ...this.props,
       ...routeProps,
-      children: this.organizeChildrenByOutlets(children)
+      children: this.organizeChildrenByOutlets(children),
     });
   }
 
@@ -123,12 +123,12 @@ export class RouteLayout {
 
     // For multiple outlets, children should specify their outlet
     const organizedChildren = {};
-    this.outlets.forEach(outlet => {
+    this.outlets.forEach((outlet) => {
       organizedChildren[outlet] = [];
     });
 
     if (Array.isArray(children)) {
-      children.forEach(child => {
+      children.forEach((child) => {
         const outlet = child.outlet || 'default';
         if (organizedChildren[outlet]) {
           organizedChildren[outlet].push(child);
@@ -166,16 +166,16 @@ export class LayoutRouter {
 
     // Find common layouts to keep
     const commonLayouts = this.findCommonLayouts(toLayouts, fromLayouts);
-    
+
     // Deactivate layouts that are no longer needed
-    fromLayouts.forEach(layout => {
+    fromLayouts.forEach((layout) => {
       if (!commonLayouts.includes(layout)) {
         layoutManager.deactivateLayout(layout);
       }
     });
 
     // Activate new layouts
-    toLayouts.forEach(layout => {
+    toLayouts.forEach((layout) => {
       if (!commonLayouts.includes(layout)) {
         // Activate layout (this would need container reference)
         // layoutManager.activateLayout(layout, container);
@@ -187,9 +187,9 @@ export class LayoutRouter {
 
   extractLayoutsFromRoute(route) {
     if (!route) return [];
-    
+
     const layouts = [];
-    
+
     // Extract layouts from route hierarchy
     let currentRoute = route;
     while (currentRoute) {
@@ -198,14 +198,14 @@ export class LayoutRouter {
       }
       currentRoute = currentRoute.parent;
     }
-    
+
     return layouts;
   }
 
   findCommonLayouts(layouts1, layouts2) {
     const common = [];
     const minLength = Math.min(layouts1.length, layouts2.length);
-    
+
     for (let i = 0; i < minLength; i++) {
       if (layouts1[i] === layouts2[i]) {
         common.push(layouts1[i]);
@@ -213,7 +213,7 @@ export class LayoutRouter {
         break;
       }
     }
-    
+
     return common;
   }
 }
@@ -223,11 +223,11 @@ export function createOutlet(name = 'default') {
   return {
     name: 'RouterOutlet',
     props: ['name'],
-    
+
     render() {
       const route = this.$route;
       const depth = this.$depth || 0;
-      
+
       // Find the component for this outlet at this depth
       const matchedRoute = route.matched[depth];
       if (!matchedRoute) {
@@ -243,11 +243,11 @@ export function createOutlet(name = 'default') {
       const routeProps = {
         $route: route,
         $router: this.$router,
-        $depth: depth + 1
+        $depth: depth + 1,
       };
 
       return component(routeProps);
-    }
+    },
   };
 }
 
@@ -266,14 +266,14 @@ export class LayoutTransition {
   }
 
   async enter(element) {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       element.classList.add(this.enterClass);
       element.classList.add(this.enterActiveClass);
-      
+
       requestAnimationFrame(() => {
         element.classList.remove(this.enterClass);
         element.classList.add(this.enterToClass);
-        
+
         setTimeout(() => {
           element.classList.remove(this.enterActiveClass);
           element.classList.remove(this.enterToClass);
@@ -284,14 +284,14 @@ export class LayoutTransition {
   }
 
   async leave(element) {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       element.classList.add(this.leaveClass);
       element.classList.add(this.leaveActiveClass);
-      
+
       requestAnimationFrame(() => {
         element.classList.remove(this.leaveClass);
         element.classList.add(this.leaveToClass);
-        
+
         setTimeout(() => {
           element.classList.remove(this.leaveActiveClass);
           element.classList.remove(this.leaveToClass);
@@ -307,16 +307,10 @@ export const CommonLayouts = {
   // Basic app layout with header, sidebar, main content
   AppLayout: (props) => html`
     <div class="app-layout">
-      <header class="app-header">
-        ${props.header || 'Header'}
-      </header>
+      <header class="app-header">${props.header || 'Header'}</header>
       <div class="app-body">
-        <aside class="app-sidebar" n-if=${props.showSidebar}>
-          ${props.sidebar || 'Sidebar'}
-        </aside>
-        <main class="app-main">
-          ${props.children.default || props.children}
-        </main>
+        <aside class="app-sidebar" n-if=${props.showSidebar}>${props.sidebar || 'Sidebar'}</aside>
+        <main class="app-main">${props.children.default || props.children}</main>
       </div>
     </div>
   `,
@@ -324,16 +318,10 @@ export const CommonLayouts = {
   // Dashboard layout with multiple content areas
   DashboardLayout: (props) => html`
     <div class="dashboard-layout">
-      <nav class="dashboard-nav">
-        ${props.children.nav || 'Navigation'}
-      </nav>
+      <nav class="dashboard-nav">${props.children.nav || 'Navigation'}</nav>
       <div class="dashboard-content">
-        <section class="dashboard-main">
-          ${props.children.default || props.children}
-        </section>
-        <aside class="dashboard-aside" n-if=${props.children.aside}>
-          ${props.children.aside}
-        </aside>
+        <section class="dashboard-main">${props.children.default || props.children}</section>
+        <aside class="dashboard-aside" n-if=${props.children.aside}>${props.children.aside}</aside>
       </div>
     </div>
   `,
@@ -342,15 +330,9 @@ export const CommonLayouts = {
   AuthLayout: (props) => html`
     <div class="auth-layout">
       <div class="auth-container">
-        <header class="auth-header">
-          ${props.header || 'Welcome'}
-        </header>
-        <main class="auth-main">
-          ${props.children.default || props.children}
-        </main>
-        <footer class="auth-footer">
-          ${props.footer || ''}
-        </footer>
+        <header class="auth-header">${props.header || 'Welcome'}</header>
+        <main class="auth-main">${props.children.default || props.children}</main>
+        <footer class="auth-footer">${props.footer || ''}</footer>
       </div>
     </div>
   `,
@@ -358,20 +340,16 @@ export const CommonLayouts = {
   // Modal layout for overlay content
   ModalLayout: (props) => html`
     <div class="modal-overlay" @click=${props.onClose}>
-      <div class="modal-container" @click=${e => e.stopPropagation()}>
+      <div class="modal-container" @click=${(e) => e.stopPropagation()}>
         <header class="modal-header" n-if=${props.title}>
           <h2>${props.title}</h2>
           <button class="modal-close" @click=${props.onClose}>×</button>
         </header>
-        <main class="modal-body">
-          ${props.children.default || props.children}
-        </main>
-        <footer class="modal-footer" n-if=${props.children.footer}>
-          ${props.children.footer}
-        </footer>
+        <main class="modal-body">${props.children.default || props.children}</main>
+        <footer class="modal-footer" n-if=${props.children.footer}>${props.children.footer}</footer>
       </div>
     </div>
-  `
+  `,
 };
 
 // Register common layouts

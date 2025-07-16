@@ -7,17 +7,19 @@ import { Animations, transition, animate, spring } from './index.js';
 // Animation directive for simple animations
 registerDirective('animate', (element, value) => {
   if (!value) return;
-  
-  const { name, options = {}, trigger } = typeof value === 'string' 
-    ? { name: value, options: {}, trigger: 'immediate' }
-    : value;
-  
+
+  const {
+    name,
+    options = {},
+    trigger,
+  } = typeof value === 'string' ? { name: value, options: {}, trigger: 'immediate' } : value;
+
   const animationFn = Animations[name];
   if (!animationFn) {
     console.warn(`Animation "${name}" not found`);
     return;
   }
-  
+
   if (trigger === 'immediate') {
     animationFn(element, options).play();
   } else if (isSignal(trigger)) {
@@ -32,18 +34,20 @@ registerDirective('animate', (element, value) => {
 // Transition directive for element show/hide
 registerDirective('transition', (element, value) => {
   if (!value) return;
-  
-  const { name, show, mode = 'in-out' } = typeof value === 'string'
-    ? { name: value, show: true, mode: 'in-out' }
-    : value;
-  
+
+  const {
+    name,
+    show,
+    mode = 'in-out',
+  } = typeof value === 'string' ? { name: value, show: true, mode: 'in-out' } : value;
+
   const trans = transition(name, { mode });
   let isVisible = element.style.display !== 'none';
-  
+
   if (isSignal(show)) {
     effect(async () => {
       const shouldShow = show.value;
-      
+
       if (shouldShow && !isVisible) {
         // Show element
         element.style.display = '';
@@ -61,36 +65,34 @@ registerDirective('transition', (element, value) => {
 
 // Scroll trigger directive
 registerDirective('scroll-animate', (element, value) => {
-  const { 
+  const {
     animation = 'fadeIn',
     threshold = 0.1,
     rootMargin = '0px',
     once = true,
-    ...options 
-  } = typeof value === 'string' 
-    ? { animation: value }
-    : value;
-  
+    ...options
+  } = typeof value === 'string' ? { animation: value } : value;
+
   const animationFn = Animations[animation];
   if (!animationFn) {
     console.warn(`Animation "${animation}" not found`);
     return;
   }
-  
+
   // Initially hide element
   element.style.opacity = '0';
   element.style.transform = 'translateY(20px)';
-  
+
   const observer = new IntersectionObserver(
     (entries) => {
-      entries.forEach(entry => {
+      entries.forEach((entry) => {
         if (entry.isIntersecting) {
           // Reset styles and animate
           element.style.opacity = '';
           element.style.transform = '';
-          
+
           animationFn(element, options).play();
-          
+
           if (once) {
             observer.unobserve(element);
           }
@@ -99,9 +101,9 @@ registerDirective('scroll-animate', (element, value) => {
     },
     { threshold, rootMargin }
   );
-  
+
   observer.observe(element);
-  
+
   // Cleanup function
   element._scrollAnimateCleanup = () => {
     observer.unobserve(element);
@@ -114,20 +116,18 @@ registerDirective('hover-animate', (element, value) => {
     enter = 'scaleIn',
     leave = 'scaleOut',
     ...options
-  } = typeof value === 'string'
-    ? { enter: value, leave: value }
-    : value;
-  
+  } = typeof value === 'string' ? { enter: value, leave: value } : value;
+
   const enterFn = Animations[enter];
   const leaveFn = Animations[leave];
-  
+
   if (!enterFn || !leaveFn) {
     console.warn(`Animation "${enter}" or "${leave}" not found`);
     return;
   }
-  
+
   let currentAnimation = null;
-  
+
   const handleMouseEnter = () => {
     if (currentAnimation) {
       currentAnimation.cancel();
@@ -135,7 +135,7 @@ registerDirective('hover-animate', (element, value) => {
     currentAnimation = enterFn(element, options);
     currentAnimation.play();
   };
-  
+
   const handleMouseLeave = () => {
     if (currentAnimation) {
       currentAnimation.cancel();
@@ -143,10 +143,10 @@ registerDirective('hover-animate', (element, value) => {
     currentAnimation = leaveFn(element, options);
     currentAnimation.play();
   };
-  
+
   element.addEventListener('mouseenter', handleMouseEnter);
   element.addEventListener('mouseleave', handleMouseLeave);
-  
+
   // Cleanup function
   element._hoverAnimateCleanup = () => {
     element.removeEventListener('mouseenter', handleMouseEnter);
@@ -163,12 +163,12 @@ registerDirective('spring', (element, value) => {
     console.warn('Spring directive requires a signal');
     return;
   }
-  
+
   let springAnimation = null;
-  
+
   effect(() => {
     const targetValues = value.value;
-    
+
     if (springAnimation) {
       springAnimation.updateTarget(targetValues);
     } else {
@@ -176,7 +176,7 @@ registerDirective('spring', (element, value) => {
       springAnimation.play();
     }
   });
-  
+
   // Cleanup function
   element._springCleanup = () => {
     if (springAnimation) {
@@ -188,29 +188,31 @@ registerDirective('spring', (element, value) => {
 // Morphing directive for smooth shape changes
 registerDirective('morph', (element, value) => {
   if (!isSignal(value)) return;
-  
-  const { property = 'borderRadius', duration = 300, easing = 'ease' } = 
-    typeof value.value === 'object' ? value.value : { [property]: value.value };
-  
+
+  const {
+    property = 'borderRadius',
+    duration = 300,
+    easing = 'ease',
+  } = typeof value.value === 'object' ? value.value : { [property]: value.value };
+
   effect(() => {
     const targetValue = value.value;
-    
+
     if (typeof targetValue === 'object') {
       // Multiple properties
       const keyframes = [
-        Object.fromEntries(Object.entries(targetValue).map(([prop, val]) => [prop, getComputedStyle(element)[prop]])),
-        targetValue
+        Object.fromEntries(
+          Object.entries(targetValue).map(([prop, val]) => [prop, getComputedStyle(element)[prop]])
+        ),
+        targetValue,
       ];
-      
+
       animate(element, keyframes, { duration, easing }).play();
     } else {
       // Single property
       const currentValue = getComputedStyle(element)[property];
-      const keyframes = [
-        { [property]: currentValue },
-        { [property]: targetValue }
-      ];
-      
+      const keyframes = [{ [property]: currentValue }, { [property]: targetValue }];
+
       animate(element, keyframes, { duration, easing }).play();
     }
   });
@@ -221,16 +223,14 @@ registerDirective('parallax', (element, value) => {
   const {
     speed = 0.5,
     direction = 'vertical',
-    offset = 0
-  } = typeof value === 'number' 
-    ? { speed: value }
-    : value;
-  
+    offset = 0,
+  } = typeof value === 'number' ? { speed: value } : value;
+
   const updateParallax = () => {
     const rect = element.getBoundingClientRect();
     const windowHeight = window.innerHeight;
     const scrolled = (windowHeight - rect.top) / (windowHeight + rect.height);
-    
+
     let transform;
     if (direction === 'vertical') {
       const yPos = -(scrolled * speed * 100) + offset;
@@ -239,10 +239,10 @@ registerDirective('parallax', (element, value) => {
       const xPos = -(scrolled * speed * 100) + offset;
       transform = `translate3d(${xPos}px, 0, 0)`;
     }
-    
+
     element.style.transform = transform;
   };
-  
+
   // Throttled scroll handler
   let ticking = false;
   const handleScroll = () => {
@@ -254,10 +254,10 @@ registerDirective('parallax', (element, value) => {
       ticking = true;
     }
   };
-  
+
   window.addEventListener('scroll', handleScroll, { passive: true });
   updateParallax(); // Initial position
-  
+
   // Cleanup function
   element._parallaxCleanup = () => {
     window.removeEventListener('scroll', handleScroll);
@@ -267,26 +267,26 @@ registerDirective('parallax', (element, value) => {
 // Auto-typing animation directive
 registerDirective('typewriter', (element, value) => {
   if (!isSignal(value)) return;
-  
+
   const {
     speed = 50,
     cursor = true,
     cursorChar = '|',
-    startDelay = 0
+    startDelay = 0,
   } = typeof value.value === 'object' ? value.value : {};
-  
+
   effect(() => {
     const text = typeof value.value === 'string' ? value.value : value.value.text;
     if (!text) return;
-    
+
     let currentIndex = 0;
     element.textContent = '';
-    
+
     if (cursor) {
       element.style.borderRight = `2px solid currentColor`;
       element.style.animation = 'berryact-cursor-blink 1s infinite';
     }
-    
+
     const typeCharacter = () => {
       if (currentIndex < text.length) {
         element.textContent = text.substring(0, currentIndex + 1);
@@ -297,7 +297,7 @@ registerDirective('typewriter', (element, value) => {
         element.style.animation = 'none';
       }
     };
-    
+
     setTimeout(typeCharacter, startDelay);
   });
 });
@@ -305,37 +305,37 @@ registerDirective('typewriter', (element, value) => {
 // Count up animation directive
 registerDirective('count-up', (element, value) => {
   if (!isSignal(value)) return;
-  
+
   effect(() => {
     const {
       target = value.value,
       duration = 1000,
       startValue = 0,
       easing = 'easeOutCubic',
-      formatter = (val) => Math.round(val).toLocaleString()
+      formatter = (val) => Math.round(val).toLocaleString(),
     } = typeof value.value === 'object' ? value.value : { target: value.value };
-    
+
     const startTime = performance.now();
     const range = target - startValue;
-    
+
     const updateCount = (currentTime) => {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      
+
       // Apply easing
       let easedProgress = progress;
       if (easing === 'easeOutCubic') {
         easedProgress = 1 - Math.pow(1 - progress, 3);
       }
-      
-      const currentValue = startValue + (range * easedProgress);
+
+      const currentValue = startValue + range * easedProgress;
       element.textContent = formatter(currentValue);
-      
+
       if (progress < 1) {
         requestAnimationFrame(updateCount);
       }
     };
-    
+
     requestAnimationFrame(updateCount);
   });
 });
@@ -347,10 +347,10 @@ registerDirective('animate-cleanup', (element) => {
     '_scrollAnimateCleanup',
     '_hoverAnimateCleanup',
     '_springCleanup',
-    '_parallaxCleanup'
+    '_parallaxCleanup',
   ];
-  
-  cleanupFunctions.forEach(cleanupFn => {
+
+  cleanupFunctions.forEach((cleanupFn) => {
     if (element[cleanupFn]) {
       element[cleanupFn]();
     }

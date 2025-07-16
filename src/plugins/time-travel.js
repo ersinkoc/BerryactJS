@@ -9,7 +9,7 @@ import { createPlugin } from '../core/plugin.js';
 export const TimeTravelPlugin = createPlugin({
   name: 'time-travel',
   version: '1.0.0',
-  
+
   setup(app, context) {
     const options = this.options || {};
     const {
@@ -19,7 +19,7 @@ export const TimeTravelPlugin = createPlugin({
       whitelist = null,
       stateName = 'time-travel',
       persistHistory = false,
-      storageKey = 'berryact-time-travel'
+      storageKey = 'berryact-time-travel',
     } = options;
 
     // History state
@@ -27,11 +27,11 @@ export const TimeTravelPlugin = createPlugin({
     const currentIndex = signal(-1);
     const isRecording = signal(true);
     const isPaused = signal(false);
-    
+
     // Throttle state
     let lastCapture = 0;
     let captureTimeout = null;
-    
+
     // Computed states
     const canUndo = computed(() => currentIndex.value > 0);
     const canRedo = computed(() => currentIndex.value < history.value.length - 1);
@@ -39,7 +39,7 @@ export const TimeTravelPlugin = createPlugin({
       const index = currentIndex.value;
       return index >= 0 ? history.value[index] : null;
     });
-    
+
     // State tracking
     const trackedStores = new Map();
     const trackedSignals = new Map();
@@ -47,7 +47,7 @@ export const TimeTravelPlugin = createPlugin({
     // Capture current state
     function captureState(label = null) {
       if (!isRecording.value || isPaused.value) return;
-      
+
       const now = Date.now();
       if (now - lastCapture < throttle) {
         // Throttle captures
@@ -55,9 +55,9 @@ export const TimeTravelPlugin = createPlugin({
         captureTimeout = setTimeout(() => captureState(label), throttle);
         return;
       }
-      
+
       lastCapture = now;
-      
+
       const snapshot = {
         timestamp: now,
         label: label || `State ${history.value.length + 1}`,
@@ -65,17 +65,17 @@ export const TimeTravelPlugin = createPlugin({
         signals: {},
         metadata: {
           url: window.location.href,
-          userAgent: navigator.userAgent
-        }
+          userAgent: navigator.userAgent,
+        },
       };
-      
+
       // Capture store states
       trackedStores.forEach((store, name) => {
         if (shouldTrack(name)) {
           snapshot.stores[name] = JSON.parse(JSON.stringify(store.state.value));
         }
       });
-      
+
       // Capture signal states
       trackedSignals.forEach((signal, name) => {
         if (shouldTrack(name)) {
@@ -87,7 +87,7 @@ export const TimeTravelPlugin = createPlugin({
           }
         }
       });
-      
+
       // Add to history
       addToHistory(snapshot);
     }
@@ -95,23 +95,23 @@ export const TimeTravelPlugin = createPlugin({
     // Add snapshot to history
     function addToHistory(snapshot) {
       const newHistory = [...history.value];
-      
+
       // Remove future history if we're not at the end
       if (currentIndex.value < newHistory.length - 1) {
         newHistory.splice(currentIndex.value + 1);
       }
-      
+
       // Add new snapshot
       newHistory.push(snapshot);
-      
+
       // Limit history size
       if (newHistory.length > maxHistory) {
         newHistory.shift();
       }
-      
+
       history.value = newHistory;
       currentIndex.value = newHistory.length - 1;
-      
+
       // Persist if enabled
       if (persistHistory) {
         saveHistory();
@@ -129,12 +129,12 @@ export const TimeTravelPlugin = createPlugin({
     // Travel to specific state
     function travelTo(index) {
       if (index < 0 || index >= history.value.length) return;
-      
+
       const snapshot = history.value[index];
       if (!snapshot) return;
-      
+
       isPaused.value = true;
-      
+
       try {
         // Restore store states
         Object.entries(snapshot.stores).forEach(([name, state]) => {
@@ -143,7 +143,7 @@ export const TimeTravelPlugin = createPlugin({
             store.replaceState(state);
           }
         });
-        
+
         // Restore signal states
         Object.entries(snapshot.signals).forEach(([name, value]) => {
           const signal = trackedSignals.get(name);
@@ -151,7 +151,7 @@ export const TimeTravelPlugin = createPlugin({
             signal.value = value;
           }
         });
-        
+
         currentIndex.value = index;
       } finally {
         // Resume recording after a delay
@@ -183,7 +183,7 @@ export const TimeTravelPlugin = createPlugin({
     function clearHistory() {
       history.value = [];
       currentIndex.value = -1;
-      
+
       if (persistHistory) {
         localStorage.removeItem(storageKey);
       }
@@ -198,8 +198,8 @@ export const TimeTravelPlugin = createPlugin({
         currentIndex: currentIndex.value,
         metadata: {
           exported: new Date().toISOString(),
-          appVersion: app.version
-        }
+          appVersion: app.version,
+        },
       };
     }
 
@@ -207,7 +207,7 @@ export const TimeTravelPlugin = createPlugin({
       if (!data || data.plugin !== 'time-travel') {
         throw new Error('Invalid history data');
       }
-      
+
       history.value = data.history || [];
       currentIndex.value = data.currentIndex || -1;
     }
@@ -237,47 +237,47 @@ export const TimeTravelPlugin = createPlugin({
     function diff(indexA, indexB) {
       const stateA = history.value[indexA];
       const stateB = history.value[indexB];
-      
+
       if (!stateA || !stateB) return null;
-      
+
       const changes = {
         stores: {},
-        signals: {}
+        signals: {},
       };
-      
+
       // Compare stores
-      Object.keys(stateA.stores).forEach(name => {
+      Object.keys(stateA.stores).forEach((name) => {
         const valueA = stateA.stores[name];
         const valueB = stateB.stores[name];
-        
+
         if (JSON.stringify(valueA) !== JSON.stringify(valueB)) {
           changes.stores[name] = {
             before: valueA,
-            after: valueB
+            after: valueB,
           };
         }
       });
-      
+
       // Compare signals
-      Object.keys(stateA.signals).forEach(name => {
+      Object.keys(stateA.signals).forEach((name) => {
         const valueA = stateA.signals[name];
         const valueB = stateB.signals[name];
-        
+
         if (valueA !== valueB) {
           changes.signals[name] = {
             before: valueA,
-            after: valueB
+            after: valueB,
           };
         }
       });
-      
+
       return changes;
     }
 
     // Track store
     function trackStore(name, store) {
       trackedStores.set(name, store);
-      
+
       // Watch for changes
       store.subscribe(() => {
         captureState(`Store ${name} mutation`);
@@ -287,7 +287,7 @@ export const TimeTravelPlugin = createPlugin({
     // Track signal
     function trackSignal(name, signal) {
       trackedSignals.set(name, signal);
-      
+
       // Watch for changes
       effect(() => {
         // Access value to track
@@ -304,7 +304,7 @@ export const TimeTravelPlugin = createPlugin({
           e.preventDefault();
           undo();
         }
-        
+
         // Ctrl/Cmd + Shift + Z for redo
         if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'z') {
           e.preventDefault();
@@ -332,63 +332,63 @@ export const TimeTravelPlugin = createPlugin({
       canUndo,
       canRedo,
       currentState,
-      
+
       // Actions
       undo,
       redo,
       jumpToState,
       clearHistory,
       captureState,
-      
+
       // Tracking
       trackStore,
       trackSignal,
-      
+
       // Import/Export
       exportHistory,
       importHistory,
       saveHistory,
       loadHistory,
-      
+
       // Analysis
       diff,
-      
+
       // Control
-      startRecording: () => isRecording.value = true,
-      stopRecording: () => isRecording.value = false,
-      pause: () => isPaused.value = true,
-      resume: () => isPaused.value = false
+      startRecording: () => (isRecording.value = true),
+      stopRecording: () => (isRecording.value = false),
+      pause: () => (isPaused.value = true),
+      resume: () => (isPaused.value = false),
     };
 
     // Provide API
     this.provide('timeTravel', timeTravel);
-    
+
     // Global access
     app.timeTravel = timeTravel;
-    
+
     // DevTools integration
     if (typeof window !== 'undefined') {
       window.__NANO_TIME_TRAVEL__ = timeTravel;
     }
-  }
+  },
 });
 
 // Time Travel UI Component
 export function TimeTravelDebugger({ position = 'bottom-right' }) {
   const timeTravel = app.timeTravel;
   if (!timeTravel) return null;
-  
+
   const { history, currentIndex, canUndo, canRedo } = timeTravel;
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(null);
-  
+
   const positionStyles = {
     'bottom-right': { bottom: 20, right: 20 },
     'bottom-left': { bottom: 20, left: 20 },
     'top-right': { top: 20, right: 20 },
-    'top-left': { top: 20, left: 20 }
+    'top-left': { top: 20, left: 20 },
   };
-  
+
   const style = {
     position: 'fixed',
     ...positionStyles[position],
@@ -398,97 +398,110 @@ export function TimeTravelDebugger({ position = 'bottom-right' }) {
     borderRadius: '8px',
     boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
     fontFamily: 'monospace',
-    fontSize: '12px'
+    fontSize: '12px',
   };
 
   return html`
     <div style=${style}>
-      ${!isOpen ? html`
-        <button 
-          style=${{
-            padding: '8px 12px',
-            background: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer'
-          }}
-          @click=${() => setIsOpen(true)}
-        >
-          ⏱ Time Travel
-        </button>
-      ` : html`
-        <div style=${{ width: '300px', maxHeight: '400px', display: 'flex', flexDirection: 'column' }}>
-          <div style=${{
-            padding: '10px',
-            borderBottom: '1px solid #eee',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
-            <strong>Time Travel Debugger</strong>
-            <button 
-              style=${{ background: 'none', border: 'none', cursor: 'pointer' }}
-              @click=${() => setIsOpen(false)}
+      ${!isOpen
+        ? html`
+            <button
+              style=${{
+                padding: '8px 12px',
+                background: '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+              }}
+              @click=${() => setIsOpen(true)}
             >
-              ✕
+              ⏱ Time Travel
             </button>
-          </div>
-          
-          <div style=${{ padding: '10px', borderBottom: '1px solid #eee' }}>
-            <button 
-              @click=${() => timeTravel.undo()}
-              disabled=${!canUndo.value}
-              style=${{ marginRight: '5px' }}
+          `
+        : html`
+            <div
+              style=${{
+                width: '300px',
+                maxHeight: '400px',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
             >
-              ← Undo
-            </button>
-            <button 
-              @click=${() => timeTravel.redo()}
-              disabled=${!canRedo.value}
-              style=${{ marginRight: '5px' }}
-            >
-              Redo →
-            </button>
-            <button @click=${() => timeTravel.clearHistory()}>
-              Clear
-            </button>
-          </div>
-          
-          <div style=${{ flex: 1, overflow: 'auto', padding: '10px' }}>
-            ${history.value.map((state, index) => html`
-              <div 
+              <div
                 style=${{
-                  padding: '5px',
-                  margin: '2px 0',
-                  background: index === currentIndex.value ? '#e3f2fd' : '#f5f5f5',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  border: index === selectedIndex ? '2px solid #2196f3' : 'none'
-                }}
-                @click=${() => {
-                  setSelectedIndex(index);
-                  timeTravel.jumpToState(index);
+                  padding: '10px',
+                  borderBottom: '1px solid #eee',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
                 }}
               >
-                <div style=${{ fontWeight: 'bold' }}>${state.label}</div>
-                <div style=${{ fontSize: '10px', color: '#666' }}>
-                  ${new Date(state.timestamp).toLocaleTimeString()}
-                </div>
+                <strong>Time Travel Debugger</strong>
+                <button
+                  style=${{ background: 'none', border: 'none', cursor: 'pointer' }}
+                  @click=${() => setIsOpen(false)}
+                >
+                  ✕
+                </button>
               </div>
-            `)}
-          </div>
-          
-          ${selectedIndex !== null && html`
-            <div style=${{ padding: '10px', borderTop: '1px solid #eee', fontSize: '10px' }}>
-              <strong>State Diff:</strong>
-              <pre style=${{ margin: '5px 0', overflow: 'auto', maxHeight: '100px' }}>
+
+              <div style=${{ padding: '10px', borderBottom: '1px solid #eee' }}>
+                <button
+                  @click=${() => timeTravel.undo()}
+                  disabled=${!canUndo.value}
+                  style=${{ marginRight: '5px' }}
+                >
+                  ← Undo
+                </button>
+                <button
+                  @click=${() => timeTravel.redo()}
+                  disabled=${!canRedo.value}
+                  style=${{ marginRight: '5px' }}
+                >
+                  Redo →
+                </button>
+                <button @click=${() => timeTravel.clearHistory()}>Clear</button>
+              </div>
+
+              <div style=${{ flex: 1, overflow: 'auto', padding: '10px' }}>
+                ${history.value.map(
+                  (state, index) => html`
+                    <div
+                      style=${{
+                        padding: '5px',
+                        margin: '2px 0',
+                        background: index === currentIndex.value ? '#e3f2fd' : '#f5f5f5',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        border: index === selectedIndex ? '2px solid #2196f3' : 'none',
+                      }}
+                      @click=${() => {
+                        setSelectedIndex(index);
+                        timeTravel.jumpToState(index);
+                      }}
+                    >
+                      <div style=${{ fontWeight: 'bold' }}>${state.label}</div>
+                      <div style=${{ fontSize: '10px', color: '#666' }}>
+                        ${new Date(state.timestamp).toLocaleTimeString()}
+                      </div>
+                    </div>
+                  `
+                )}
+              </div>
+
+              ${selectedIndex !== null &&
+              html`
+                <div style=${{ padding: '10px', borderTop: '1px solid #eee', fontSize: '10px' }}>
+                  <strong>State Diff:</strong>
+                  <pre style=${{ margin: '5px 0', overflow: 'auto', maxHeight: '100px' }}>
                 ${JSON.stringify(timeTravel.diff(currentIndex.value, selectedIndex), null, 2)}
-              </pre>
+              </pre
+                  >
+                </div>
+              `}
             </div>
           `}
-        </div>
-      `}
     </div>
   `;
 }

@@ -3,19 +3,19 @@ import { TemplateNode } from './parser.js';
 
 export function compileTemplate(node) {
   if (!node) return null;
-  
+
   if (typeof node === 'string' || typeof node === 'number') {
     return compileTextNode(node);
   }
-  
+
   if (isSignal(node)) {
     return compileSignalNode(node);
   }
-  
+
   if (Array.isArray(node)) {
     return compileArrayNode(node);
   }
-  
+
   if (node instanceof TemplateNode) {
     switch (node.type) {
       case 'element':
@@ -28,46 +28,46 @@ export function compileTemplate(node) {
         return null;
     }
   }
-  
+
   return null;
 }
 
 function compileTextNode(content) {
   if (Array.isArray(content)) {
-    const textContent = content.map(item => {
+    const textContent = content.map((item) => {
       if (isSignal(item)) {
         return () => String(item.value);
       }
       return () => String(item);
     });
-    
+
     return {
       type: 'text',
       render: () => {
         const element = document.createTextNode('');
-        
+
         const update = () => {
-          element.textContent = textContent.map(fn => fn()).join('');
+          element.textContent = textContent.map((fn) => fn()).join('');
         };
-        
+
         update();
-        
+
         return {
           element,
           update,
-          unmount: () => {}
+          unmount: () => {},
         };
-      }
+      },
     };
   }
-  
+
   return {
     type: 'text',
     render: () => ({
       element: document.createTextNode(String(content)),
       update: () => {},
-      unmount: () => {}
-    })
+      unmount: () => {},
+    }),
   };
 }
 
@@ -76,20 +76,20 @@ function compileSignalNode(signal) {
     type: 'signal',
     render: () => {
       const element = document.createTextNode('');
-      
+
       const update = () => {
         const value = signal.value;
         element.textContent = String(value);
       };
-      
+
       update();
-      
+
       return {
         element,
         update,
-        unmount: () => {}
+        unmount: () => {},
       };
-    }
+    },
   };
 }
 
@@ -99,18 +99,18 @@ function compileArrayNode(array) {
     render: () => {
       const fragment = document.createDocumentFragment();
       const children = [];
-      
+
       const renderChildren = () => {
-        children.forEach(child => {
+        children.forEach((child) => {
           if (child.unmount) child.unmount();
         });
         children.length = 0;
-        
+
         while (fragment.firstChild) {
           fragment.removeChild(fragment.firstChild);
         }
-        
-        array.forEach(item => {
+
+        array.forEach((item) => {
           const compiled = compileTemplate(item);
           if (compiled) {
             const rendered = compiled.render();
@@ -119,19 +119,19 @@ function compileArrayNode(array) {
           }
         });
       };
-      
+
       renderChildren();
-      
+
       return {
         element: fragment,
         update: renderChildren,
         unmount: () => {
-          children.forEach(child => {
+          children.forEach((child) => {
             if (child.unmount) child.unmount();
           });
-        }
+        },
       };
-    }
+    },
   };
 }
 
@@ -141,11 +141,11 @@ function compileElementNode(node) {
     render: () => {
       const element = document.createElement(node.tag);
       const children = [];
-      
+
       const updateProps = () => {
         Object.entries(node.props).forEach(([key, value]) => {
           if (key === 'key') return;
-          
+
           if (key.startsWith('@')) {
             const eventName = key.slice(1);
             element.addEventListener(eventName, value);
@@ -170,18 +170,18 @@ function compileElementNode(node) {
           }
         });
       };
-      
+
       const updateChildren = () => {
-        children.forEach(child => {
+        children.forEach((child) => {
           if (child.unmount) child.unmount();
         });
         children.length = 0;
-        
+
         while (element.firstChild) {
           element.removeChild(element.firstChild);
         }
-        
-        node.children.forEach(child => {
+
+        node.children.forEach((child) => {
           const compiled = compileTemplate(child);
           if (compiled) {
             const rendered = compiled.render();
@@ -190,10 +190,10 @@ function compileElementNode(node) {
           }
         });
       };
-      
+
       updateProps();
       updateChildren();
-      
+
       return {
         element,
         update: () => {
@@ -201,12 +201,12 @@ function compileElementNode(node) {
           updateChildren();
         },
         unmount: () => {
-          children.forEach(child => {
+          children.forEach((child) => {
             if (child.unmount) child.unmount();
           });
-        }
+        },
       };
-    }
+    },
   };
 }
 
@@ -216,18 +216,18 @@ function compileFragmentNode(node) {
     render: () => {
       const fragment = document.createDocumentFragment();
       const children = [];
-      
+
       const updateChildren = () => {
-        children.forEach(child => {
+        children.forEach((child) => {
           if (child.unmount) child.unmount();
         });
         children.length = 0;
-        
+
         while (fragment.firstChild) {
           fragment.removeChild(fragment.firstChild);
         }
-        
-        node.children.forEach(child => {
+
+        node.children.forEach((child) => {
           const compiled = compileTemplate(child);
           if (compiled) {
             const rendered = compiled.render();
@@ -236,18 +236,18 @@ function compileFragmentNode(node) {
           }
         });
       };
-      
+
       updateChildren();
-      
+
       return {
         element: fragment,
         update: updateChildren,
         unmount: () => {
-          children.forEach(child => {
+          children.forEach((child) => {
             if (child.unmount) child.unmount();
           });
-        }
+        },
       };
-    }
+    },
   };
 }

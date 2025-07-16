@@ -6,7 +6,7 @@ export class ObjectPool {
     this.resetFn = resetFn;
     this.pool = [];
     this.maxSize = 100;
-    
+
     // Pre-populate pool
     for (let i = 0; i < initialSize; i++) {
       this.pool.push(this.createFn());
@@ -60,7 +60,7 @@ export class MicroTaskScheduler {
     this.queue = [];
     this.isScheduled = false;
     this.channel = null;
-    
+
     if (typeof MessageChannel !== 'undefined') {
       this.channel = new MessageChannel();
       this.channel.port2.onmessage = () => this.flush();
@@ -69,10 +69,10 @@ export class MicroTaskScheduler {
 
   schedule(callback) {
     this.queue.push(callback);
-    
+
     if (!this.isScheduled) {
       this.isScheduled = true;
-      
+
       if (this.channel) {
         this.channel.port1.postMessage(null);
       } else {
@@ -85,7 +85,7 @@ export class MicroTaskScheduler {
     this.isScheduled = false;
     const callbacks = this.queue.slice();
     this.queue.length = 0;
-    
+
     for (const callback of callbacks) {
       try {
         callback();
@@ -101,13 +101,13 @@ export const microTaskScheduler = new MicroTaskScheduler();
 // Fast path for primitive comparisons
 export function fastEqual(a, b) {
   if (a === b) return true;
-  
+
   if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) {
     return false;
   }
-  
+
   if (a.constructor !== b.constructor) return false;
-  
+
   if (Array.isArray(a)) {
     if (a.length !== b.length) return false;
     for (let i = 0; i < a.length; i++) {
@@ -115,18 +115,18 @@ export function fastEqual(a, b) {
     }
     return true;
   }
-  
+
   const keysA = Object.keys(a);
   const keysB = Object.keys(b);
-  
+
   if (keysA.length !== keysB.length) return false;
-  
+
   for (const key of keysA) {
     if (!keysB.includes(key) || !fastEqual(a[key], b[key])) {
       return false;
     }
   }
-  
+
   return true;
 }
 
@@ -182,7 +182,7 @@ export function throttle(fn, limit) {
     if (!inThrottle) {
       fn.apply(this, args);
       inThrottle = true;
-      setTimeout(() => inThrottle = false, limit);
+      setTimeout(() => (inThrottle = false), limit);
     }
   };
 }
@@ -196,17 +196,21 @@ export class EventDelegator {
 
   setup() {
     const events = ['click', 'input', 'change', 'submit', 'focus', 'blur', 'keydown', 'keyup'];
-    
-    events.forEach(eventType => {
-      document.addEventListener(eventType, (event) => {
-        this.handleEvent(event);
-      }, { passive: true, capture: true });
+
+    events.forEach((eventType) => {
+      document.addEventListener(
+        eventType,
+        (event) => {
+          this.handleEvent(event);
+        },
+        { passive: true, capture: true }
+      );
     });
   }
 
   handleEvent(event) {
     let target = event.target;
-    
+
     while (target && target !== document) {
       const id = target._berryactId;
       if (id && this.handlers.has(id)) {
@@ -224,18 +228,18 @@ export class EventDelegator {
     if (!element._berryactId) {
       element._berryactId = Math.random().toString(36).substr(2, 9);
     }
-    
+
     if (!this.handlers.has(element._berryactId)) {
       this.handlers.set(element._berryactId, {});
     }
-    
+
     this.handlers.get(element._berryactId)[eventType] = handler;
   }
 
   unregister(element, eventType) {
     if (element._berryactId && this.handlers.has(element._berryactId)) {
       delete this.handlers.get(element._berryactId)[eventType];
-      
+
       const elementHandlers = this.handlers.get(element._berryactId);
       if (Object.keys(elementHandlers).length === 0) {
         this.handlers.delete(element._berryactId);
@@ -296,86 +300,86 @@ export class PerformanceMonitor {
       renders: [],
       updates: [],
       mounts: [],
-      unmounts: []
+      unmounts: [],
     };
     this.enabled = process.env.NODE_ENV !== 'production';
   }
 
   measureRender(component, fn) {
     if (!this.enabled) return fn();
-    
+
     const start = performance.now();
     const result = fn();
     const duration = performance.now() - start;
-    
+
     this.metrics.renders.push({
       component: component.constructor.name,
       duration,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
-    
+
     // Keep only last 100 measurements
     if (this.metrics.renders.length > 100) {
       this.metrics.renders.shift();
     }
-    
+
     return result;
   }
 
   measureUpdate(component, fn) {
     if (!this.enabled) return fn();
-    
+
     const start = performance.now();
     const result = fn();
     const duration = performance.now() - start;
-    
+
     this.metrics.updates.push({
       component: component.constructor.name,
       duration,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
-    
+
     if (this.metrics.updates.length > 100) {
       this.metrics.updates.shift();
     }
-    
+
     return result;
   }
 
   getAverageRenderTime(componentName) {
-    const renders = this.metrics.renders.filter(r => 
-      !componentName || r.component === componentName
+    const renders = this.metrics.renders.filter(
+      (r) => !componentName || r.component === componentName
     );
-    
+
     if (renders.length === 0) return 0;
-    
+
     const total = renders.reduce((sum, r) => sum + r.duration, 0);
     return total / renders.length;
   }
 
   getSlowestComponents(limit = 10) {
     const componentTimes = new Map();
-    
-    this.metrics.renders.forEach(render => {
+
+    this.metrics.renders.forEach((render) => {
       const current = componentTimes.get(render.component) || { total: 0, count: 0 };
       current.total += render.duration;
       current.count++;
       componentTimes.set(render.component, current);
     });
-    
+
     return Array.from(componentTimes.entries())
       .map(([name, data]) => ({
         name,
         average: data.total / data.count,
         total: data.total,
-        count: data.count
+        count: data.count,
       }))
       .sort((a, b) => b.average - a.average)
       .slice(0, limit);
   }
 
   clearMetrics() {
-    Object.keys(this.metrics).forEach(key => {
+    Object.keys(this.metrics).forEach((key) => {
       this.metrics[key].length = 0;
     });
   }

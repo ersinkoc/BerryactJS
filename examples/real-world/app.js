@@ -1,12 +1,12 @@
-import { 
-  createApp, 
-  createRouter, 
-  createStore, 
-  signal, 
-  computed, 
-  html, 
-  useState, 
-  useEffect 
+import {
+  createApp,
+  createRouter,
+  createStore,
+  signal,
+  computed,
+  html,
+  useState,
+  useEffect,
 } from '../../src/index.js';
 
 // API Service
@@ -20,9 +20,9 @@ class ApiService {
     const config = {
       headers: {
         'Content-Type': 'application/json',
-        ...options.headers
+        ...options.headers,
       },
-      ...options
+      ...options,
     };
 
     if (config.body && typeof config.body === 'object') {
@@ -30,7 +30,7 @@ class ApiService {
     }
 
     const response = await fetch(url, config);
-    
+
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
@@ -51,7 +51,7 @@ class ApiService {
   async getFeedArticles(token, params = {}) {
     const searchParams = new URLSearchParams(params);
     return this.request(`/articles/feed?${searchParams}`, {
-      headers: { Authorization: `Token ${token}` }
+      headers: { Authorization: `Token ${token}` },
     });
   }
 
@@ -59,21 +59,21 @@ class ApiService {
   async login(credentials) {
     return this.request('/users/login', {
       method: 'POST',
-      body: { user: credentials }
+      body: { user: credentials },
     });
   }
 
   async register(userData) {
     return this.request('/users', {
       method: 'POST',
-      body: { user: userData }
+      body: { user: userData },
     });
   }
 
   // User
   async getCurrentUser(token) {
     return this.request('/user', {
-      headers: { Authorization: `Token ${token}` }
+      headers: { Authorization: `Token ${token}` },
     });
   }
 
@@ -100,29 +100,29 @@ const store = createStore({
       author: null,
       favorited: null,
       limit: 20,
-      offset: 0
-    }
+      offset: 0,
+    },
   },
 
   getters: {
     isAuthenticated: (state) => !!state.token,
     currentUser: (state) => state.user,
-    articlesCount: (state) => state.articles.length
+    articlesCount: (state) => state.articles.length,
   },
 
   mutations: {
     setLoading(state, loading) {
       state.loading = loading;
     },
-    
+
     setError(state, error) {
       state.error = error;
     },
-    
+
     setUser(state, user) {
       state.user = user;
     },
-    
+
     setToken(state, token) {
       state.token = token;
       if (token) {
@@ -131,36 +131,36 @@ const store = createStore({
         localStorage.removeItem('token');
       }
     },
-    
+
     setArticles(state, articles) {
       state.articles = articles;
     },
-    
+
     setCurrentArticle(state, article) {
       state.currentArticle = article;
     },
-    
+
     setTags(state, tags) {
       state.tags = tags;
     },
-    
+
     setFilter(state, { key, value }) {
       state.filters[key] = value;
       state.filters.offset = 0; // Reset pagination
     },
-    
+
     logout(state) {
       state.user = null;
       state.token = null;
       localStorage.removeItem('token');
-    }
+    },
   },
 
   actions: {
     async loadArticles(context) {
       context.commit('setLoading', true);
       context.commit('setError', null);
-      
+
       try {
         const params = {};
         Object.entries(context.state.filters).forEach(([key, value]) => {
@@ -168,7 +168,7 @@ const store = createStore({
             params[key] = value;
           }
         });
-        
+
         const response = await api.getArticles(params);
         context.commit('setArticles', response.articles);
       } catch (error) {
@@ -231,7 +231,7 @@ const store = createStore({
 
     async loadCurrentUser(context) {
       if (!context.state.token) return;
-      
+
       try {
         const response = await api.getCurrentUser(context.state.token);
         context.commit('setUser', response.user);
@@ -242,8 +242,8 @@ const store = createStore({
 
     logout(context) {
       context.commit('logout');
-    }
-  }
+    },
+  },
 });
 
 // Components
@@ -260,31 +260,33 @@ function Header() {
             <li class="nav-item">
               <a class="nav-link" href="/">Home</a>
             </li>
-            ${isAuthenticated.value ? html`
-              <li class="nav-item">
-                <a class="nav-link" href="/editor">
-                  <i class="ion-compose"></i>&nbsp;New Article
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="/settings">
-                  <i class="ion-gear-a"></i>&nbsp;Settings
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="/profile/${currentUser.value?.username}">
-                  <img src="${currentUser.value?.image}" class="user-pic" />
-                  ${currentUser.value?.username}
-                </a>
-              </li>
-            ` : html`
-              <li class="nav-item">
-                <a class="nav-link" href="/login">Sign in</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="/register">Sign up</a>
-              </li>
-            `}
+            ${isAuthenticated.value
+              ? html`
+                  <li class="nav-item">
+                    <a class="nav-link" href="/editor">
+                      <i class="ion-compose"></i>&nbsp;New Article
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="/settings">
+                      <i class="ion-gear-a"></i>&nbsp;Settings
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="/profile/${currentUser.value?.username}">
+                      <img src="${currentUser.value?.image}" class="user-pic" />
+                      ${currentUser.value?.username}
+                    </a>
+                  </li>
+                `
+              : html`
+                  <li class="nav-item">
+                    <a class="nav-link" href="/login">Sign in</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="/register">Sign up</a>
+                  </li>
+                `}
           </ul>
         </div>
       </nav>
@@ -297,7 +299,7 @@ function ArticlePreview({ article }) {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
     });
   };
 
@@ -322,9 +324,9 @@ function ArticlePreview({ article }) {
         <p>${article.description}</p>
         <span>Read more...</span>
         <ul class="tag-list">
-          ${article.tagList.map(tag => html`
-            <li class="tag-default tag-pill tag-outline">${tag}</li>
-          `)}
+          ${article.tagList.map(
+            (tag) => html` <li class="tag-default tag-pill tag-outline">${tag}</li> `
+          )}
         </ul>
       </a>
     </div>
@@ -343,13 +345,7 @@ function ArticleList() {
     return html`<div class="article-preview">No articles are here... yet.</div>`;
   }
 
-  return html`
-    <div>
-      ${articles.value.map(article => 
-        ArticlePreview({ article })
-      )}
-    </div>
-  `;
+  return html` <div>${articles.value.map((article) => ArticlePreview({ article }))}</div> `;
 }
 
 function TagList() {
@@ -368,18 +364,20 @@ function TagList() {
     <div class="sidebar">
       <p>Popular Tags</p>
       <div class="tag-list">
-        ${tags.value.map(tag => html`
-          <a 
-            href="#" 
-            class="tag-pill tag-default"
-            @click=${(e) => {
-              e.preventDefault();
-              handleTagClick(tag);
-            }}
-          >
-            ${tag}
-          </a>
-        `)}
+        ${tags.value.map(
+          (tag) => html`
+            <a
+              href="#"
+              class="tag-pill tag-default"
+              @click=${(e) => {
+                e.preventDefault();
+                handleTagClick(tag);
+              }}
+            >
+              ${tag}
+            </a>
+          `
+        )}
       </div>
     </div>
   `;
@@ -417,22 +415,24 @@ function Home() {
           <div class="col-md-9">
             <div class="feed-toggle">
               <ul class="nav nav-pills outline-active">
-                ${isAuthenticated.value ? html`
-                  <li class="nav-item">
-                    <a 
-                      class="nav-link ${activeTab === 'feed' ? 'active' : ''}"
-                      href="#"
-                      @click=${(e) => {
-                        e.preventDefault();
-                        switchTab('feed');
-                      }}
-                    >
-                      Your Feed
-                    </a>
-                  </li>
-                ` : ''}
+                ${isAuthenticated.value
+                  ? html`
+                      <li class="nav-item">
+                        <a
+                          class="nav-link ${activeTab === 'feed' ? 'active' : ''}"
+                          href="#"
+                          @click=${(e) => {
+                            e.preventDefault();
+                            switchTab('feed');
+                          }}
+                        >
+                          Your Feed
+                        </a>
+                      </li>
+                    `
+                  : ''}
                 <li class="nav-item">
-                  <a 
+                  <a
                     class="nav-link ${activeTab === 'global' ? 'active' : ''}"
                     href="#"
                     @click=${(e) => {
@@ -486,17 +486,19 @@ function Login() {
               <a href="/register">Need an account?</a>
             </p>
 
-            ${errors.general ? html`
-              <ul class="error-messages">
-                <li>${errors.general}</li>
-              </ul>
-            ` : ''}
+            ${errors.general
+              ? html`
+                  <ul class="error-messages">
+                    <li>${errors.general}</li>
+                  </ul>
+                `
+              : ''}
 
             <form @submit=${handleSubmit}>
               <fieldset class="form-group">
-                <input 
-                  class="form-control form-control-lg" 
-                  type="email" 
+                <input
+                  class="form-control form-control-lg"
+                  type="email"
                   placeholder="Email"
                   value=${email}
                   @input=${(e) => setEmail(e.target.value)}
@@ -504,16 +506,16 @@ function Login() {
                 />
               </fieldset>
               <fieldset class="form-group">
-                <input 
-                  class="form-control form-control-lg" 
-                  type="password" 
+                <input
+                  class="form-control form-control-lg"
+                  type="password"
                   placeholder="Password"
                   value=${password}
                   @input=${(e) => setPassword(e.target.value)}
                   required
                 />
               </fieldset>
-              <button 
+              <button
                 class="btn btn-lg btn-primary pull-xs-right"
                 type="submit"
                 disabled=${loading.value}
@@ -557,17 +559,19 @@ function Register() {
               <a href="/login">Have an account?</a>
             </p>
 
-            ${errors.general ? html`
-              <ul class="error-messages">
-                <li>${errors.general}</li>
-              </ul>
-            ` : ''}
+            ${errors.general
+              ? html`
+                  <ul class="error-messages">
+                    <li>${errors.general}</li>
+                  </ul>
+                `
+              : ''}
 
             <form @submit=${handleSubmit}>
               <fieldset class="form-group">
-                <input 
-                  class="form-control form-control-lg" 
-                  type="text" 
+                <input
+                  class="form-control form-control-lg"
+                  type="text"
                   placeholder="Your Name"
                   value=${username}
                   @input=${(e) => setUsername(e.target.value)}
@@ -575,9 +579,9 @@ function Register() {
                 />
               </fieldset>
               <fieldset class="form-group">
-                <input 
-                  class="form-control form-control-lg" 
-                  type="email" 
+                <input
+                  class="form-control form-control-lg"
+                  type="email"
                   placeholder="Email"
                   value=${email}
                   @input=${(e) => setEmail(e.target.value)}
@@ -585,16 +589,16 @@ function Register() {
                 />
               </fieldset>
               <fieldset class="form-group">
-                <input 
-                  class="form-control form-control-lg" 
-                  type="password" 
+                <input
+                  class="form-control form-control-lg"
+                  type="password"
                   placeholder="Password"
                   value=${password}
                   @input=${(e) => setPassword(e.target.value)}
                   required
                 />
               </fieldset>
-              <button 
+              <button
                 class="btn btn-lg btn-primary pull-xs-right"
                 type="submit"
                 disabled=${loading.value}
@@ -632,7 +636,7 @@ function Article() {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
     });
   };
 
@@ -654,14 +658,12 @@ function Article() {
             </div>
             <button class="btn btn-sm btn-outline-secondary">
               <i class="ion-plus-round"></i>
-              &nbsp;
-              Follow ${article.value.author.username}
+              &nbsp; Follow ${article.value.author.username}
             </button>
             &nbsp;&nbsp;
             <button class="btn btn-sm btn-outline-primary">
               <i class="ion-heart"></i>
-              &nbsp;
-              Favorite Post <span class="counter">(${article.value.favoritesCount})</span>
+              &nbsp; Favorite Post <span class="counter">(${article.value.favoritesCount})</span>
             </button>
           </div>
         </div>
@@ -671,14 +673,14 @@ function Article() {
         <div class="row article-content">
           <div class="col-md-12">
             <div class="article-body">
-              ${article.value.body.split('\n').map(paragraph => 
-                paragraph.trim() ? html`<p>${paragraph}</p>` : ''
-              )}
+              ${article.value.body
+                .split('\n')
+                .map((paragraph) => (paragraph.trim() ? html`<p>${paragraph}</p>` : ''))}
             </div>
             <ul class="tag-list">
-              ${article.value.tagList.map(tag => html`
-                <li class="tag-default tag-pill tag-outline">${tag}</li>
-              `)}
+              ${article.value.tagList.map(
+                (tag) => html` <li class="tag-default tag-pill tag-outline">${tag}</li> `
+              )}
             </ul>
           </div>
         </div>
@@ -698,14 +700,12 @@ function Article() {
             </div>
             <button class="btn btn-sm btn-outline-secondary">
               <i class="ion-plus-round"></i>
-              &nbsp;
-              Follow ${article.value.author.username}
+              &nbsp; Follow ${article.value.author.username}
             </button>
             &nbsp;
             <button class="btn btn-sm btn-outline-primary">
               <i class="ion-heart"></i>
-              &nbsp;
-              Favorite Post <span class="counter">(${article.value.favoritesCount})</span>
+              &nbsp; Favorite Post <span class="counter">(${article.value.favoritesCount})</span>
             </button>
           </div>
         </div>
@@ -725,27 +725,29 @@ function App() {
   return html`
     <div class="app">
       <${Header} />
-      
-      ${error.value ? html`
-        <div class="error-banner">
-          <div class="container">
-            <p class="error-message">${error.value}</p>
-            <button @click=${() => store.commit('setError', null)}>×</button>
-          </div>
-        </div>
-      ` : ''}
-      
+
+      ${error.value
+        ? html`
+            <div class="error-banner">
+              <div class="container">
+                <p class="error-message">${error.value}</p>
+                <button @click=${() => store.commit('setError', null)}>×</button>
+              </div>
+            </div>
+          `
+        : ''}
+
       <main class="main-content">
         <router-outlet></router-outlet>
       </main>
-      
+
       <footer class="footer">
         <div class="container">
           <a href="/" class="logo-font">conduit</a>
           <span class="attribution">
-            An interactive learning project from <a href="https://thinkster.io">Thinkster</a>. 
-            Code &amp; design licensed under MIT.
-            Built with <a href="https://berryact.dev">Berryact Framework</a>.
+            An interactive learning project from <a href="https://thinkster.io">Thinkster</a>. Code
+            &amp; design licensed under MIT. Built with
+            <a href="https://berryact.dev">Berryact Framework</a>.
           </span>
         </div>
       </footer>
@@ -760,8 +762,8 @@ const router = createRouter({
     { path: '/', component: Home },
     { path: '/login', component: Login },
     { path: '/register', component: Register },
-    { path: '/article/:slug', component: Article }
-  ]
+    { path: '/article/:slug', component: Article },
+  ],
 });
 
 // Initialize app

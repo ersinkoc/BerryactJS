@@ -11,17 +11,21 @@ export class DOMRenderer {
 
   setupEventDelegation() {
     const commonEvents = ['click', 'input', 'change', 'submit', 'keydown', 'keyup'];
-    
-    commonEvents.forEach(eventType => {
-      document.addEventListener(eventType, (event) => {
-        this.handleDelegatedEvent(event);
-      }, true);
+
+    commonEvents.forEach((eventType) => {
+      document.addEventListener(
+        eventType,
+        (event) => {
+          this.handleDelegatedEvent(event);
+        },
+        true
+      );
     });
   }
 
   handleDelegatedEvent(event) {
     let target = event.target;
-    
+
     while (target && target !== document) {
       const handlers = this.eventDelegation.get(target);
       if (handlers && handlers[event.type]) {
@@ -43,11 +47,11 @@ export class DOMRenderer {
     }
 
     const rendered = compiled.render();
-    
+
     if (rendered.element) {
       if (rendered.element.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
         const children = Array.from(rendered.element.childNodes);
-        children.forEach(child => container.appendChild(child));
+        children.forEach((child) => container.appendChild(child));
       } else {
         container.appendChild(rendered.element);
       }
@@ -60,16 +64,16 @@ export class DOMRenderer {
         if (rendered.element && rendered.element.parentNode) {
           rendered.element.parentNode.removeChild(rendered.element);
         }
-      }
+      },
     };
   }
 
   createElement(tag, props = {}, children = []) {
     const element = document.createElement(tag);
-    
+
     this.updateProps(element, props);
     this.updateChildren(element, children);
-    
+
     return element;
   }
 
@@ -77,7 +81,7 @@ export class DOMRenderer {
     Object.entries(props).forEach(([key, value]) => {
       this.setProp(element, key, value);
     });
-    
+
     processDirectives(element, props);
   }
 
@@ -137,7 +141,7 @@ export class DOMRenderer {
     if (!this.eventDelegation.has(element)) {
       this.eventDelegation.set(element, {});
     }
-    
+
     this.eventDelegation.get(element)[eventType] = handler;
   }
 
@@ -146,7 +150,7 @@ export class DOMRenderer {
       element.removeChild(element.firstChild);
     }
 
-    children.forEach(child => {
+    children.forEach((child) => {
       if (child === null || child === undefined) {
         return;
       }
@@ -183,14 +187,14 @@ export class DOMRenderer {
       });
       return textNode;
     }
-    
+
     return document.createTextNode(String(content));
   }
 
   createFragment(children) {
     const fragment = document.createDocumentFragment();
-    
-    children.forEach(child => {
+
+    children.forEach((child) => {
       if (child instanceof Node) {
         fragment.appendChild(child);
       } else {
@@ -203,7 +207,7 @@ export class DOMRenderer {
         }
       }
     });
-    
+
     return fragment;
   }
 

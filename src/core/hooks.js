@@ -26,10 +26,10 @@ export function getNextHookIndex() {
 export function useState(initialValue) {
   const component = getCurrentComponent();
   const index = getNextHookIndex();
-  
+
   if (!component.hooks[index]) {
     const state = signal(initialValue);
-    
+
     const setState = (newValue) => {
       if (typeof newValue === 'function') {
         state.value = newValue(state.value);
@@ -38,10 +38,10 @@ export function useState(initialValue) {
       }
       scheduleComponentUpdate(component);
     };
-    
+
     component.hooks[index] = [state, setState];
   }
-  
+
   const [state, setState] = component.hooks[index];
   return [() => state.value, setState];
 }
@@ -49,50 +49,50 @@ export function useState(initialValue) {
 export function useSignal(initialValue) {
   const component = getCurrentComponent();
   const index = getNextHookIndex();
-  
+
   if (!component.hooks[index]) {
     const state = signal(initialValue);
-    
+
     effect(() => {
       state.value;
       scheduleComponentUpdate(component);
     });
-    
+
     component.hooks[index] = state;
   }
-  
+
   return component.hooks[index];
 }
 
 export function useComputed(fn) {
   const component = getCurrentComponent();
   const index = getNextHookIndex();
-  
+
   if (!component.hooks[index]) {
     const computedValue = computed(fn);
-    
+
     effect(() => {
       computedValue.value;
       scheduleComponentUpdate(component);
     });
-    
+
     component.hooks[index] = computedValue;
   }
-  
+
   return component.hooks[index];
 }
 
 export function useEffect(fn, deps) {
   const component = getCurrentComponent();
   const index = getNextHookIndex();
-  
+
   if (!component.hooks[index]) {
     component.hooks[index] = { deps: [], cleanup: null };
   }
-  
+
   const hook = component.hooks[index];
   const hasChanged = !deps || !hook.deps || deps.some((dep, i) => dep !== hook.deps[i]);
-  
+
   // Debug logging
   if (typeof window !== 'undefined' && window.DEBUG_HOOKS) {
     console.log('useEffect debug:', {
@@ -102,24 +102,24 @@ export function useEffect(fn, deps) {
       hasChanged,
       depsUndefined: !deps,
       hookDepsUndefined: !hook.deps,
-      someResult: deps ? deps.some((dep, i) => dep !== hook.deps[i]) : 'deps undefined'
+      someResult: deps ? deps.some((dep, i) => dep !== hook.deps[i]) : 'deps undefined',
     });
   }
-  
+
   if (hasChanged) {
     if (hook.cleanup) {
       hook.cleanup();
     }
-    
+
     hook.cleanup = fn();
     hook.deps = deps ? [...deps] : [];
   }
-  
+
   // Store cleanup function for component unmount
   if (!component.effectCleanups) {
     component.effectCleanups = [];
   }
-  
+
   // Replace existing cleanup for this hook
   component.effectCleanups[index] = hook.cleanup;
 }
@@ -127,19 +127,19 @@ export function useEffect(fn, deps) {
 export function useMemo(fn, deps) {
   const component = getCurrentComponent();
   const index = getNextHookIndex();
-  
+
   if (!component.hooks[index]) {
     component.hooks[index] = { value: undefined, deps: [] };
   }
-  
+
   const hook = component.hooks[index];
   const hasChanged = !deps || !hook.deps || deps.some((dep, i) => dep !== hook.deps[i]);
-  
+
   if (hasChanged) {
     hook.value = fn();
     hook.deps = deps ? [...deps] : [];
   }
-  
+
   return hook.value;
 }
 
@@ -150,17 +150,17 @@ export function useCallback(fn, deps) {
 export function useRef(initialValue) {
   const component = getCurrentComponent();
   const index = getNextHookIndex();
-  
+
   if (!component.hooks[index]) {
     component.hooks[index] = { current: initialValue };
   }
-  
+
   return component.hooks[index];
 }
 
 export function useContext(context) {
   const component = getCurrentComponent();
-  
+
   // Start from current component and walk up the tree
   let current = component;
   while (current) {
@@ -169,7 +169,7 @@ export function useContext(context) {
     }
     current = current.parent;
   }
-  
+
   return context.defaultValue;
 }
 
@@ -181,15 +181,15 @@ export function createContext(defaultValue) {
       component.providedContext = context;
       component.contextValue = props.value;
       return props.children;
-    }
+    },
   };
-  
+
   return context;
 }
 
 export function cleanupComponentEffects(component) {
   if (component.effectCleanups) {
-    component.effectCleanups.forEach(cleanup => {
+    component.effectCleanups.forEach((cleanup) => {
       if (cleanup && typeof cleanup === 'function') {
         cleanup();
       }

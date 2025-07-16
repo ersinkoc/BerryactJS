@@ -11,17 +11,21 @@ module.exports = function babelPluginDevExpression({ types: t }) {
       },
 
       FunctionExpression(path) {
-        if (path.parent.type === 'VariableDeclarator' && 
-            path.parent.id.type === 'Identifier' &&
-            /^[A-Z]/.test(path.parent.id.name)) {
+        if (
+          path.parent.type === 'VariableDeclarator' &&
+          path.parent.id.type === 'Identifier' &&
+          /^[A-Z]/.test(path.parent.id.name)
+        ) {
           addComponentDebugInfo(path, path.parent.id.name, t);
         }
       },
 
       ArrowFunctionExpression(path) {
-        if (path.parent.type === 'VariableDeclarator' && 
-            path.parent.id.type === 'Identifier' &&
-            /^[A-Z]/.test(path.parent.id.name)) {
+        if (
+          path.parent.type === 'VariableDeclarator' &&
+          path.parent.id.type === 'Identifier' &&
+          /^[A-Z]/.test(path.parent.id.name)
+        ) {
           addComponentDebugInfo(path, path.parent.id.name, t);
         }
       },
@@ -32,13 +36,15 @@ module.exports = function babelPluginDevExpression({ types: t }) {
 
         const openingElement = path.node.openingElement;
         const location = path.node.loc;
-        
+
         if (location && !hasSourceAttribute(openingElement)) {
           const sourceAttr = t.jsxAttribute(
             t.jsxIdentifier('data-source'),
-            t.stringLiteral(`${state.file.opts.filename}:${location.start.line}:${location.start.column}`)
+            t.stringLiteral(
+              `${state.file.opts.filename}:${location.start.line}:${location.start.column}`
+            )
           );
-          
+
           openingElement.attributes.push(sourceAttr);
         }
       },
@@ -47,14 +53,11 @@ module.exports = function babelPluginDevExpression({ types: t }) {
       CallExpression(path) {
         if (path.node.callee.name === 'ErrorBoundary') {
           const props = path.node.arguments[0];
-          
+
           if (props && props.type === 'ObjectExpression') {
             // Add development info
             props.properties.push(
-              t.objectProperty(
-                t.identifier('__DEV__'),
-                t.booleanLiteral(true)
-              )
+              t.objectProperty(t.identifier('__DEV__'), t.booleanLiteral(true))
             );
           }
         }
@@ -63,37 +66,30 @@ module.exports = function babelPluginDevExpression({ types: t }) {
       // Add debug assertions
       Identifier(path) {
         if (path.node.name === '__DEV__' && path.isReferencedIdentifier()) {
-          path.replaceWith(
-            t.booleanLiteral(process.env.NODE_ENV !== 'production')
-          );
+          path.replaceWith(t.booleanLiteral(process.env.NODE_ENV !== 'production'));
         }
-      }
-    }
+      },
+    },
   };
 };
 
 function addComponentDebugInfo(path, componentName, t) {
   const body = path.node.body;
-  
+
   if (body.type === 'BlockStatement') {
     // Add debug name at the beginning of the function
     body.body.unshift(
       t.expressionStatement(
-        t.callExpression(
-          t.memberExpression(
-            t.identifier('console'),
-            t.identifier('debug')
-          ),
-          [t.stringLiteral(`[Berryact] Rendering ${componentName}`)]
-        )
+        t.callExpression(t.memberExpression(t.identifier('console'), t.identifier('debug')), [
+          t.stringLiteral(`[Berryact] Rendering ${componentName}`),
+        ])
       )
     );
   }
 }
 
 function hasSourceAttribute(openingElement) {
-  return openingElement.attributes.some(attr => 
-    attr.type === 'JSXAttribute' && 
-    attr.name.name === 'data-source'
+  return openingElement.attributes.some(
+    (attr) => attr.type === 'JSXAttribute' && attr.name.name === 'data-source'
   );
 }

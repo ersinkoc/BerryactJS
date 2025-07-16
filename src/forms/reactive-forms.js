@@ -15,7 +15,7 @@ export const Validators = {
         return { valid: false, message };
       }
       return { valid: true };
-    }
+    },
   }),
 
   minLength: (length, message = `Minimum length is ${length}`) => ({
@@ -25,7 +25,7 @@ export const Validators = {
         return { valid: false, message };
       }
       return { valid: true };
-    }
+    },
   }),
 
   maxLength: (length, message = `Maximum length is ${length}`) => ({
@@ -35,7 +35,7 @@ export const Validators = {
         return { valid: false, message };
       }
       return { valid: true };
-    }
+    },
   }),
 
   pattern: (regex, message = 'Invalid format') => ({
@@ -45,7 +45,7 @@ export const Validators = {
         return { valid: false, message };
       }
       return { valid: true };
-    }
+    },
   }),
 
   email: (message = 'Invalid email address') => ({
@@ -56,7 +56,7 @@ export const Validators = {
         return { valid: false, message };
       }
       return { valid: true };
-    }
+    },
   }),
 
   min: (minValue, message = `Minimum value is ${minValue}`) => ({
@@ -66,7 +66,7 @@ export const Validators = {
         return { valid: false, message };
       }
       return { valid: true };
-    }
+    },
   }),
 
   max: (maxValue, message = `Maximum value is ${maxValue}`) => ({
@@ -76,7 +76,7 @@ export const Validators = {
         return { valid: false, message };
       }
       return { valid: true };
-    }
+    },
   }),
 
   custom: (validateFn, message = 'Invalid value') => ({
@@ -91,7 +91,7 @@ export const Validators = {
       } catch (error) {
         return { valid: false, message: error.message || message };
       }
-    }
+    },
   }),
 
   match: (otherFieldName, message = 'Fields do not match') => ({
@@ -99,30 +99,29 @@ export const Validators = {
     validate: (value, field) => {
       const form = field.form;
       if (!form) return { valid: true };
-      
+
       const otherField = form.getField(otherFieldName);
       if (!otherField) return { valid: true };
-      
+
       if (value !== otherField.value.value) {
         return { valid: false, message };
       }
       return { valid: true };
-    }
+    },
   }),
 
   requiredIf: (condition, message = 'This field is required') => ({
     name: 'requiredIf',
     validate: (value, field) => {
-      const shouldValidate = typeof condition === 'function' 
-        ? condition(field.form?.values.value)
-        : condition;
-        
+      const shouldValidate =
+        typeof condition === 'function' ? condition(field.form?.values.value) : condition;
+
       if (shouldValidate && (!value || value === '')) {
         return { valid: false, message };
       }
       return { valid: true };
-    }
-  })
+    },
+  }),
 };
 
 // Form field class
@@ -130,7 +129,7 @@ export class FormField {
   constructor(name, options = {}) {
     this.name = name;
     this.form = null;
-    
+
     // Field state
     this.value = signal(options.value ?? '');
     this.errors = signal([]);
@@ -138,7 +137,7 @@ export class FormField {
     this.dirty = signal(false);
     this.validating = signal(false);
     this.focused = signal(false);
-    
+
     // Options
     this.validators = options.validators || [];
     this.asyncValidators = options.asyncValidators || [];
@@ -146,32 +145,32 @@ export class FormField {
     this.parse = options.parse || null;
     this.format = options.format || null;
     this.debounce = options.debounce || 0;
-    
+
     // Computed states
     this.valid = computed(() => this.errors.value.length === 0);
     this.invalid = computed(() => this.errors.value.length > 0);
     this.pristine = computed(() => !this.dirty.value);
     this.untouched = computed(() => !this.touched.value);
-    
+
     // Error message
     this.error = computed(() => {
       const errors = this.errors.value;
       return errors.length > 0 ? errors[0].message : null;
     });
-    
+
     // Setup validation
     this._setupValidation();
   }
 
   _setupValidation() {
     let validateTimeout;
-    
+
     effect(() => {
       const value = this.value.value;
-      
+
       // Clear existing timeout
       clearTimeout(validateTimeout);
-      
+
       // Debounce validation
       validateTimeout = setTimeout(() => {
         this.validate();
@@ -181,19 +180,19 @@ export class FormField {
 
   async validate(options = {}) {
     const { updateTouched = false, force = false } = options;
-    
+
     if (!force && !this.dirty.value && !this.touched.value) {
       return true;
     }
-    
+
     if (updateTouched) {
       this.touched.value = true;
     }
-    
+
     this.validating.value = true;
     const errors = [];
     const value = this.getValue();
-    
+
     try {
       // Run sync validators
       for (const validator of this.validators) {
@@ -201,11 +200,11 @@ export class FormField {
         if (!result.valid) {
           errors.push({
             rule: validator.name,
-            message: result.message
+            message: result.message,
           });
         }
       }
-      
+
       // Run async validators if sync passed
       if (errors.length === 0 && this.asyncValidators.length > 0) {
         for (const validator of this.asyncValidators) {
@@ -213,7 +212,7 @@ export class FormField {
           if (!result.valid) {
             errors.push({
               rule: validator.name,
-              message: result.message
+              message: result.message,
             });
           }
         }
@@ -221,41 +220,41 @@ export class FormField {
     } finally {
       this.validating.value = false;
     }
-    
+
     this.errors.value = errors;
     return errors.length === 0;
   }
 
   getValue() {
     const rawValue = this.value.value;
-    
+
     // Apply parser if provided
     if (this.parse) {
       return this.parse(rawValue);
     }
-    
+
     return rawValue;
   }
 
   setValue(value, options = {}) {
     const { emitEvent = true, updateDirty = true } = options;
-    
+
     // Apply transform if provided
     if (this.transform) {
       value = this.transform(value);
     }
-    
+
     // Apply format if provided
     if (this.format) {
       value = this.format(value);
     }
-    
+
     this.value.value = value;
-    
+
     if (updateDirty) {
       this.dirty.value = true;
     }
-    
+
     if (emitEvent && this.form) {
       this.form._notifyChange(this.name, value);
     }
@@ -317,7 +316,7 @@ export class FormField {
       onFocus: () => this.focus(),
       onBlur: () => this.blur(),
       'aria-invalid': this.invalid.value,
-      'aria-describedby': this.error.value ? `${this.name}-error` : undefined
+      'aria-describedby': this.error.value ? `${this.name}-error` : undefined,
     };
   }
 }
@@ -327,17 +326,17 @@ export class FormGroup {
   constructor(fields = {}, options = {}) {
     this.fields = new Map();
     this.options = options;
-    
+
     // Form state
     this.submitting = signal(false);
     this.submitted = signal(false);
     this.submitCount = signal(0);
-    
+
     // Initialize fields
     Object.entries(fields).forEach(([name, fieldOptions]) => {
       this.addField(name, fieldOptions);
     });
-    
+
     // Computed states
     this.values = computed(() => {
       const values = {};
@@ -346,7 +345,7 @@ export class FormGroup {
       });
       return values;
     });
-    
+
     this.errors = computed(() => {
       const errors = {};
       this.fields.forEach((field, name) => {
@@ -356,37 +355,35 @@ export class FormGroup {
       });
       return errors;
     });
-    
+
     this.valid = computed(() => {
-      return Array.from(this.fields.values()).every(field => field.valid.value);
+      return Array.from(this.fields.values()).every((field) => field.valid.value);
     });
-    
+
     this.invalid = computed(() => !this.valid.value);
-    
+
     this.dirty = computed(() => {
-      return Array.from(this.fields.values()).some(field => field.dirty.value);
+      return Array.from(this.fields.values()).some((field) => field.dirty.value);
     });
-    
+
     this.pristine = computed(() => !this.dirty.value);
-    
+
     this.touched = computed(() => {
-      return Array.from(this.fields.values()).some(field => field.touched.value);
+      return Array.from(this.fields.values()).some((field) => field.touched.value);
     });
-    
+
     this.validating = computed(() => {
-      return Array.from(this.fields.values()).some(field => field.validating.value);
+      return Array.from(this.fields.values()).some((field) => field.validating.value);
     });
-    
+
     // Change handlers
     this._changeHandlers = new Set();
     this._submitHandlers = new Set();
   }
 
   addField(name, options) {
-    const field = options instanceof FormField 
-      ? options 
-      : new FormField(name, options);
-      
+    const field = options instanceof FormField ? options : new FormField(name, options);
+
     field.form = this;
     this.fields.set(name, field);
     return field;
@@ -426,41 +423,42 @@ export class FormGroup {
 
   async validate(options = {}) {
     const results = await Promise.all(
-      Array.from(this.fields.values()).map(field => field.validate(options))
+      Array.from(this.fields.values()).map((field) => field.validate(options))
     );
-    return results.every(valid => valid);
+    return results.every((valid) => valid);
   }
 
   async submit(handler) {
     if (this.submitting.value) return;
-    
+
     this.submitting.value = true;
     this.submitted.value = true;
     this.submitCount.value++;
-    
+
     try {
       // Validate all fields
       const isValid = await this.validate({ updateTouched: true });
-      
+
       if (!isValid) {
-        const firstErrorField = Array.from(this.fields.values())
-          .find(field => field.invalid.value);
-          
+        const firstErrorField = Array.from(this.fields.values()).find(
+          (field) => field.invalid.value
+        );
+
         if (firstErrorField && this.options.focusOnError) {
           // Focus first error field
           this._notifyFocus(firstErrorField.name);
         }
-        
+
         return;
       }
-      
+
       // Call handler
       const values = this.values.value;
       await handler(values, this);
-      
+
       // Notify submit handlers
-      this._submitHandlers.forEach(h => h(values));
-      
+      this._submitHandlers.forEach((h) => h(values));
+
       // Reset if configured
       if (this.options.resetOnSubmit) {
         this.reset();
@@ -475,18 +473,18 @@ export class FormGroup {
       this.fields.forEach((field, name) => {
         field.reset(values[name] || '');
       });
-      
+
       this.submitted.value = false;
       this.submitCount.value = 0;
     });
   }
 
   markAllAsTouched() {
-    this.fields.forEach(field => field.markAsTouched());
+    this.fields.forEach((field) => field.markAsTouched());
   }
 
   markAllAsUntouched() {
-    this.fields.forEach(field => field.markAsUntouched());
+    this.fields.forEach((field) => field.markAsUntouched());
   }
 
   onChange(handler) {
@@ -500,7 +498,7 @@ export class FormGroup {
   }
 
   _notifyChange(fieldName, value) {
-    this._changeHandlers.forEach(handler => {
+    this._changeHandlers.forEach((handler) => {
       handler({ fieldName, value, values: this.values.value });
     });
   }
@@ -519,7 +517,7 @@ export class FormGroup {
         if (this.options.onSubmit) {
           this.submit(this.options.onSubmit);
         }
-      }
+      },
     };
   }
 }
@@ -529,13 +527,13 @@ export class FormArray {
   constructor(initialItems = [], fieldFactory) {
     this.items = signal(initialItems);
     this.fieldFactory = fieldFactory;
-    
+
     // Computed states
     this.length = computed(() => this.items.value.length);
-    this.valid = computed(() => this.items.value.every(item => item.valid.value));
+    this.valid = computed(() => this.items.value.every((item) => item.valid.value));
     this.invalid = computed(() => !this.valid.value);
-    this.dirty = computed(() => this.items.value.some(item => item.dirty.value));
-    this.values = computed(() => this.items.value.map(item => item.getValue()));
+    this.dirty = computed(() => this.items.value.some((item) => item.dirty.value));
+    this.values = computed(() => this.items.value.map((item) => item.getValue()));
   }
 
   push(value) {
@@ -563,25 +561,23 @@ export class FormArray {
   }
 
   setItems(values) {
-    this.items.value = values.map(value => this.fieldFactory(value));
+    this.items.value = values.map((value) => this.fieldFactory(value));
   }
 
   async validate(options) {
-    const results = await Promise.all(
-      this.items.value.map(field => field.validate(options))
-    );
-    return results.every(valid => valid);
+    const results = await Promise.all(this.items.value.map((field) => field.validate(options)));
+    return results.every((valid) => valid);
   }
 
   reset() {
-    this.items.value.forEach(field => field.reset());
+    this.items.value.forEach((field) => field.reset());
   }
 }
 
 // Form builder helper
 export function createForm(config) {
   const fields = {};
-  
+
   Object.entries(config).forEach(([name, fieldConfig]) => {
     if (typeof fieldConfig === 'string' || fieldConfig === null) {
       // Simple value
@@ -590,14 +586,14 @@ export function createForm(config) {
       // [value, validators]
       fields[name] = {
         value: fieldConfig[0],
-        validators: fieldConfig[1]
+        validators: fieldConfig[1],
       };
     } else {
       // Full config
       fields[name] = fieldConfig;
     }
   });
-  
+
   return new FormGroup(fields);
 }
 
@@ -609,13 +605,13 @@ export function useForm(config, options) {
     }
     return createForm(config);
   });
-  
+
   useEffect(() => {
     return () => {
       // Cleanup if needed
     };
   }, []);
-  
+
   return form;
 }
 
@@ -623,7 +619,7 @@ export function useForm(config, options) {
 export const ReactiveFormsPlugin = createPlugin({
   name: 'reactive-forms',
   version: '1.0.0',
-  
+
   setup(app, context) {
     // Provide form utilities
     this.provide('forms', {
@@ -632,13 +628,13 @@ export const ReactiveFormsPlugin = createPlugin({
       FormArray,
       Validators,
       createForm,
-      useForm
+      useForm,
     });
-    
+
     // Global access
     app.forms = {
       create: createForm,
-      validators: Validators
+      validators: Validators,
     };
-  }
+  },
 });

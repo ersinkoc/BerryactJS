@@ -13,28 +13,28 @@ describe('Template System', () => {
     test('handles interpolation', () => {
       const message = 'Hello';
       const template = html`<div>${message}</div>`;
-      
+
       expect(template.children).toContain(message);
     });
 
     test('handles signal interpolation', () => {
       const count = signal(5);
       const template = html`<div>${count}</div>`;
-      
+
       expect(template.children).toContain(count);
     });
 
     test('handles attributes', () => {
       const className = 'test-class';
       const template = html`<div class=${className}>Content</div>`;
-      
+
       expect(template.props.class).toBe(className);
     });
 
     test('handles event handlers', () => {
       const handler = () => {};
       const template = html`<button @click=${handler}>Click</button>`;
-      
+
       expect(template.props['@click']).toBe(handler);
     });
 
@@ -45,7 +45,7 @@ describe('Template System', () => {
           <p>Paragraph</p>
         </div>
       `;
-      
+
       expect(template.children).toHaveLength(2);
       expect(template.children[0].tag).toBe('h1');
       expect(template.children[1].tag).toBe('p');
@@ -59,14 +59,14 @@ describe('Template System', () => {
           Some text
         </div>
       `;
-      
+
       // Check that h1 element contains the title
-      const h1Element = template.children.find(child => child.tag === 'h1');
+      const h1Element = template.children.find((child) => child.tag === 'h1');
       expect(h1Element).toBeDefined();
       expect(h1Element.children).toContain(title);
-      
+
       // Check that text content contains "Some text"
-      const textNode = template.children.find(child => child.type === 'text');
+      const textNode = template.children.find((child) => child.type === 'text');
       expect(textNode).toBeDefined();
       expect(textNode.children.join('')).toContain('Some text');
     });
@@ -74,21 +74,15 @@ describe('Template System', () => {
 
   describe('fragment', () => {
     test('creates fragment from children', () => {
-      const frag = fragment(
-        html`<div>First</div>`,
-        html`<div>Second</div>`
-      );
-      
+      const frag = fragment(html`<div>First</div>`, html`<div>Second</div>`);
+
       expect(frag.type).toBe('fragment');
       expect(frag.children).toHaveLength(2);
     });
 
     test('flattens nested arrays', () => {
-      const items = [
-        html`<li>Item 1</li>`,
-        html`<li>Item 2</li>`
-      ];
-      
+      const items = [html`<li>Item 1</li>`, html`<li>Item 2</li>`];
+
       const frag = fragment(...items);
       expect(frag.children).toHaveLength(2);
     });
@@ -115,7 +109,7 @@ describe('Template System', () => {
     test('handles complex expressions', () => {
       const user = { name: 'John', age: 30 };
       const template = html`<div>${user.name} is ${user.age} years old</div>`;
-      
+
       // Check that the text content contains the interpolated values
       const textNode = template.children[0];
       expect(textNode.children).toContain(user.name);
@@ -124,8 +118,8 @@ describe('Template System', () => {
 
     test('handles arrays in interpolation', () => {
       const items = ['A', 'B', 'C'];
-      const template = html`<div>${items.map(item => html`<span>${item}</span>`)}</div>`;
-      
+      const template = html`<div>${items.map((item) => html`<span>${item}</span>`)}</div>`;
+
       expect(template.children[0]).toBeInstanceOf(Array);
       expect(template.children[0]).toHaveLength(3);
     });

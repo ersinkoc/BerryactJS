@@ -9,7 +9,7 @@ export const Portal = Symbol.for('berryact.portal');
 // VNode structure for both JSX and template literals
 export function createVNode(type, props, children, key, ref) {
   const normalizedChildren = normalizeChildren(children);
-  
+
   return {
     $$typeof: BERRYACT_ELEMENT_TYPE,
     type,
@@ -17,7 +17,7 @@ export function createVNode(type, props, children, key, ref) {
     children: normalizedChildren,
     key: key != null ? String(key) : null,
     ref: ref || null,
-    _owner: null
+    _owner: null,
   };
 }
 
@@ -26,25 +26,25 @@ export function normalizeChildren(children) {
   if (children == null || children === false || children === true) {
     return [];
   }
-  
+
   if (isPrimitive(children)) {
     return [createTextVNode(String(children))];
   }
-  
+
   if (isSignal(children)) {
     return [createTextVNode(children)];
   }
-  
+
   if (isArray(children)) {
     const normalized = [];
-    
+
     for (let i = 0; i < children.length; i++) {
       const child = children[i];
-      
+
       if (child == null || child === false || child === true) {
         continue;
       }
-      
+
       if (isPrimitive(child)) {
         normalized.push(createTextVNode(String(child)));
       } else if (isSignal(child)) {
@@ -57,14 +57,14 @@ export function normalizeChildren(children) {
         normalized.push(child);
       }
     }
-    
+
     return normalized;
   }
-  
+
   if (isVNode(children)) {
     return [children];
   }
-  
+
   return [children];
 }
 
@@ -76,7 +76,7 @@ export function createTextVNode(text) {
     props: { nodeValue: text },
     children: [],
     key: null,
-    ref: null
+    ref: null,
   };
 }
 
@@ -95,41 +95,35 @@ export function cloneVNode(vnode, newProps, newChildren) {
   if (!isVNode(vnode)) {
     throw new Error('cloneVNode expects a valid VNode');
   }
-  
+
   const props = { ...vnode.props, ...newProps };
   const children = newChildren !== undefined ? newChildren : vnode.children;
-  
-  return createVNode(
-    vnode.type,
-    props,
-    children,
-    vnode.key,
-    vnode.ref
-  );
+
+  return createVNode(vnode.type, props, children, vnode.key, vnode.ref);
 }
 
 // Get display name for debugging
 export function getComponentName(vnode) {
   if (!vnode) return 'Unknown';
-  
+
   const { type } = vnode;
-  
+
   if (typeof type === 'string') {
     return type;
   }
-  
+
   if (typeof type === 'function') {
     return type.displayName || type.name || 'Component';
   }
-  
+
   if (type === Fragment) {
     return 'Fragment';
   }
-  
+
   if (type === Portal) {
     return 'Portal';
   }
-  
+
   return 'Unknown';
 }
 

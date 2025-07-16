@@ -3,7 +3,7 @@ import { MemoryHistory } from '../../src/router/history.js';
 
 describe('Router System', () => {
   let router;
-  
+
   beforeEach(() => {
     router = createRouter({
       mode: 'memory',
@@ -13,8 +13,8 @@ describe('Router System', () => {
         { path: '/users/:id', component: () => 'User', name: 'profile' },
         { path: '/posts/:id/comments/:commentId', component: () => 'Comment' },
         { path: '/login', component: () => 'Login' },
-        { path: '/admin', component: () => 'Admin' }
-      ]
+        { path: '/admin', component: () => 'Admin' },
+      ],
     });
   });
 
@@ -49,13 +49,13 @@ describe('Router System', () => {
     test('navigates to simple route', async () => {
       router.push('/about');
       // Wait for the async route change to complete
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
       expect(router.currentRoute.value.path).toBe('/about');
     });
 
     test('navigates with parameters', async () => {
       router.push('/users/456');
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
       expect(router.currentRoute.value.path).toBe('/users/:id');
       expect(router.params.value.id).toBe('456');
     });
@@ -68,7 +68,7 @@ describe('Router System', () => {
 
     test('handles hash fragments', async () => {
       router.push('/about#section1');
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
       expect(router.hash.value).toBe('section1');
     });
 
@@ -76,7 +76,7 @@ describe('Router System', () => {
       router.push('/');
       router.push('/about');
       router.replace('/users/123');
-      
+
       // Should be able to go back to initial route, skipping replaced route
       router.back();
       expect(router.currentRoute.value.path).toBe('/');
@@ -88,13 +88,13 @@ describe('Router System', () => {
       router.push('/');
       router.push('/about');
       router.push('/users/123');
-      
+
       router.back();
       expect(router.currentRoute.value.path).toBe('/about');
-      
+
       router.back();
       expect(router.currentRoute.value.path).toBe('/');
-      
+
       router.forward();
       expect(router.currentRoute.value.path).toBe('/about');
     });
@@ -103,10 +103,10 @@ describe('Router System', () => {
       router.push('/');
       router.push('/about');
       router.push('/users/123');
-      
+
       router.go(-2);
       expect(router.currentRoute.value.path).toBe('/');
-      
+
       router.go(1);
       expect(router.currentRoute.value.path).toBe('/about');
     });
@@ -115,24 +115,24 @@ describe('Router System', () => {
   describe('Route Guards', () => {
     test('beforeEach guard can allow navigation', async () => {
       let guardCalled = false;
-      
+
       router.beforeEach((to, from, next) => {
         guardCalled = true;
         next();
       });
-      
+
       router.push('/about');
-      
+
       // Wait for async guard
-      await new Promise(resolve => setTimeout(resolve, 0));
-      
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
       expect(guardCalled).toBe(true);
       expect(router.currentRoute.value.path).toBe('/about');
     });
 
     test('beforeEach guard can prevent navigation', async () => {
       router.push('/'); // Start at home
-      
+
       router.beforeEach((to, from, next) => {
         if (to.path === '/about') {
           next(false); // Prevent navigation
@@ -140,12 +140,12 @@ describe('Router System', () => {
           next();
         }
       });
-      
+
       router.push('/about');
-      
+
       // Wait for async guard
-      await new Promise(resolve => setTimeout(resolve, 0));
-      
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
       expect(router.currentRoute.value.path).toBe('/'); // Should stay at home
     });
 
@@ -157,29 +157,29 @@ describe('Router System', () => {
           next();
         }
       });
-      
+
       router.push('/admin');
-      
+
       // Wait for async guard
-      await new Promise(resolve => setTimeout(resolve, 0));
-      
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
       expect(router.currentRoute.value.path).toBe('/login');
     });
 
     test('afterEach guard runs after navigation', async () => {
       let afterEachCalled = false;
       let capturedTo = null;
-      
+
       router.afterEach((to, from) => {
         afterEachCalled = true;
         capturedTo = to;
       });
-      
+
       router.push('/about');
-      
+
       // Wait for async operations
-      await new Promise(resolve => setTimeout(resolve, 0));
-      
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
       expect(afterEachCalled).toBe(true);
       expect(capturedTo.path).toBe('/about');
     });
@@ -188,20 +188,20 @@ describe('Router System', () => {
   describe('Named Routes', () => {
     beforeEach(() => {
       router.addRoute('/profile/:id', () => 'Profile', {
-        name: 'profile'
+        name: 'profile',
       });
     });
 
     test('navigates to named route', async () => {
       router.pushNamed('profile', { id: '123' });
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
       expect(router.currentRoute.value.name).toBe('profile');
       expect(router.params.value.id).toBe('123');
     });
 
     test('navigates to named route with query', async () => {
       router.pushNamed('profile', { id: '456' }, { tab: 'settings' });
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
       expect(router.params.value.id).toBe('456');
       expect(router.query.value.tab).toBe('settings');
     });
@@ -216,7 +216,7 @@ describe('Router System', () => {
   describe('Dynamic Route Addition', () => {
     test('adds single route', () => {
       router.addRoute('/dynamic', () => 'Dynamic');
-      
+
       const route = router.matchRoute('/dynamic');
       expect(route).toBeTruthy();
       expect(route.path).toBe('/dynamic');
@@ -225,18 +225,18 @@ describe('Router System', () => {
     test('adds multiple routes', () => {
       router.addRoutes([
         { path: '/route1', component: () => 'Route1' },
-        { path: '/route2', component: () => 'Route2' }
+        { path: '/route2', component: () => 'Route2' },
       ]);
-      
+
       expect(router.matchRoute('/route1')).toBeTruthy();
       expect(router.matchRoute('/route2')).toBeTruthy();
     });
 
     test('handles route with meta data', () => {
       router.addRoute('/protected', () => 'Protected', {
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true },
       });
-      
+
       const route = router.matchRoute('/protected');
       expect(route.meta.requiresAuth).toBe(true);
     });
@@ -245,7 +245,7 @@ describe('Router System', () => {
   describe('Current Route Helpers', () => {
     test('getCurrentRoute returns current route', () => {
       router.push('/users/789');
-      
+
       const current = router.getCurrentRoute();
       expect(current.path).toBe('/users/:id');
       expect(current.params.id).toBe('789');
@@ -253,7 +253,7 @@ describe('Router System', () => {
 
     test('isCurrentRoute checks if route is current', () => {
       router.push('/about');
-      
+
       expect(router.isCurrentRoute('/about')).toBe(true);
       expect(router.isCurrentRoute('/users/123')).toBe(false);
     });
@@ -262,20 +262,20 @@ describe('Router System', () => {
   describe('Error Handling', () => {
     test('handles navigation errors gracefully', async () => {
       let errorCaught = false;
-      
+
       router.onError((error) => {
         errorCaught = true;
       });
-      
+
       router.beforeEach((to, from, next) => {
         throw new Error('Navigation error');
       });
-      
+
       router.push('/about');
-      
+
       // Wait for async error handling
-      await new Promise(resolve => setTimeout(resolve, 0));
-      
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
       expect(errorCaught).toBe(true);
     });
   });
@@ -286,13 +286,13 @@ describe('Router System', () => {
         mode: 'memory',
         routes: [
           { path: '/', component: () => 'Home' },
-          { path: '/test', component: () => 'Test' }
-        ]
+          { path: '/test', component: () => 'Test' },
+        ],
       });
-      
+
       memoryRouter.push('/test');
       expect(memoryRouter.currentRoute.value.path).toBe('/test');
-      
+
       memoryRouter.back();
       expect(memoryRouter.currentRoute.value.path).toBe('/');
     });

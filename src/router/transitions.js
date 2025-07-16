@@ -10,7 +10,7 @@ import { nextTick } from '../render/scheduler.js';
 export const TransitionState = {
   IDLE: 'idle',
   LEAVING: 'leaving',
-  ENTERING: 'entering'
+  ENTERING: 'entering',
 };
 
 // Built-in transition types
@@ -18,7 +18,7 @@ export const TransitionType = {
   FADE: 'fade',
   SLIDE: 'slide',
   SCALE: 'scale',
-  NONE: 'none'
+  NONE: 'none',
 };
 
 // Transition manager
@@ -30,7 +30,7 @@ export class TransitionManager {
       css: true,
       js: false,
       mode: 'out-in', // out-in, in-out, simultaneous
-      ...options
+      ...options,
     };
 
     this.state = signal(TransitionState.IDLE);
@@ -47,7 +47,7 @@ export class TransitionManager {
 
     try {
       const transition = this.getTransition(fromRoute, toRoute);
-      
+
       if (transition.type === TransitionType.NONE) {
         // No transition
         if (fromElement) fromElement.style.display = 'none';
@@ -61,16 +61,16 @@ export class TransitionManager {
           await this.transitionOut(fromElement, transition);
           await this.transitionIn(toElement, transition);
           break;
-          
+
         case 'in-out':
           await this.transitionIn(toElement, transition);
           await this.transitionOut(fromElement, transition);
           break;
-          
+
         case 'simultaneous':
           await Promise.all([
             this.transitionOut(fromElement, transition),
-            this.transitionIn(toElement, transition)
+            this.transitionIn(toElement, transition),
           ]);
           break;
       }
@@ -129,7 +129,7 @@ export class TransitionManager {
     element.classList.add(toClass);
 
     // Wait for transition
-    await new Promise(resolve => {
+    await new Promise((resolve) => {
       setTimeout(() => {
         element.classList.remove(baseClass, activeClass, toClass);
         resolve();
@@ -140,11 +140,11 @@ export class TransitionManager {
   getTransition(fromRoute, toRoute) {
     // Check route-specific transitions
     const routeTransition = toRoute?.meta?.transition || fromRoute?.meta?.transition;
-    
+
     if (routeTransition) {
       return {
         ...this.options,
-        ...routeTransition
+        ...routeTransition,
       };
     }
 
@@ -169,7 +169,7 @@ export function Transition({ name = 'fade', mode = 'out-in', duration = 300, chi
       type: name,
       mode,
       duration,
-      css: true
+      css: true,
     };
 
     if (visible) {
@@ -183,20 +183,11 @@ export function Transition({ name = 'fade', mode = 'out-in', duration = 300, chi
     }
   }, [visible]);
 
-  return html`
-    <div ref=${elementRef}>
-      ${children}
-    </div>
-  `;
+  return html` <div ref=${elementRef}>${children}</div> `;
 }
 
 // Transition group for lists
-export function TransitionGroup({ 
-  tag = 'div', 
-  name = 'list', 
-  duration = 300, 
-  children 
-}) {
+export function TransitionGroup({ tag = 'div', name = 'list', duration = 300, children }) {
   const containerRef = useRef(null);
   const positions = useRef(new Map());
 
@@ -207,7 +198,7 @@ export function TransitionGroup({
     const items = Array.from(container.children);
 
     // Record initial positions
-    items.forEach(item => {
+    items.forEach((item) => {
       const key = item.getAttribute('key');
       if (key) {
         positions.value.set(key, item.getBoundingClientRect());
@@ -216,7 +207,7 @@ export function TransitionGroup({
 
     // Apply FLIP animation on next tick
     nextTick(() => {
-      items.forEach(item => {
+      items.forEach((item) => {
         const key = item.getAttribute('key');
         if (!key) return;
 
@@ -245,7 +236,7 @@ export function TransitionGroup({
   });
 
   const Tag = tag;
-  
+
   return html`
     <${Tag} ref=${containerRef} class="berryact-transition-group">
       ${children}
@@ -353,9 +344,9 @@ export const transitionStyles = `
 // Inject transition styles
 export function injectTransitionStyles() {
   if (typeof document === 'undefined') return;
-  
+
   const styleId = 'berryact-transition-styles';
-  
+
   if (!document.getElementById(styleId)) {
     const style = document.createElement('style');
     style.id = styleId;
@@ -367,14 +358,14 @@ export function injectTransitionStyles() {
 // Custom transition creator
 export function createTransition(name, definition) {
   const transitions = new Map();
-  
+
   transitions.set(name, {
     css: definition.css !== false,
     js: !!definition.js,
     duration: definition.duration || 300,
     enter: definition.enter,
     leave: definition.leave,
-    styles: definition.styles
+    styles: definition.styles,
   });
 
   // Inject custom styles if provided
@@ -386,7 +377,7 @@ export function createTransition(name, definition) {
 
   return {
     name,
-    use: () => transitions.get(name)
+    use: () => transitions.get(name),
   };
 }
 
@@ -394,13 +385,13 @@ export function createTransition(name, definition) {
 export function createTransitionDirective() {
   return {
     name: 'transition',
-    
+
     mounted(el, binding) {
       const { value, modifiers } = binding;
       const transition = {
         type: value || TransitionType.FADE,
         duration: modifiers.fast ? 150 : modifiers.slow ? 600 : 300,
-        mode: modifiers.inOut ? 'in-out' : modifiers.simultaneous ? 'simultaneous' : 'out-in'
+        mode: modifiers.inOut ? 'in-out' : modifiers.simultaneous ? 'simultaneous' : 'out-in',
       };
 
       el._transitionManager = new TransitionManager(transition);
@@ -409,13 +400,13 @@ export function createTransitionDirective() {
     updated(el, binding) {
       if (el._transitionManager && binding.value !== binding.oldValue) {
         el._transitionManager.setDefaultTransition({
-          type: binding.value || TransitionType.FADE
+          type: binding.value || TransitionType.FADE,
         });
       }
     },
 
     unmounted(el) {
       delete el._transitionManager;
-    }
+    },
   };
 }

@@ -6,18 +6,18 @@ export default defineConfig({
     berryactPlugin({
       jsxImportSource: '@oxog/berryact',
       compat: false,
-      optimize: true
-    })
+      optimize: true,
+    }),
   ],
-  
+
   server: {
     port: 3001,
-    open: true
+    open: true,
   },
-  
+
   resolve: {
     alias: {
-      '@oxog/berryact': '../../src/index.js'
-    }
-  }
+      '@oxog/berryact': '../../src/index.js',
+    },
+  },
 });

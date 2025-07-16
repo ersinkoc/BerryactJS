@@ -10,7 +10,7 @@ import { html } from '../template/parser.js';
 export const VirtualScrollerPlugin = createPlugin({
   name: 'virtual-scroller',
   version: '1.0.0',
-  
+
   setup(app, context) {
     // Virtual scroller factory
     function createVirtualScroller(options = {}) {
@@ -22,7 +22,7 @@ export const VirtualScrollerPlugin = createPlugin({
         horizontal = false,
         onScroll = null,
         getItemHeight = null, // Function for dynamic heights
-        estimatedItemHeight = itemHeight
+        estimatedItemHeight = itemHeight,
       } = options;
 
       // State
@@ -34,20 +34,20 @@ export const VirtualScrollerPlugin = createPlugin({
         containerWidth: signal(400),
         isScrolling: signal(false),
         itemHeights: new Map(),
-        measuredHeight: signal(0)
+        measuredHeight: signal(0),
       };
 
       // Calculate visible range
       const visibleRange = computed(() => {
         const scrollPos = horizontal ? state.scrollLeft.value : state.scrollTop.value;
         const containerSize = horizontal ? state.containerWidth.value : state.containerHeight.value;
-        
+
         if (getItemHeight) {
           // Dynamic heights - more complex calculation
           let accumulatedHeight = 0;
           let startIndex = 0;
           let endIndex = 0;
-          
+
           // Find start index
           for (let i = 0; i < state.items.value.length; i++) {
             const height = state.itemHeights.get(i) || estimatedItemHeight;
@@ -57,7 +57,7 @@ export const VirtualScrollerPlugin = createPlugin({
             }
             accumulatedHeight += height;
           }
-          
+
           // Find end index
           accumulatedHeight = 0;
           for (let i = startIndex; i < state.items.value.length; i++) {
@@ -68,27 +68,27 @@ export const VirtualScrollerPlugin = createPlugin({
             }
             accumulatedHeight += height;
           }
-          
+
           if (endIndex === 0) {
             endIndex = state.items.value.length;
           }
-          
+
           return {
             startIndex,
             endIndex: Math.min(endIndex + buffer, state.items.value.length),
             startOffset: calculateOffset(startIndex),
-            endOffset: calculateOffset(endIndex)
+            endOffset: calculateOffset(endIndex),
           };
         } else {
           // Fixed heights - simple calculation
           const startIndex = Math.floor(scrollPos / itemHeight);
           const endIndex = Math.ceil((scrollPos + containerSize) / itemHeight);
-          
+
           return {
             startIndex: Math.max(0, startIndex - buffer),
             endIndex: Math.min(endIndex + buffer, state.items.value.length),
             startOffset: startIndex * itemHeight,
-            endOffset: 0
+            endOffset: 0,
           };
         }
       });
@@ -113,11 +113,11 @@ export const VirtualScrollerPlugin = createPlugin({
           if (measuredCount === 0) {
             return state.items.value.length * estimatedItemHeight;
           }
-          
+
           let totalMeasured = 0;
-          state.itemHeights.forEach(height => totalMeasured += height);
+          state.itemHeights.forEach((height) => (totalMeasured += height));
           const avgHeight = totalMeasured / measuredCount;
-          
+
           return totalMeasured + (state.items.value.length - measuredCount) * avgHeight;
         } else {
           return state.items.value.length * itemHeight;
@@ -134,25 +134,25 @@ export const VirtualScrollerPlugin = createPlugin({
       let scrollTimeout;
       function handleScroll(event) {
         const target = event.target;
-        
+
         if (horizontal) {
           state.scrollLeft.value = target.scrollLeft;
         } else {
           state.scrollTop.value = target.scrollTop;
         }
-        
+
         state.isScrolling.value = true;
-        
+
         clearTimeout(scrollTimeout);
         scrollTimeout = setTimeout(() => {
           state.isScrolling.value = false;
         }, 150);
-        
+
         if (onScroll) {
           onScroll(event, {
             scrollTop: target.scrollTop,
             scrollLeft: target.scrollLeft,
-            visibleRange: visibleRange.value
+            visibleRange: visibleRange.value,
           });
         }
       }
@@ -160,17 +160,17 @@ export const VirtualScrollerPlugin = createPlugin({
       // Measure item height
       function measureItem(index, element) {
         if (!getItemHeight || !element) return;
-        
+
         const height = horizontal ? element.offsetWidth : element.offsetHeight;
         const previousHeight = state.itemHeights.get(index);
-        
+
         if (height !== previousHeight) {
           state.itemHeights.set(index, height);
-          
+
           // Recalculate total height if all items measured
           if (state.itemHeights.size === state.items.value.length) {
             let total = 0;
-            state.itemHeights.forEach(h => total += h);
+            state.itemHeights.forEach((h) => (total += h));
             state.measuredHeight.value = total;
           }
         }
@@ -180,27 +180,31 @@ export const VirtualScrollerPlugin = createPlugin({
       function scrollToIndex(index, align = 'start') {
         const container = containerRef.value;
         if (!container) return;
-        
+
         let offset = 0;
-        
+
         if (getItemHeight) {
           offset = calculateOffset(index);
         } else {
           offset = index * itemHeight;
         }
-        
+
         if (align === 'center') {
-          const containerSize = horizontal ? state.containerWidth.value : state.containerHeight.value;
+          const containerSize = horizontal
+            ? state.containerWidth.value
+            : state.containerHeight.value;
           const itemSize = state.itemHeights.get(index) || itemHeight;
           offset -= (containerSize - itemSize) / 2;
         } else if (align === 'end') {
-          const containerSize = horizontal ? state.containerWidth.value : state.containerHeight.value;
+          const containerSize = horizontal
+            ? state.containerWidth.value
+            : state.containerHeight.value;
           const itemSize = state.itemHeights.get(index) || itemHeight;
           offset -= containerSize - itemSize;
         }
-        
+
         offset = Math.max(0, offset);
-        
+
         if (horizontal) {
           container.scrollLeft = offset;
         } else {
@@ -215,7 +219,7 @@ export const VirtualScrollerPlugin = createPlugin({
       }
 
       // Container ref
-      let containerRef = { value: null };
+      const containerRef = { value: null };
 
       // Component
       function VirtualScroller({ items, renderItem, className = '', style = {} }) {
@@ -226,42 +230,42 @@ export const VirtualScrollerPlugin = createPlugin({
 
         const range = visibleRange.value;
         const visibles = visibleItems.value;
-        
+
         const containerStyle = {
           height: `${state.containerHeight.value}px`,
           overflow: 'auto',
           position: 'relative',
-          ...style
+          ...style,
         };
-        
+
         const contentStyle = {
           [horizontal ? 'width' : 'height']: `${totalSize.value}px`,
           [horizontal ? 'height' : 'width']: '100%',
-          position: 'relative'
+          position: 'relative',
         };
-        
+
         const offsetStyle = {
           position: 'absolute',
           top: horizontal ? 0 : `${range.startOffset}px`,
           left: horizontal ? `${range.startOffset}px` : 0,
           right: 0,
-          bottom: 0
+          bottom: 0,
         };
 
         return html`
-          <div 
+          <div
             class="virtual-scroller ${className}"
             style=${containerStyle}
             @scroll=${handleScroll}
-            ref=${(el) => containerRef.value = el}
+            ref=${(el) => (containerRef.value = el)}
           >
             <div style=${contentStyle}>
               <div style=${offsetStyle}>
                 ${visibles.map((item, idx) => {
                   const actualIndex = range.startIndex + idx;
-                  
+
                   return html`
-                    <div 
+                    <div
                       key=${item.id || actualIndex}
                       ref=${(el) => measureItem(actualIndex, el)}
                       data-index=${actualIndex}
@@ -288,7 +292,7 @@ export const VirtualScrollerPlugin = createPlugin({
         refresh: () => {
           state.itemHeights.clear();
           state.measuredHeight.value = 0;
-        }
+        },
       };
     }
 
@@ -305,7 +309,7 @@ export const VirtualScrollerPlugin = createPlugin({
       const scroller = createVirtualScroller({
         items: rows,
         itemHeight: rowHeight,
-        ...scrollerOptions
+        ...scrollerOptions,
       });
 
       function VirtualTable({ columns, rows, onRowClick, className = '' }) {
@@ -315,27 +319,27 @@ export const VirtualScrollerPlugin = createPlugin({
               <table>
                 <thead>
                   <tr>
-                    ${columns.map(col => html`
-                      <th style="width: ${col.width || 'auto'}">
-                        ${col.label}
-                      </th>
-                    `)}
+                    ${columns.map(
+                      (col) => html` <th style="width: ${col.width || 'auto'}">${col.label}</th> `
+                    )}
                   </tr>
                 </thead>
               </table>
             </div>
-            
+
             <${scroller.component}
               items=${rows}
               renderItem=${(row, index) => html`
                 <table>
                   <tbody>
                     <tr @click=${() => onRowClick?.(row, index)}>
-                      ${columns.map(col => html`
-                        <td style="width: ${col.width || 'auto'}">
-                          ${col.render ? col.render(row[col.key], row) : row[col.key]}
-                        </td>
-                      `)}
+                      ${columns.map(
+                        (col) => html`
+                          <td style="width: ${col.width || 'auto'}">
+                            ${col.render ? col.render(row[col.key], row) : row[col.key]}
+                          </td>
+                        `
+                      )}
                     </tr>
                   </tbody>
                 </table>
@@ -348,7 +352,7 @@ export const VirtualScrollerPlugin = createPlugin({
 
       return {
         component: VirtualTable,
-        scroller
+        scroller,
       };
     }
 
@@ -367,18 +371,18 @@ export const VirtualScrollerPlugin = createPlugin({
       const rows = computed(() => {
         const result = [];
         const itemsArray = Array.isArray(items) ? items : items.value || [];
-        
+
         for (let i = 0; i < itemsArray.length; i += columnCount) {
           result.push(itemsArray.slice(i, i + columnCount));
         }
-        
+
         return result;
       });
 
       const scroller = createVirtualScroller({
         items: rows.value,
         itemHeight: itemHeight + gap,
-        ...scrollerOptions
+        ...scrollerOptions,
       });
 
       function VirtualGrid({ items, renderItem, className = '' }) {
@@ -389,9 +393,9 @@ export const VirtualScrollerPlugin = createPlugin({
               <div style="display: flex; gap: ${gap}px">
                 ${row.map((item, colIndex) => {
                   const index = rowIndex * columnCount + colIndex;
-                  
+
                   return html`
-                    <div 
+                    <div
                       key=${item.id || index}
                       style="width: ${itemWidth}px; height: ${itemHeight}px"
                     >
@@ -408,25 +412,25 @@ export const VirtualScrollerPlugin = createPlugin({
 
       return {
         component: VirtualGrid,
-        scroller
+        scroller,
       };
     }
 
     // Register resize observer for auto-sizing
     if (typeof ResizeObserver !== 'undefined') {
       this.registerGlobalHook('virtualscroller:mount', (container, scroller) => {
-        const observer = new ResizeObserver(entries => {
+        const observer = new ResizeObserver((entries) => {
           const entry = entries[0];
           const { width, height } = entry.contentRect;
           scroller.updateContainerSize(width, height);
         });
-        
+
         observer.observe(container);
-        
+
         // Store observer for cleanup
         container._resizeObserver = observer;
       });
-      
+
       this.registerGlobalHook('virtualscroller:unmount', (container) => {
         if (container._resizeObserver) {
           container._resizeObserver.disconnect();
@@ -439,27 +443,27 @@ export const VirtualScrollerPlugin = createPlugin({
     this.provide('virtualScroller', {
       createVirtualScroller,
       createVirtualTable,
-      createVirtualGrid
+      createVirtualGrid,
     });
-    
+
     // Global access
     app.virtualScroller = {
       create: createVirtualScroller,
       createTable: createVirtualTable,
-      createGrid: createVirtualGrid
+      createGrid: createVirtualGrid,
     };
-  }
+  },
 });
 
 // Standalone virtual scroller component
 export function VirtualScroller(props) {
   const plugin = usePlugin('virtual-scroller');
-  
+
   if (!plugin) {
     console.warn('VirtualScroller: Plugin not installed');
     return null;
   }
-  
+
   const scroller = plugin.virtualScroller.createVirtualScroller(props);
   return scroller.component(props);
 }

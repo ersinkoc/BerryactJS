@@ -22,32 +22,33 @@ export default function TodoApp() {
   const addTodo = () => {
     const text = input().trim();
     if (text) {
-      setTodos([...todos(), {
-        id: Date.now(),
-        text,
-        done: false,
-        createdAt: new Date().toISOString()
-      }]);
+      setTodos([
+        ...todos(),
+        {
+          id: Date.now(),
+          text,
+          done: false,
+          createdAt: new Date().toISOString(),
+        },
+      ]);
       setInput('');
     }
   };
 
   const toggleTodo = (id) => {
-    setTodos(todos().map(todo =>
-      todo.id === id ? { ...todo, done: !todo.done } : todo
-    ));
+    setTodos(todos().map((todo) => (todo.id === id ? { ...todo, done: !todo.done } : todo)));
   };
 
   const deleteTodo = (id) => {
-    setTodos(todos().filter(todo => todo.id !== id));
+    setTodos(todos().filter((todo) => todo.id !== id));
   };
 
   const filteredTodos = () => {
     switch (filter()) {
       case 'active':
-        return todos().filter(todo => !todo.done);
+        return todos().filter((todo) => !todo.done);
       case 'completed':
-        return todos().filter(todo => todo.done);
+        return todos().filter((todo) => todo.done);
       default:
         return todos();
     }
@@ -55,7 +56,7 @@ export default function TodoApp() {
 
   const stats = () => {
     const total = todos().length;
-    const completed = todos().filter(t => t.done).length;
+    const completed = todos().filter((t) => t.done).length;
     return { total, completed, active: total - completed };
   };
 
@@ -80,9 +81,7 @@ export default function TodoApp() {
           @input=${(e) => setInput(e.target.value)}
           autofocus
         />
-        <button type="submit" class="add-button">
-          Add
-        </button>
+        <button type="submit" class="add-button">Add</button>
       </form>
 
       <div class="filters">
@@ -107,41 +106,42 @@ export default function TodoApp() {
       </div>
 
       <ul class="todo-list">
-        ${filteredTodos().map(todo => html`
-          <li key=${todo.id} class="todo-item ${todo.done ? 'completed' : ''}">
-            <input
-              type="checkbox"
-              class="todo-checkbox"
-              checked=${todo.done}
-              @change=${() => toggleTodo(todo.id)}
-            />
-            <span class="todo-text">${todo.text}</span>
-            <button
-              class="delete-btn"
-              @click=${() => deleteTodo(todo.id)}
-              aria-label="Delete todo"
-            >
-              ×
-            </button>
-          </li>
-        `)}
+        ${filteredTodos().map(
+          (todo) => html`
+            <li key=${todo.id} class="todo-item ${todo.done ? 'completed' : ''}">
+              <input
+                type="checkbox"
+                class="todo-checkbox"
+                checked=${todo.done}
+                @change=${() => toggleTodo(todo.id)}
+              />
+              <span class="todo-text">${todo.text}</span>
+              <button
+                class="delete-btn"
+                @click=${() => deleteTodo(todo.id)}
+                aria-label="Delete todo"
+              >
+                ×
+              </button>
+            </li>
+          `
+        )}
       </ul>
 
-      ${todos().length === 0 ? html`
-        <p class="empty-state">No todos yet. Add one above!</p>
-      ` : ''}
-
-      ${todos().length > 0 ? html`
-        <footer class="todo-footer">
-          <button
-            class="clear-completed"
-            @click=${() => setTodos(todos().filter(t => !t.done))}
-            disabled=${stats().completed === 0}
-          >
-            Clear completed
-          </button>
-        </footer>
-      ` : ''}
+      ${todos().length === 0 ? html` <p class="empty-state">No todos yet. Add one above!</p> ` : ''}
+      ${todos().length > 0
+        ? html`
+            <footer class="todo-footer">
+              <button
+                class="clear-completed"
+                @click=${() => setTodos(todos().filter((t) => !t.done))}
+                disabled=${stats().completed === 0}
+              >
+                Clear completed
+              </button>
+            </footer>
+          `
+        : ''}
     </div>
   `;
 }

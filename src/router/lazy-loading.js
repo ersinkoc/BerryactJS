@@ -7,7 +7,7 @@ export class LazyComponent {
     this.error = options.error || ((error) => `Error: ${error.message}`);
     this.delay = options.delay || 200;
     this.timeout = options.timeout || 10000;
-    
+
     this.state = 'pending'; // pending, loading, loaded, error
     this.component = null;
     this.errorInfo = null;
@@ -26,19 +26,18 @@ export class LazyComponent {
   async performLoad() {
     try {
       this.state = 'loading';
-      
+
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('Component load timeout')), this.timeout);
       });
 
       const loadPromise = this.importFn();
       const module = await Promise.race([loadPromise, timeoutPromise]);
-      
+
       this.component = module.default || module;
       this.state = 'loaded';
-      
+
       return this.component;
-      
     } catch (error) {
       this.state = 'error';
       this.errorInfo = error;
@@ -56,16 +55,16 @@ export class LazyComponent {
           }
         }, this.delay);
         return this.loading();
-        
+
       case 'loading':
         return this.loading();
-        
+
       case 'loaded':
         return this.component(props);
-        
+
       case 'error':
         return this.error(this.errorInfo);
-        
+
       default:
         return this.loading();
     }
@@ -92,15 +91,17 @@ export class ComponentPreloader {
       return this.loadingPromises.get(routePath);
     }
 
-    const loadPromise = importFn().then(module => {
-      const component = module.default || module;
-      this.preloadCache.set(routePath, component);
-      this.loadingPromises.delete(routePath);
-      return component;
-    }).catch(error => {
-      this.loadingPromises.delete(routePath);
-      throw error;
-    });
+    const loadPromise = importFn()
+      .then((module) => {
+        const component = module.default || module;
+        this.preloadCache.set(routePath, component);
+        this.loadingPromises.delete(routePath);
+        return component;
+      })
+      .catch((error) => {
+        this.loadingPromises.delete(routePath);
+        throw error;
+      });
 
     this.loadingPromises.set(routePath, loadPromise);
     return loadPromise;
@@ -112,7 +113,7 @@ export class ComponentPreloader {
 
   preloadOnHover(element, routePath, importFn) {
     let timeoutId = null;
-    
+
     const handleMouseEnter = () => {
       timeoutId = setTimeout(() => {
         this.preload(routePath, importFn).catch(() => {
@@ -143,7 +144,7 @@ export class ComponentPreloader {
   preloadOnVisible(element, routePath, importFn) {
     const observer = new IntersectionObserver(
       (entries) => {
-        entries.forEach(entry => {
+        entries.forEach((entry) => {
           if (entry.isIntersecting) {
             this.preload(routePath, importFn).catch(() => {
               // Silent fail for preloading
@@ -182,14 +183,14 @@ export class BundleAnalyzer {
     if (!this.enabled) return;
 
     const loadTime = endTime - startTime;
-    
+
     if (!this.chunks.has(chunkName)) {
       this.chunks.set(chunkName, {
         name: chunkName,
         size: size,
         loadTimes: [],
         averageLoadTime: 0,
-        loadCount: 0
+        loadCount: 0,
       });
     }
 
@@ -197,7 +198,7 @@ export class BundleAnalyzer {
     chunk.loadTimes.push(loadTime);
     chunk.loadCount++;
     chunk.averageLoadTime = chunk.loadTimes.reduce((a, b) => a + b, 0) / chunk.loadTimes.length;
-    
+
     // Keep only last 10 load times
     if (chunk.loadTimes.length > 10) {
       chunk.loadTimes.shift();
@@ -205,12 +206,12 @@ export class BundleAnalyzer {
   }
 
   getChunkStats() {
-    return Array.from(this.chunks.values()).map(chunk => ({
+    return Array.from(this.chunks.values()).map((chunk) => ({
       name: chunk.name,
       size: chunk.size,
       averageLoadTime: Math.round(chunk.averageLoadTime),
       loadCount: chunk.loadCount,
-      lastLoadTime: chunk.loadTimes[chunk.loadTimes.length - 1] || 0
+      lastLoadTime: chunk.loadTimes[chunk.loadTimes.length - 1] || 0,
     }));
   }
 
@@ -230,22 +231,22 @@ export class BundleAnalyzer {
     if (!this.enabled) return;
 
     console.group('📦 Bundle Analysis Report');
-    
+
     console.log('📊 Chunk Statistics:');
-    this.getChunkStats().forEach(chunk => {
+    this.getChunkStats().forEach((chunk) => {
       console.log(`  ${chunk.name}: ${chunk.size}B, ~${chunk.averageLoadTime}ms avg`);
     });
-    
+
     console.log('\n🐌 Slowest Chunks:');
     this.getSlowestChunks().forEach((chunk, i) => {
       console.log(`  ${i + 1}. ${chunk.name}: ${chunk.averageLoadTime}ms`);
     });
-    
+
     console.log('\n📦 Largest Chunks:');
     this.getLargestChunks().forEach((chunk, i) => {
       console.log(`  ${i + 1}. ${chunk.name}: ${chunk.size}B`);
     });
-    
+
     console.groupEnd();
   }
 }
@@ -258,7 +259,7 @@ export function createLazyRoute(path, importFn, options = {}) {
     loading: options.loading,
     error: options.error,
     delay: options.delay,
-    timeout: options.timeout
+    timeout: options.timeout,
   });
 
   return {
@@ -267,32 +268,32 @@ export function createLazyRoute(path, importFn, options = {}) {
     meta: {
       ...options.meta,
       lazy: true,
-      chunkName: options.chunkName || path.replace(/[^a-zA-Z0-9]/g, '_')
+      chunkName: options.chunkName || path.replace(/[^a-zA-Z0-9]/g, '_'),
     },
     beforeEnter: async (to, from, next) => {
       const startTime = performance.now();
-      
+
       try {
         await lazyComponent.load();
         const endTime = performance.now();
-        
+
         bundleAnalyzer.trackChunkLoad(
           to.meta.chunkName,
           startTime,
           endTime,
           options.estimatedSize || 0
         );
-        
+
         if (options.beforeEnter) {
           return options.beforeEnter(to, from, next);
         }
-        
+
         next();
       } catch (error) {
         console.error(`Failed to load route ${path}:`, error);
         next(false);
       }
-    }
+    },
   };
 }
 
@@ -355,7 +356,7 @@ export class HoverPrefetchStrategy {
     };
 
     document.addEventListener('mouseover', handleMouseOver);
-    
+
     return () => {
       document.removeEventListener('mouseover', handleMouseOver);
     };
@@ -375,17 +376,16 @@ export class ViewportPrefetchStrategy {
   init(router, prefetcher) {
     this.router = router;
     this.prefetcher = prefetcher;
-    this.observer = new IntersectionObserver(
-      this.handleIntersection.bind(this),
-      { rootMargin: '200px' }
-    );
-    
+    this.observer = new IntersectionObserver(this.handleIntersection.bind(this), {
+      rootMargin: '200px',
+    });
+
     this.observeLinks();
     this.cleanup = () => this.observer.disconnect();
   }
 
   observeLinks() {
-    document.querySelectorAll('a[href]').forEach(link => {
+    document.querySelectorAll('a[href]').forEach((link) => {
       if (this.isInternalLink(link.href)) {
         this.observer.observe(link);
       }
@@ -393,7 +393,7 @@ export class ViewportPrefetchStrategy {
   }
 
   handleIntersection(entries) {
-    entries.forEach(entry => {
+    entries.forEach((entry) => {
       if (entry.isIntersecting) {
         const link = entry.target;
         const path = new URL(link.href, window.location.origin).pathname;
@@ -419,7 +419,7 @@ export class IdlePrefetchStrategy {
     this.prefetcher = prefetcher;
     this.prefetchQueue = [];
     this.isIdle = false;
-    
+
     this.setupIdleCallback();
   }
 
@@ -433,7 +433,7 @@ export class IdlePrefetchStrategy {
     };
 
     // Collect all lazy routes for prefetching
-    this.router.routes.forEach(route => {
+    this.router.routes.forEach((route) => {
       if (route.meta?.lazy) {
         this.prefetchQueue.push(route.path);
       }
@@ -444,9 +444,8 @@ export class IdlePrefetchStrategy {
 
   handleIdle(deadline) {
     this.isIdle = true;
-    
-    while (this.prefetchQueue.length > 0 && 
-           (!deadline || deadline.timeRemaining() > 0)) {
+
+    while (this.prefetchQueue.length > 0 && (!deadline || deadline.timeRemaining() > 0)) {
       const routePath = this.prefetchQueue.shift();
       this.prefetcher.prefetch(routePath);
     }
