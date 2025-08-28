@@ -87,11 +87,14 @@ export function useEffect(fn, deps) {
   const index = getNextHookIndex();
 
   if (!component.hooks[index]) {
-    component.hooks[index] = { deps: [], cleanup: null };
+    component.hooks[index] = { deps: [], cleanup: null, initialized: false };
   }
 
   const hook = component.hooks[index];
-  const hasChanged = !deps || !hook.deps || deps.some((dep, i) => dep !== hook.deps[i]);
+  const hasChanged =
+    !deps ||
+    !hook.initialized ||
+    deps.some((dep, i) => dep !== hook.deps[i]);
 
   // Debug logging
   if (typeof window !== 'undefined' && window.DEBUG_HOOKS) {
@@ -111,8 +114,10 @@ export function useEffect(fn, deps) {
       hook.cleanup();
     }
 
-    hook.cleanup = fn();
+    const result = fn();
+    hook.cleanup = typeof result === 'function' ? result : null;
     hook.deps = deps ? [...deps] : [];
+    hook.initialized = true;
   }
 
   // Store cleanup function for component unmount
