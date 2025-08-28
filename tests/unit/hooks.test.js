@@ -193,6 +193,25 @@ describe('Hooks System', () => {
 
       expect(runCount).toBe(2); // Should run again
     });
+
+    test('runs once when deps array is empty', () => {
+      let runCount = 0;
+
+      resetHookIndex();
+      useEffect(() => {
+        runCount++;
+      }, []);
+
+      expect(runCount).toBe(1);
+
+      // Second render with empty deps should not run again
+      resetHookIndex();
+      useEffect(() => {
+        runCount++;
+      }, []);
+
+      expect(runCount).toBe(1);
+    });
   });
 
   describe('useMemo', () => {
