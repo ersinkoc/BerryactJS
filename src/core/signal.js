@@ -227,7 +227,6 @@ export function computed(fn) {
       });
       dependencies.clear();
       observers.clear();
-      cachedValue = null;
     },
   };
 
