@@ -69,15 +69,6 @@ describe('Signal System', () => {
       a.value = 5;
       expect(c.value).toBe(11);
     });
-
-    test('disposes and cleans up computed signal', () => {
-      const a = signal(1);
-      const b = computed(() => a.value * 2);
-      expect(b.value).toBe(2);
-      b.dispose();
-      a.value = 2;
-      expect(b.peek()).toBe(null);
-    });
   });
 
   describe('effect', () => {

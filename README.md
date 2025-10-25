@@ -2,6 +2,37 @@
 
 A modern, lightweight JavaScript UI framework designed to be a simpler alternative to React and Vue. At under 15KB uncompressed (~5KB gzipped), Berryact provides a powerful reactive system, component model, and full-featured ecosystem while maintaining exceptional performance.
 
+## Table of Contents
+
+- [Why Berryact?](#why-berryact)
+- [Key Features](#key-features)
+- [Quick Start](#quick-start)
+- [Core Concepts](#core-concepts)
+  - [Reactive Signals](#reactive-signals)
+  - [Component System](#component-system)
+  - [Template System](#template-system)
+  - [State Management](#state-management)
+  - [Routing](#routing)
+- [Advanced Features](#advanced-features)
+  - [Directives](#directives)
+  - [Custom Directives](#custom-directives)
+  - [Plugins](#plugins)
+- [Performance](#performance)
+- [Browser Support](#browser-support)
+- [Comparison](#comparison)
+- [Examples](#examples)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Why Berryact?
+
+In a world of complex build tools and heavy frameworks, Berryact offers a simpler, more direct approach to building web applications. Here's why you might choose Berryact for your next project:
+
+-   **Simplicity and Speed:** With no build step required and zero dependencies, you can get started in seconds. The small bundle size means faster load times for your users.
+-   **Modern and Performant:** Berryact leverages modern browser features to deliver exceptional performance. Its fine-grained reactivity system avoids the overhead of a virtual DOM, ensuring that your application is always fast and responsive.
+-   **Intuitive and Productive:** The API is designed to be simple and intuitive. Features like tagged template literals for UI, a built-in state management store, and a powerful component model help you be more productive.
+
 ## Key Features
 
 - 🚀 **Ultra Lightweight**: < 15KB uncompressed, ~5KB gzipped
@@ -30,27 +61,20 @@ npm install @oxog/berryact
 </head>
 <body>
     <div id="app"></div>
-    
     <script type="module">
-        import { createApp, signal, computed, html } from '@oxog/berryact';
+        import { createApp, signal, html } from 'https://unpkg.com/@oxog/berryact';
 
         function Counter() {
             const count = signal(0);
-            const double = computed(() => count.value * 2);
-            
             return html`
                 <div>
                     <h1>Count: ${count}</h1>
-                    <h2>Double: ${double}</h2>
-                    <button @click=${() => count.value++}>
-                        Increment
-                    </button>
+                    <button @click=${() => count.value++}>Increment</button>
                 </div>
             `;
         }
 
-        const app = createApp(Counter);
-        app.mount('#app');
+        createApp(Counter).mount('#app');
     </script>
 </body>
 </html>
@@ -283,7 +307,7 @@ Berryact is designed for exceptional performance:
 
 | Feature | Berryact | React | Vue |
 |---------|------|-------|-----|
-| Bundle Size | 5KB | 42KB | 34KB |
+| Bundle Size (gzipped) | ~5KB | ~45KB | ~35KB |
 | Runtime Dependencies | 0 | 2 | 1 |
 | Build Step Required | No | Yes | Optional |
 | Learning Curve | Low | Medium | Low |
