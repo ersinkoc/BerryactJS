@@ -43,7 +43,7 @@ export function useState(initialValue) {
   }
 
   const [state, setState] = component.hooks[index];
-  return [() => state.value, setState];
+  return [state.value, setState];
 }
 
 export function useSignal(initialValue) {

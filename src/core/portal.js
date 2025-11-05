@@ -3,8 +3,11 @@
  */
 
 import { effect, signal } from './signal-enhanced.js';
-// TODO: Fix render/unmount imports
-// import { render, unmount } from '../render/dom.js';
+import { renderer } from '../render/dom.js';
+
+// Wrapper functions to match expected API
+const render = (content, container) => renderer.render(content, container);
+const unmount = (instance) => instance && instance.unmount ? instance.unmount() : renderer.unmount(instance);
 
 // Global portal registry
 const portals = new Map();
@@ -179,7 +182,19 @@ export function getAllPortals() {
 export function closePortal(key) {
   const portal = portals.get(key);
   if (portal) {
-    portal.unmount();
+    // The portal stored in the Map is the internal portal object,
+    // not the returned API object. We need to call unmountPortal directly.
+    if (portal.mounted) {
+      // Recreate the unmountPortal logic here
+      if (portal.instance) {
+        unmount(portal.instance);
+      }
+      if (portal.container.parentNode) {
+        portal.container.parentNode.removeChild(portal.container);
+      }
+      portal.mounted = false;
+      portals.delete(key);
+    }
   }
 }
 
@@ -187,7 +202,18 @@ export function closePortal(key) {
  * Close all portals
  */
 export function closeAllPortals() {
-  portals.forEach((portal) => portal.unmount());
+  portals.forEach((portal, key) => {
+    if (portal.mounted) {
+      if (portal.instance) {
+        unmount(portal.instance);
+      }
+      if (portal.container.parentNode) {
+        portal.container.parentNode.removeChild(portal.container);
+      }
+      portal.mounted = false;
+      portals.delete(key);
+    }
+  });
 }
 
 // Common portal targets
@@ -356,33 +382,36 @@ export function createTooltip(content, anchor, options = {}) {
     return positions[position] || positions.top;
   }
 
+  // Define tooltipWrapper at the outer scope so it can be reused
+  const createTooltipWrapper = (tooltipContent) => {
+    return () => {
+      const pos = calculatePosition();
+
+      return {
+        render: () => {
+          const tooltipElement = document.createElement('div');
+          tooltipElement.className = 'berryact-tooltip-content';
+          tooltipElement.style.cssText = `
+            position: fixed;
+            left: ${pos.left}px;
+            top: ${pos.top}px;
+            transform: ${pos.transform};
+            z-index: 10000;
+            pointer-events: none;
+          `;
+
+          render(tooltipContent, tooltipElement);
+          return tooltipElement;
+        },
+      };
+    };
+  };
+
   function show() {
     if (portal) return;
 
     timeoutId = setTimeout(() => {
-      const tooltipWrapper = () => {
-        const pos = calculatePosition();
-
-        return {
-          render: () => {
-            const tooltipElement = document.createElement('div');
-            tooltipElement.className = 'berryact-tooltip-content';
-            tooltipElement.style.cssText = `
-              position: fixed;
-              left: ${pos.left}px;
-              top: ${pos.top}px;
-              transform: ${pos.transform};
-              z-index: 10000;
-              pointer-events: none;
-            `;
-
-            render(content, tooltipElement);
-            return tooltipElement;
-          },
-        };
-      };
-
-      portal = createPortal(tooltipWrapper, document.body, {
+      portal = createPortal(createTooltipWrapper(content), document.body, {
         className,
         ...portalOptions,
       });
@@ -403,7 +432,7 @@ export function createTooltip(content, anchor, options = {}) {
   function update(newContent) {
     content = newContent;
     if (portal) {
-      portal.update(() => tooltipWrapper(newContent));
+      portal.update(createTooltipWrapper(newContent));
     }
   }
 

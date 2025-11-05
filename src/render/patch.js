@@ -60,6 +60,8 @@ function mountNode(node, container) {
     });
 
     container.appendChild(element);
+    // Store reference to the DOM element on the node for future patches
+    node.element = element;
     return element;
   }
 
@@ -84,10 +86,17 @@ function unmountNode(node) {
 }
 
 function patchElement(oldNode, newNode, container) {
-  const element = container.querySelector(oldNode.tag) || container.firstChild;
+  // Store reference to the actual DOM element on the node during mount
+  // If we have a reference, use it. Otherwise fall back to firstChild for initial render
+  const element = oldNode.element || container.firstChild;
 
-  updateProps(element, oldNode.props, newNode.props);
-  patchChildren(oldNode.children, newNode.children, element);
+  if (element) {
+    updateProps(element, oldNode.props, newNode.props);
+    patchChildren(oldNode.children, newNode.children, element);
+
+    // Store the element reference for future patches
+    newNode.element = element;
+  }
 
   return element;
 }
