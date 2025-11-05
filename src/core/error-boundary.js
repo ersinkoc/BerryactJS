@@ -4,6 +4,7 @@
 
 import { signal, effect } from './signal-enhanced.js';
 import { getCurrentComponent } from './component.js';
+import { useState, useEffect } from './hooks.js';
 import { html } from '../template/parser.js';
 
 // Global error handlers

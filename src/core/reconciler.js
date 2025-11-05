@@ -103,11 +103,11 @@ export class Reconciler {
 
       if (isSignal(text)) {
         // Create text node with signal
-        fiber.dom = document.createTextNode(text());
+        fiber.dom = document.createTextNode(text.value);
 
         // Update text on signal change
         effect(() => {
-          fiber.dom.nodeValue = text();
+          fiber.dom.nodeValue = text.value;
         });
       } else {
         fiber.dom = document.createTextNode(text);
@@ -261,6 +261,14 @@ export class Reconciler {
 
   commitRoot(fiber) {
     if (!fiber) return;
+
+    // Check if parent exists before accessing its dom property
+    if (!fiber.parent || !fiber.parent.dom) {
+      // If there's no parent or parent.dom, skip this fiber
+      this.commitRoot(fiber.child);
+      this.commitRoot(fiber.sibling);
+      return;
+    }
 
     const domParent = fiber.parent.dom;
 
