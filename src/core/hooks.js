@@ -125,6 +125,19 @@ export function useEffect(fn, deps) {
     component.effectCleanups = [];
   }
 
+  // Clean up old cleanup if it's different (defensive programming to prevent memory leaks)
+  if (
+    component.effectCleanups[index] &&
+    component.effectCleanups[index] !== hook.cleanup &&
+    typeof component.effectCleanups[index] === 'function'
+  ) {
+    try {
+      component.effectCleanups[index]();
+    } catch (error) {
+      console.error('Error in effect cleanup:', error);
+    }
+  }
+
   // Replace existing cleanup for this hook
   component.effectCleanups[index] = hook.cleanup;
 }

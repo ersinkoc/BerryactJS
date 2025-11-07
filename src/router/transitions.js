@@ -5,6 +5,8 @@
 
 import { signal, effect } from '../core/signal-enhanced.js';
 import { nextTick } from '../render/scheduler.js';
+import { useState, useRef, useEffect } from '../core/hooks.js';
+import { html } from '../template/parser.js';
 
 // Transition states
 export const TransitionState = {

@@ -123,6 +123,17 @@ export function signal(initialValue) {
     get isDisposed() {
       return isDisposed;
     },
+
+    /**
+     * Removes a specific observer from this signal (internal cleanup method)
+     * @param {object} observer - The observer/effect to remove
+     * @description Used internally to prevent memory leaks when effects are disposed
+     */
+    _removeObserver(observer) {
+      if (observers.has(observer)) {
+        observers.delete(observer);
+      }
+    },
   };
 
   function notify() {
@@ -159,10 +170,11 @@ export function computed(fn) {
     const prevEffect = currentEffect;
     currentEffect = effectObject;
 
-    // Clean up old dependencies
+    // Clean up old dependencies properly to prevent memory leaks
     dependencies.forEach((dep) => {
-      if (dep.observers) {
-        dep.observers.delete(effectObject);
+      // Use the internal cleanup method if available
+      if (dep && typeof dep._removeObserver === 'function') {
+        dep._removeObserver(effectObject);
       }
     });
     dependencies.clear();
@@ -220,13 +232,25 @@ export function computed(fn) {
 
     dispose() {
       effectObject.active = false;
+      // Clean up dependencies properly using the cleanup method
       dependencies.forEach((dep) => {
-        if (dep.observers) {
-          dep.observers.delete(effectObject);
+        if (dep && typeof dep._removeObserver === 'function') {
+          dep._removeObserver(effectObject);
         }
       });
       dependencies.clear();
       observers.clear();
+    },
+
+    /**
+     * Removes a specific observer from this computed signal (internal cleanup method)
+     * @param {object} observer - The observer/effect to remove
+     * @description Used internally to prevent memory leaks when effects are disposed
+     */
+    _removeObserver(observer) {
+      if (observers.has(observer)) {
+        observers.delete(observer);
+      }
     },
   };
 
@@ -255,9 +279,10 @@ export function effect(fn, options = {}) {
       const prevEffect = currentEffect;
       currentEffect = effectObject;
 
+      // Clean up old dependencies properly
       dependencies.forEach((dep) => {
-        if (dep.observers) {
-          dep.observers.delete(effectObject);
+        if (dep && typeof dep._removeObserver === 'function') {
+          dep._removeObserver(effectObject);
         }
       });
       dependencies.clear();
@@ -278,9 +303,10 @@ export function effect(fn, options = {}) {
         cleanup();
         cleanup = null;
       }
+      // Clean up dependencies properly
       dependencies.forEach((dep) => {
-        if (dep.observers) {
-          dep.observers.delete(effectObject);
+        if (dep && typeof dep._removeObserver === 'function') {
+          dep._removeObserver(effectObject);
         }
       });
       dependencies.clear();

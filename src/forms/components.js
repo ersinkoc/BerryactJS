@@ -2,6 +2,7 @@
 
 import { html } from '../template/parser.js';
 import { registerDirective } from '../template/directives.js';
+import { effect } from '../core/signal.js';
 
 // Form input component
 export function FormInput(props) {

@@ -71,33 +71,60 @@ function vNodeToDOM(vnode) {
 
     // Handle component VNodes
     if (typeof vnode.type === 'function') {
-      // Create an instance of the component
-      let instance;
-      if (vnode.type.prototype && vnode.type.prototype.render) {
-        // Class component
-        instance = new vnode.type(vnode.props);
+      let childVNode;
+
+      // Check if it's a class component (has render method or extends Component)
+      const isClassComponent =
+        (vnode.type.prototype && vnode.type.prototype.render) ||
+        (vnode.type.prototype && vnode.type.prototype instanceof Component);
+
+      if (isClassComponent) {
+        // Class component - instantiate and call render
+        const instance = new vnode.type(vnode.props);
+
+        // Render the component synchronously to get the VNode
+        const prevComponent = currentComponent;
+        const prevHookIndex = hookIndex;
+
+        currentComponent = instance;
+        hookIndex = 0;
+
+        try {
+          childVNode = instance.render();
+        } finally {
+          currentComponent = prevComponent;
+          hookIndex = prevHookIndex;
+        }
       } else {
-        // Function component or defineComponent result
-        const ComponentClass = vnode.type;
-        // Component instance creation
-        instance = new ComponentClass(vnode.props);
+        // Function component - call directly with props
+        const prevComponent = currentComponent;
+        const prevHookIndex = hookIndex;
+
+        // Create a minimal component context for hooks to work
+        const context = {
+          hooks: [],
+          effects: [],
+          props: vnode.props
+        };
+
+        currentComponent = context;
+        hookIndex = 0;
+
+        try {
+          childVNode = vnode.type(vnode.props);
+        } finally {
+          currentComponent = prevComponent;
+          hookIndex = prevHookIndex;
+        }
       }
 
-      // Render the component synchronously to get the VNode
-      const prevComponent = currentComponent;
-      const prevHookIndex = hookIndex;
-
-      currentComponent = instance;
-      hookIndex = 0;
-
-      try {
-        const childVNode = instance.render();
+      // Convert child VNode to DOM
+      if (childVNode) {
         const childDOM = vNodeToDOM(childVNode);
         return childDOM;
-      } finally {
-        currentComponent = prevComponent;
-        hookIndex = prevHookIndex;
       }
+
+      return null;
     }
 
     // Handle DOM element VNodes
