@@ -3,7 +3,7 @@
  */
 
 import { signal, effect, computed } from './signal-enhanced.js';
-import { createContext, useContext } from './hooks.js';
+import { createContext, useContext, useState, useEffect } from './hooks.js';
 import { html } from '../template/parser.js';
 
 // Suspense context

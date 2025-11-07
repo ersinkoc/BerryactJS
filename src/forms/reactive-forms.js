@@ -163,18 +163,27 @@ export class FormField {
   }
 
   _setupValidation() {
-    let validateTimeout;
-
-    effect(() => {
+    // Store effect reference for cleanup
+    this._validationEffect = effect(() => {
       const value = this.value.value;
 
-      // Clear existing timeout
-      clearTimeout(validateTimeout);
+      // Clear existing timeout on each run
+      if (this._validateTimeout) {
+        clearTimeout(this._validateTimeout);
+      }
 
       // Debounce validation
-      validateTimeout = setTimeout(() => {
+      this._validateTimeout = setTimeout(() => {
         this.validate();
       }, this.debounce);
+
+      // Return cleanup function to clear timeout when effect is disposed
+      return () => {
+        if (this._validateTimeout) {
+          clearTimeout(this._validateTimeout);
+          this._validateTimeout = null;
+        }
+      };
     });
   }
 
@@ -261,6 +270,12 @@ export class FormField {
   }
 
   reset(value = '') {
+    // Clear timeout to prevent memory leak
+    if (this._validateTimeout) {
+      clearTimeout(this._validateTimeout);
+      this._validateTimeout = null;
+    }
+
     batch(() => {
       this.value.value = value;
       this.errors.value = [];
@@ -269,6 +284,50 @@ export class FormField {
       this.validating.value = false;
       this.focused.value = false;
     });
+  }
+
+  /**
+   * Dispose the form field and clean up resources
+   * @description Call this when the field is no longer needed to prevent memory leaks
+   */
+  dispose() {
+    // Clear validation timeout
+    if (this._validateTimeout) {
+      clearTimeout(this._validateTimeout);
+      this._validateTimeout = null;
+    }
+
+    // Dispose validation effect
+    if (this._validationEffect && typeof this._validationEffect.dispose === 'function') {
+      this._validationEffect.dispose();
+      this._validationEffect = null;
+    }
+
+    // Dispose signals
+    if (this.value && typeof this.value.dispose === 'function') {
+      this.value.dispose();
+    }
+    if (this.errors && typeof this.errors.dispose === 'function') {
+      this.errors.dispose();
+    }
+    if (this.touched && typeof this.touched.dispose === 'function') {
+      this.touched.dispose();
+    }
+    if (this.dirty && typeof this.dirty.dispose === 'function') {
+      this.dirty.dispose();
+    }
+    if (this.validating && typeof this.validating.dispose === 'function') {
+      this.validating.dispose();
+    }
+    if (this.focused && typeof this.focused.dispose === 'function') {
+      this.focused.dispose();
+    }
+    if (this.valid && typeof this.valid.dispose === 'function') {
+      this.valid.dispose();
+    }
+    if (this.invalid && typeof this.invalid.dispose === 'function') {
+      this.invalid.dispose();
+    }
   }
 
   markAsTouched() {

@@ -1,15 +1,22 @@
 module.exports = {
   testEnvironment: 'jsdom',
-  
+
+  // Ignore dist and build directories
+  modulePathIgnorePatterns: [
+    '<rootDir>/dist/',
+    '<rootDir>/build/',
+    '<rootDir>/node_modules/'
+  ],
+
   // Module resolution
   moduleNameMapper: {
     '^@oxog/berryact$': '<rootDir>/src/index.js',
     '^@oxog/berryact/(.*)$': '<rootDir>/src/$1'
   },
-  
+
   // Setup files
   setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
-  
+
   // Test file patterns
   testMatch: [
     '<rootDir>/tests/**/*.test.js',

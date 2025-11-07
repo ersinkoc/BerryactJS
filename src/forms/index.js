@@ -101,12 +101,56 @@ export class FormField {
   }
 
   reset() {
+    // Clear debounce timer to prevent memory leak
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+      this.debounceTimer = null;
+    }
+
     this.value.value = this.initialValue;
     this.touched.value = false;
     this.focused.value = false;
     this.dirty.value = false;
     this.errors.value = [];
     this.validating.value = false;
+  }
+
+  /**
+   * Dispose the form field and clean up resources
+   * @description Call this when the field is no longer needed to prevent memory leaks
+   */
+  dispose() {
+    // Clear debounce timer
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+      this.debounceTimer = null;
+    }
+
+    // Dispose signals if they have dispose methods
+    if (this.value && typeof this.value.dispose === 'function') {
+      this.value.dispose();
+    }
+    if (this.errors && typeof this.errors.dispose === 'function') {
+      this.errors.dispose();
+    }
+    if (this.touched && typeof this.touched.dispose === 'function') {
+      this.touched.dispose();
+    }
+    if (this.focused && typeof this.focused.dispose === 'function') {
+      this.focused.dispose();
+    }
+    if (this.dirty && typeof this.dirty.dispose === 'function') {
+      this.dirty.dispose();
+    }
+    if (this.validating && typeof this.validating.dispose === 'function') {
+      this.validating.dispose();
+    }
+    if (this.isValid && typeof this.isValid.dispose === 'function') {
+      this.isValid.dispose();
+    }
+    if (this.isInvalid && typeof this.isInvalid.dispose === 'function') {
+      this.isInvalid.dispose();
+    }
   }
 
   addValidator(validator) {
