@@ -5,20 +5,32 @@ import { isSignal } from './core/signal.js';
 // Symbol to identify Berryact elements
 export const BERRYACT_ELEMENT_TYPE = Symbol.for('berryact.element');
 
+// CSS properties that should not have 'px' appended to numeric values
+const unitlessProperties = new Set([
+  'animationIterationCount', 'aspectRatio', 'borderImageOutset', 'borderImageSlice',
+  'borderImageWidth', 'boxFlex', 'boxFlexGroup', 'boxOrdinalGroup', 'columnCount',
+  'columns', 'flex', 'flexGrow', 'flexPositive', 'flexShrink', 'flexNegative',
+  'flexOrder', 'gridRow', 'gridRowEnd', 'gridRowSpan', 'gridRowStart', 'gridColumn',
+  'gridColumnEnd', 'gridColumnSpan', 'gridColumnStart', 'fontWeight', 'lineClamp',
+  'lineHeight', 'opacity', 'order', 'orphans', 'tabSize', 'widows', 'zIndex', 'zoom',
+  'fillOpacity', 'floodOpacity', 'stopOpacity', 'strokeDasharray', 'strokeDashoffset',
+  'strokeMiterlimit', 'strokeOpacity', 'strokeWidth'
+]);
+
 // Transform React-style props to Berryact conventions
 function transformProps(props) {
   if (!props) return null;
-  
+
   const transformed = {};
-  
+
   for (const key in props) {
     const value = props[key];
-    
+
     // Skip internal props
     if (key === 'key' || key === 'ref' || key === '__self' || key === '__source') {
       continue;
     }
-    
+
     // Transform className to class
     if (key === 'className') {
       transformed.class = value;
@@ -39,7 +51,14 @@ function transformProps(props) {
         .map(([prop, val]) => {
           // Convert camelCase to kebab-case
           const cssProp = prop.replace(/[A-Z]/g, match => `-${match.toLowerCase()}`);
-          return `${cssProp}: ${val}`;
+
+          // Add 'px' to numeric values for properties that need units
+          let cssVal = val;
+          if (typeof val === 'number' && val !== 0 && !unitlessProperties.has(prop)) {
+            cssVal = `${val}px`;
+          }
+
+          return `${cssProp}: ${cssVal}`;
         })
         .join('; ');
       transformed.style = styleStr;
@@ -53,7 +72,7 @@ function transformProps(props) {
       transformed[key] = value;
     }
   }
-  
+
   return transformed;
 }
 

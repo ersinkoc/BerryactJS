@@ -14,10 +14,14 @@ export class HistoryManager {
   }
 
   setupListeners() {
+    // Store bound handlers for later removal
+    this.popstateHandler = this.handlePopState.bind(this);
+    this.hashchangeHandler = this.handleHashChange.bind(this);
+
     if (this.mode === 'history') {
-      window.addEventListener('popstate', this.handlePopState.bind(this));
+      window.addEventListener('popstate', this.popstateHandler);
     } else if (this.mode === 'hash') {
-      window.addEventListener('hashchange', this.handleHashChange.bind(this));
+      window.addEventListener('hashchange', this.hashchangeHandler);
     }
   }
 
@@ -124,6 +128,25 @@ export class HistoryManager {
 
   getState() {
     return this.current;
+  }
+
+  /**
+   * Dispose the history manager and clean up event listeners
+   * @description Call this when the history manager is no longer needed to prevent memory leaks
+   */
+  dispose() {
+    if (typeof window !== 'undefined') {
+      if (this.mode === 'history' && this.popstateHandler) {
+        window.removeEventListener('popstate', this.popstateHandler);
+      } else if (this.mode === 'hash' && this.hashchangeHandler) {
+        window.removeEventListener('hashchange', this.hashchangeHandler);
+      }
+    }
+
+    // Clear listeners
+    this.listeners = [];
+    this.popstateHandler = null;
+    this.hashchangeHandler = null;
   }
 }
 
