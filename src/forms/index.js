@@ -316,6 +316,45 @@ export class Form {
       field.errors.value = [];
     });
   }
+
+  /**
+   * Dispose the form and clean up all resources
+   * @description Call this when the form is no longer needed to prevent memory leaks
+   */
+  dispose() {
+    // Dispose all fields
+    Object.values(this.fields).forEach((field) => {
+      if (field && typeof field.dispose === 'function') {
+        field.dispose();
+      }
+    });
+
+    // Dispose computed values
+    if (this.isValid && typeof this.isValid.dispose === 'function') {
+      this.isValid.dispose();
+    }
+    if (this.isDirty && typeof this.isDirty.dispose === 'function') {
+      this.isDirty.dispose();
+    }
+    if (this.isTouched && typeof this.isTouched.dispose === 'function') {
+      this.isTouched.dispose();
+    }
+    if (this.errors && typeof this.errors.dispose === 'function') {
+      this.errors.dispose();
+    }
+
+    // Dispose state signals
+    if (this.submitting && typeof this.submitting.dispose === 'function') {
+      this.submitting.dispose();
+    }
+    if (this.submitAttempted && typeof this.submitAttempted.dispose === 'function') {
+      this.submitAttempted.dispose();
+    }
+
+    // Clear references
+    this.fields = {};
+    this.plugins = [];
+  }
 }
 
 // Built-in validators

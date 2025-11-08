@@ -53,10 +53,17 @@ export function useSignal(initialValue) {
   if (!component.hooks[index]) {
     const state = signal(initialValue);
 
-    effect(() => {
+    // Create effect and track it for cleanup
+    const updateEffect = effect(() => {
       state.value;
       scheduleComponentUpdate(component);
     });
+
+    // Track effect for cleanup on unmount
+    if (!component.effects) {
+      component.effects = [];
+    }
+    component.effects.push(updateEffect);
 
     component.hooks[index] = state;
   }
@@ -71,10 +78,17 @@ export function useComputed(fn) {
   if (!component.hooks[index]) {
     const computedValue = computed(fn);
 
-    effect(() => {
+    // Create effect and track it for cleanup
+    const updateEffect = effect(() => {
       computedValue.value;
       scheduleComponentUpdate(component);
     });
+
+    // Track effect for cleanup on unmount
+    if (!component.effects) {
+      component.effects = [];
+    }
+    component.effects.push(updateEffect);
 
     component.hooks[index] = computedValue;
   }
@@ -95,19 +109,6 @@ export function useEffect(fn, deps) {
     !deps ||
     !hook.initialized ||
     deps.some((dep, i) => dep !== hook.deps[i]);
-
-  // Debug logging
-  if (typeof window !== 'undefined' && window.DEBUG_HOOKS) {
-    console.log('useEffect debug:', {
-      index,
-      deps,
-      hookDeps: hook.deps,
-      hasChanged,
-      depsUndefined: !deps,
-      hookDepsUndefined: !hook.deps,
-      someResult: deps ? deps.some((dep, i) => dep !== hook.deps[i]) : 'deps undefined',
-    });
-  }
 
   if (hasChanged) {
     if (hook.cleanup) {

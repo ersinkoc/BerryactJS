@@ -328,6 +328,39 @@ export class Store {
     // In strict mode, state mutations should only happen in mutation handlers
     // This is a simplified check - in a real implementation, this would be more sophisticated
   }
+
+  /**
+   * Dispose the store and clean up all resources
+   * @description Call this when the store is no longer needed to prevent memory leaks
+   */
+  dispose() {
+    // Dispose state signal
+    if (this.state && typeof this.state.dispose === 'function') {
+      this.state.dispose();
+    }
+
+    // Dispose all getters (computed values)
+    Object.values(this.getters).forEach((getter) => {
+      if (getter && typeof getter.dispose === 'function') {
+        getter.dispose();
+      }
+    });
+
+    // Dispose all modules
+    this.modules.forEach((module) => {
+      if (module && typeof module.dispose === 'function') {
+        module.dispose();
+      }
+    });
+
+    // Clear arrays and maps
+    this.plugins = [];
+    this.history = [];
+    this.modules.clear();
+    this.getters = {};
+    this.mutations = {};
+    this.actions = {};
+  }
 }
 
 export function createStore(options) {
