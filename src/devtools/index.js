@@ -1,6 +1,7 @@
 export class DevTools {
   constructor() {
-    this.enabled = process.env.NODE_ENV !== 'production';
+    this.enabled =
+      typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production';
     this.components = new Map();
     this.stores = new Map();
     this.performance = {

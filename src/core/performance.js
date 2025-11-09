@@ -302,7 +302,8 @@ export class PerformanceMonitor {
       mounts: [],
       unmounts: [],
     };
-    this.enabled = process.env.NODE_ENV !== 'production';
+    this.enabled =
+      typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production';
   }
 
   measureRender(component, fn) {

@@ -119,7 +119,7 @@ export class ErrorBoundary {
     emitError(info);
 
     // Log to console in development
-    if (process.env.NODE_ENV !== 'production') {
+    if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production') {
       console.error('Error caught by ErrorBoundary:', error);
       console.error('Error Info:', info);
     }
@@ -323,7 +323,7 @@ export function AsyncErrorBoundary({ children, fallback, onError }) {
  * @param root0.onClose
  */
 export function ErrorOverlay({ error, errorInfo, onClose }) {
-  if (process.env.NODE_ENV === 'production') {
+  if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'production') {
     return null;
   }
 
@@ -430,7 +430,11 @@ export function createErrorLogger(options = {}) {
 }
 
 // CSS for error overlay (inject into page)
-if (typeof document !== 'undefined' && process.env.NODE_ENV !== 'production') {
+if (
+  typeof document !== 'undefined' &&
+  typeof process !== 'undefined' &&
+  process.env?.NODE_ENV !== 'production'
+) {
   const style = document.createElement('style');
   style.textContent = `
     .berryact-error-overlay {

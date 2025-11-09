@@ -272,7 +272,8 @@ export class SSRRenderer {
       }
     });
 
-    return attributes.length > 0 ? ' ' + attributes.join(' ') : '';
+    // Return attributes without leading space (space added by caller)
+    return attributes.join(' ');
   }
 
   isSelfClosing(tag) {

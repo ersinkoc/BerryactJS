@@ -450,8 +450,9 @@ export function createApp(component, options = {}) {
 // Version
 export const version = '1.0.0';
 
-// Development mode check
-export const isDev = process.env.NODE_ENV !== 'production';
+// Development mode check (safe cross-environment access)
+export const isDev =
+  typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production';
 
 // JSX Runtime exports
 import { jsx, jsxs, Fragment } from './jsx-runtime.js';

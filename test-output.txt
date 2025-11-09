@@ -1,0 +1,492 @@
+
+> @oxog/berryact@1.0.0 test
+> jest --testTimeout=60000 --maxWorkers=4
+
+PASS tests/unit/store.test.js
+  Store System
+    State Management
+      ✓ initializes with correct state (21 ms)
+      ✓ state is reactive (2 ms)
+    Getters
+      ✓ computed getters work correctly (1 ms)
+      ✓ getters are reactive (1 ms)
+      ✓ getters update when state changes (1 ms)
+    Mutations
+      ✓ mutations modify state (1 ms)
+      ✓ mutations with payload (1 ms)
+      ✓ unknown mutation in strict mode throws error (22 ms)
+      ✓ unknown mutation in non-strict mode is ignored (1 ms)
+    Actions
+      ✓ actions can commit mutations (11 ms)
+      ✓ actions can return values (12 ms)
+      ✓ actions receive correct context (1 ms)
+      ✓ unknown action in strict mode throws error (1 ms)
+    Subscriptions
+      ✓ subscribe to state changes (1 ms)
+      ✓ subscribeAction to action dispatches (1 ms)
+      ✓ unsubscribe from changes
+    Watch
+      ✓ watch specific state property (1 ms)
+      ✓ watch getter (1 ms)
+    State Replacement
+      ✓ replaceState updates entire state
+    Time Travel
+      ✓ saves state snapshots (1 ms)
+      ✓ can undo changes (1 ms)
+      ✓ can redo changes
+      ✓ time travel to specific index
+      ✓ canUndo and canRedo work correctly (1 ms)
+      ✓ clear history (1 ms)
+    Modules
+      ✓ register module (1 ms)
+      ✓ unregister module (1 ms)
+    Plugins
+      ✓ plugins receive store instance (1 ms)
+      ✓ use method adds plugin
+    Error Handling
+      ✓ mutation errors are caught (4 ms)
+      ✓ action errors are propagated (1 ms)
+
+FAIL tests/integration/ssr.test.js
+  Server-Side Rendering
+    SSRContext
+      ✓ creates context with default options (3 ms)
+      ✓ creates context with custom options (1 ms)
+      ✓ addPreload adds preload link (1 ms)
+      ✓ addPrefetch adds prefetch link (1 ms)
+      ✓ setMeta adds meta information (1 ms)
+    SSRRenderer
+      ✕ renders simple component to string (12 ms)
+      ✕ renders component with props (3 ms)
+      ✕ escapes HTML in content (2 ms)
+      ✕ handles nested components (6 ms)
+      ✕ skips event handlers in SSR (7 ms)
+      ✕ handles self-closing tags (6 ms)
+      ✕ handles boolean attributes (4 ms)
+      ✕ renders arrays of components (6 ms)
+      ✕ generates full HTML document (3 ms)
+    Hydrator
+      ✕ throws error when called on server (15 ms)
+      ✕ marks elements for hydration (1 ms)
+      ✕ cleans up SSR state after hydration (1 ms)
+    Error Handling
+      ✕ handles component render errors gracefully (6 ms)
+      ✕ handles malformed templates (2 ms)
+      ✕ handles null/undefined components
+    Performance
+      ✕ caches rendered components (24 ms)
+
+  ● Server-Side Rendering › SSRRenderer › renders simple component to string
+
+    The error below may be caused by using the wrong test environment, see https://jestjs.io/docs/configuration#testenvironment-string.
+    Consider using the "jsdom" test environment.
+
+    ReferenceError: document is not defined
+
+      33 | // Clean up after each test
+      34 | afterEach(() => {
+    > 35 |   document.body.innerHTML = '';
+         |   ^
+      36 |   // Clear any pending timers
+      37 |   jest.clearAllTimers();
+      38 | });
+
+      at Object.document (tests/setup.js:35:3)
+
+  ● Server-Side Rendering › SSRRenderer › renders component with props
+
+    The error below may be caused by using the wrong test environment, see https://jestjs.io/docs/configuration#testenvironment-string.
+    Consider using the "jsdom" test environment.
+
+    ReferenceError: document is not defined
+
+      33 | // Clean up after each test
+      34 | afterEach(() => {
+    > 35 |   document.body.innerHTML = '';
+         |   ^
+      36 |   // Clear any pending timers
+      37 |   jest.clearAllTimers();
+      38 | });
+
+      at Object.document (tests/setup.js:35:3)
+
+  ● Server-Side Rendering › SSRRenderer › escapes HTML in content
+
+    The error below may be caused by using the wrong test environment, see https://jestjs.io/docs/configuration#testenvironment-string.
+    Consider using the "jsdom" test environment.
+
+    ReferenceError: document is not defined
+
+      33 | // Clean up after each test
+      34 | afterEach(() => {
+    > 35 |   document.body.innerHTML = '';
+         |   ^
+      36 |   // Clear any pending timers
+      37 |   jest.clearAllTimers();
+      38 | });
+
+      at Object.document (tests/setup.js:35:3)
+
+  ● Server-Side Rendering › SSRRenderer › handles nested components
+
+    The error below may be caused by using the wrong test environment, see https://jestjs.io/docs/configuration#testenvironment-string.
+    Consider using the "jsdom" test environment.
+
+    ReferenceError: document is not defined
+
+      33 | // Clean up after each test
+      34 | afterEach(() => {
+    > 35 |   document.body.innerHTML = '';
+         |   ^
+      36 |   // Clear any pending timers
+      37 |   jest.clearAllTimers();
+      38 | });
+
+      at Object.document (tests/setup.js:35:3)
+
+  ● Server-Side Rendering › SSRRenderer › skips event handlers in SSR
+
+    The error below may be caused by using the wrong test environment, see https://jestjs.io/docs/configuration#testenvironment-string.
+    Consider using the "jsdom" test environment.
+
+    ReferenceError: document is not defined
+
+      33 | // Clean up after each test
+      34 | afterEach(() => {
+    > 35 |   document.body.innerHTML = '';
+         |   ^
+      36 |   // Clear any pending timers
+      37 |   jest.clearAllTimers();
+      38 | });
+
+      at Object.document (tests/setup.js:35:3)
+
+  ● Server-Side Rendering › SSRRenderer › handles self-closing tags
+
+    expect(received).toContain(expected) // indexOf
+
+    Expected substring: "<input type=\"text\" value=\"test\" />"
+    Received string:    "<!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset=\"utf-8\">
+        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">···············
+      </head>
+      <body>
+        <div id=\"app\"><div><input  type=\"text\" value=\"test\" /><br /><img  src=\"/image.jpg\" alt=\"test\" /></div></div>·····
+      </body>
+    </html>"
+
+      153 |       const result = await renderer.renderToString(ComponentWithInput);
+      154 |
+    > 155 |       expect(result.html).toContain('<input type="text" value="test" />');
+          |                           ^
+      156 |       expect(result.html).toContain('<br />');
+      157 |       expect(result.html).toContain('<img src="/image.jpg" alt="test" />');
+      158 |     });
+
+      at Object.toContain (tests/integration/ssr.test.js:155:27)
+
+  ● Server-Side Rendering › SSRRenderer › handles self-closing tags
+
+    The error below may be caused by using the wrong test environment, see https://jestjs.io/docs/configuration#testenvironment-string.
+    Consider using the "jsdom" test environment.
+
+    ReferenceError: document is not defined
+
+      33 | // Clean up after each test
+      34 | afterEach(() => {
+    > 35 |   document.body.innerHTML = '';
+         |   ^
+      36 |   // Clear any pending timers
+      37 |   jest.clearAllTimers();
+      38 | });
+
+      at Object.document (tests/setup.js:35:3)
+
+  ● Server-Side Rendering › SSRRenderer › handles boolean attributes
+
+    The error below may be caused by using the wrong test environment, see https://jestjs.io/docs/configuration#testenvironment-string.
+    Consider using the "jsdom" test environment.
+
+    ReferenceError: document is not defined
+
+      33 | // Clean up after each test
+      34 | afterEach(() => {
+    > 35 |   document.body.innerHTML = '';
+         |   ^
+      36 |   // Clear any pending timers
+      37 |   jest.clearAllTimers();
+      38 | });
+
+      at Object.document (tests/setup.js:35:3)
+
+  ● Server-Side Rendering › SSRRenderer › renders arrays of components
+
+    The error below may be caused by using the wrong test environment, see https://jestjs.io/docs/configuration#testenvironment-string.
+    Consider using the "jsdom" test environment.
+
+    ReferenceError: document is not defined
+
+      33 | // Clean up after each test
+      34 | afterEach(() => {
+    > 35 |   document.body.innerHTML = '';
+         |   ^
+      36 |   // Clear any pending timers
+      37 |   jest.clearAllTimers();
+      38 | });
+
+      at Object.document (tests/setup.js:35:3)
+
+  ● Server-Side Rendering › SSRRenderer › generates full HTML document
+
+    The error below may be caused by using the wrong test environment, see https://jestjs.io/docs/configuration#testenvironment-string.
+    Consider using the "jsdom" test environment.
+
+    ReferenceError: document is not defined
+
+      33 | // Clean up after each test
+      34 | afterEach(() => {
+    > 35 |   document.body.innerHTML = '';
+         |   ^
+      36 |   // Clear any pending timers
+      37 |   jest.clearAllTimers();
+      38 | });
+
+      at Object.document (tests/setup.js:35:3)
+
+  ● Server-Side Rendering › Hydrator › throws error when called on server
+
+    expect(received).toThrow(expected)
+
+    Expected substring: "Hydration can only run on the client"
+    Received message:   "document is not defined"
+
+          226 |
+          227 |       expect(() => {
+        > 228 |         hydrator.hydrate(() => {}, document.createElement('div'));
+              |                                    ^
+          229 |       }).toThrow('Hydration can only run on the client');
+          230 |     });
+          231 |
+
+      at document (tests/integration/ssr.test.js:228:36)
+      at Object.<anonymous> (node_modules/expect/build/toThrowMatchers.js:74:11)
+      at Object.throwingMatcher [as toThrow] (node_modules/expect/build/index.js:320:21)
+      at Object.toThrow (tests/integration/ssr.test.js:229:10)
+      at Object.toThrow (tests/integration/ssr.test.js:229:10)
+
+  ● Server-Side Rendering › Hydrator › throws error when called on server
+
+    The error below may be caused by using the wrong test environment, see https://jestjs.io/docs/configuration#testenvironment-string.
+    Consider using the "jsdom" test environment.
+
+    ReferenceError: document is not defined
+
+      33 | // Clean up after each test
+      34 | afterEach(() => {
+    > 35 |   document.body.innerHTML = '';
+         |   ^
+      36 |   // Clear any pending timers
+      37 |   jest.clearAllTimers();
+      38 | });
+
+      at Object.document (tests/setup.js:35:3)
+
+  ● Server-Side Rendering › Hydrator › marks elements for hydration
+
+    The error below may be caused by using the wrong test environment, see https://jestjs.io/docs/configuration#testenvironment-string.
+    Consider using the "jsdom" test environment.
+
+    ReferenceError: document is not defined
+
+      33 | // Clean up after each test
+      34 | afterEach(() => {
+    > 35 |   document.body.innerHTML = '';
+         |   ^
+      36 |   // Clear any pending timers
+      37 |   jest.clearAllTimers();
+      38 | });
+
+      at Object.document (tests/setup.js:35:3)
+
+  ● Server-Side Rendering › Hydrator › cleans up SSR state after hydration
+
+    The error below may be caused by using the wrong test environment, see https://jestjs.io/docs/configuration#testenvironment-string.
+    Consider using the "jsdom" test environment.
+
+    ReferenceError: document is not defined
+
+      248 |     test('cleans up SSR state after hydration', () => {
+      249 |       const component = () => html`<div>Test</div>`;
+    > 250 |       const container = document.createElement('div');
+          |                         ^
+      251 |
+      252 |       expect(global.window.__NANO_STATE__).toBeDefined();
+      253 |
+
+      at Object.document (tests/integration/ssr.test.js:250:25)
+
+  ● Server-Side Rendering › Hydrator › cleans up SSR state after hydration
+
+    The error below may be caused by using the wrong test environment, see https://jestjs.io/docs/configuration#testenvironment-string.
+    Consider using the "jsdom" test environment.
+
+    ReferenceError: document is not defined
+
+      33 | // Clean up after each test
+      34 | afterEach(() => {
+    > 35 |   document.body.innerHTML = '';
+         |   ^
+      36 |   // Clear any pending timers
+      37 |   jest.clearAllTimers();
+      38 | });
+
+      at Object.document (tests/setup.js:35:3)
+
+  ● Server-Side Rendering › Error Handling › handles component render errors gracefully
+
+    The error below may be caused by using the wrong test environment, see https://jestjs.io/docs/configuration#testenvironment-string.
+    Consider using the "jsdom" test environment.
+
+    ReferenceError: document is not defined
+
+      33 | // Clean up after each test
+      34 | afterEach(() => {
+    > 35 |   document.body.innerHTML = '';
+         |   ^
+      36 |   // Clear any pending timers
+      37 |   jest.clearAllTimers();
+      38 | });
+
+      at Object.document (tests/setup.js:35:3)
+
+  ● Server-Side Rendering › Error Handling › handles malformed templates
+
+    The error below may be caused by using the wrong test environment, see https://jestjs.io/docs/configuration#testenvironment-string.
+    Consider using the "jsdom" test environment.
+
+    ReferenceError: document is not defined
+
+      33 | // Clean up after each test
+      34 | afterEach(() => {
+    > 35 |   document.body.innerHTML = '';
+         |   ^
+      36 |   // Clear any pending timers
+      37 |   jest.clearAllTimers();
+      38 | });
+
+      at Object.document (tests/setup.js:35:3)
+
+  ● Server-Side Rendering › Error Handling › handles null/undefined components
+
+    The error below may be caused by using the wrong test environment, see https://jestjs.io/docs/configuration#testenvironment-string.
+    Consider using the "jsdom" test environment.
+
+    ReferenceError: document is not defined
+
+      33 | // Clean up after each test
+      34 | afterEach(() => {
+    > 35 |   document.body.innerHTML = '';
+         |   ^
+      36 |   // Clear any pending timers
+      37 |   jest.clearAllTimers();
+      38 | });
+
+      at Object.document (tests/setup.js:35:3)
+
+  ● Server-Side Rendering › Performance › caches rendered components
+
+    The error below may be caused by using the wrong test environment, see https://jestjs.io/docs/configuration#testenvironment-string.
+    Consider using the "jsdom" test environment.
+
+    ReferenceError: document is not defined
+
+      33 | // Clean up after each test
+      34 | afterEach(() => {
+    > 35 |   document.body.innerHTML = '';
+         |   ^
+      36 |   // Clear any pending timers
+      37 |   jest.clearAllTimers();
+      38 | });
+
+      at Object.document (tests/setup.js:35:3)
+
+
+<--- Last few GCs --->
+
+[2712:0x6aec000]    36332 ms: Scavenge (reduce) (interleaved) 1939.0 (2052.8) -> 1931.8 (2032.5) MB, pooled: 0 MB, 63.81 / 0.00 ms  (average mu = 0.315, current mu = 0.298) allocation failure; 
+[2712:0x6aec000]    36760 ms: Mark-Compact (reduce) 1934.0 (2033.3) -> 1856.1 (2008.5) MB, pooled: 0 MB, 313.56 / 0.00 ms  (+ 1212.2 ms in 0 steps since start of marking, biggest step 0.0 ms, walltime since start of marking 1655 ms) (average mu = 0.296, c
+
+<--- JS stacktrace --->
+
+FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+
+FAIL tests/dual-syntax.test.js
+  ● Test suite failed to run
+
+    A jest worker process (pid=2712) was terminated by another process: signal=SIGTERM, exitCode=null. Operating system logs may contain more information on why this occurred.
+
+      at ChildProcessWorker._onExit (node_modules/jest-worker/build/workers/ChildProcessWorker.js:370:23)
+
+PASS tests/unit/router.test.js
+  Router System
+    Route Matching
+      ✓ matches simple routes (15 ms)
+      ✓ matches parameterized routes (2 ms)
+      ✓ matches complex parameterized routes (5 ms)
+      ✓ returns null for non-matching routes (1 ms)
+    Navigation
+      ✓ navigates to simple route (10 ms)
+      ✓ navigates with parameters (11 ms)
+      ✓ handles query parameters (1 ms)
+      ✓ handles hash fragments (12 ms)
+      ✓ replace navigation (1 ms)
+    History Management
+      ✓ go forward and backward (1 ms)
+      ✓ go with delta (1 ms)
+    Route Guards
+      ✓ beforeEach guard can allow navigation (2 ms)
+      ✓ beforeEach guard can prevent navigation (2 ms)
+      ✓ beforeEach guard can redirect (81 ms)
+      ✓ afterEach guard runs after navigation (2 ms)
+    Named Routes
+      ✓ navigates to named route (12 ms)
+      ✓ navigates to named route with query (12 ms)
+      ✓ throws error for unknown named route (2 ms)
+    Dynamic Route Addition
+      ✓ adds single route
+      ✓ adds multiple routes (1 ms)
+      ✓ handles route with meta data (1 ms)
+    Current Route Helpers
+      ✓ getCurrentRoute returns current route
+      ✓ isCurrentRoute checks if route is current (1 ms)
+    Error Handling
+      ✓ handles navigation errors gracefully (2 ms)
+    Memory History
+      ✓ works with memory history
+
+PASS tests/unit/template.test.js
+  Template System
+    html template literals
+      ✓ creates simple template (12 ms)
+      ✓ handles interpolation (2 ms)
+      ✓ handles signal interpolation (2 ms)
+      ✓ handles attributes (3 ms)
+      ✓ handles event handlers (2 ms)
+      ✓ handles nested elements (3 ms)
+      ✓ handles mixed content (2 ms)
+    fragment
+      ✓ creates fragment from children (3 ms)
+      ✓ flattens nested arrays (3 ms)
+    template compilation edge cases
+      ✓ handles empty templates (1 ms)
+      ✓ handles self-closing tags (2 ms)
+      ✓ handles boolean attributes (1 ms)
+      ✓ handles complex expressions (1 ms)
+      ✓ handles arrays in interpolation (4 ms)
+    error handling
+      ✓ handles malformed HTML gracefully (4 ms)
+      ✓ handles invalid expressions (1 ms)
+

@@ -32,7 +32,10 @@ global.suppressConsoleWarnings = () => {
 
 // Clean up after each test
 afterEach(() => {
-  document.body.innerHTML = '';
+  // Only access document if it exists (not in Node/SSR environment)
+  if (typeof document !== 'undefined' && document.body) {
+    document.body.innerHTML = '';
+  }
   // Clear any pending timers
   jest.clearAllTimers();
 });

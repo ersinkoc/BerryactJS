@@ -6,6 +6,7 @@ export class DOMRenderer {
   constructor() {
     this.renderedComponents = new WeakMap();
     this.eventDelegation = new Map();
+    this.eventListeners = []; // Track event listeners for cleanup
     this.setupEventDelegation();
   }
 
@@ -13,14 +14,33 @@ export class DOMRenderer {
     const commonEvents = ['click', 'input', 'change', 'submit', 'keydown', 'keyup'];
 
     commonEvents.forEach((eventType) => {
-      document.addEventListener(
-        eventType,
-        (event) => {
-          this.handleDelegatedEvent(event);
-        },
-        true
-      );
+      const handler = (event) => {
+        this.handleDelegatedEvent(event);
+      };
+
+      document.addEventListener(eventType, handler, true);
+
+      // Track for cleanup
+      this.eventListeners.push({ type: eventType, handler });
     });
+  }
+
+  /**
+   * Dispose of the renderer and clean up all resources
+   * This removes all global event listeners and clears delegations
+   */
+  dispose() {
+    // Remove all global event listeners
+    this.eventListeners.forEach(({ type, handler }) => {
+      document.removeEventListener(type, handler, true);
+    });
+    this.eventListeners = [];
+
+    // Clear event delegation map
+    this.eventDelegation.clear();
+
+    // Clear rendered components
+    this.renderedComponents = new WeakMap();
   }
 
   handleDelegatedEvent(event) {
@@ -107,9 +127,16 @@ export class DOMRenderer {
     }
 
     if (isSignal(value)) {
-      effect(() => {
+      // Create effect and track cleanup function
+      const cleanup = effect(() => {
         this.setDOMProperty(element, key, value.value);
       });
+
+      // Store cleanup for later (when element is unmounted)
+      if (!element._berryactCleanups) {
+        element._berryactCleanups = [];
+      }
+      element._berryactCleanups.push(cleanup);
     } else {
       this.setDOMProperty(element, key, value);
     }
@@ -161,9 +188,15 @@ export class DOMRenderer {
         element.appendChild(child);
       } else if (isSignal(child)) {
         const textNode = document.createTextNode('');
-        effect(() => {
+
+        // Create effect and track cleanup
+        const cleanup = effect(() => {
           textNode.textContent = String(child.value);
         });
+
+        // Store cleanup on the text node
+        textNode._berryactCleanup = cleanup;
+
         element.appendChild(textNode);
       } else if (Array.isArray(child)) {
         this.updateChildren(element, child);
@@ -182,9 +215,15 @@ export class DOMRenderer {
   createTextNode(content) {
     if (isSignal(content)) {
       const textNode = document.createTextNode('');
-      effect(() => {
+
+      // Create effect and track cleanup
+      const cleanup = effect(() => {
         textNode.textContent = String(content.value);
       });
+
+      // Store cleanup on the text node
+      textNode._berryactCleanup = cleanup;
+
       return textNode;
     }
 
@@ -213,7 +252,44 @@ export class DOMRenderer {
 
   unmount(element) {
     if (element && element.parentNode) {
+      // Clean up all tracked effects on this element
+      if (element._berryactCleanups) {
+        element._berryactCleanups.forEach((cleanup) => {
+          if (typeof cleanup === 'function') {
+            cleanup();
+          }
+        });
+        element._berryactCleanups = [];
+      }
+
+      // Clean up effects on text nodes
+      if (element._berryactCleanup && typeof element._berryactCleanup === 'function') {
+        element._berryactCleanup();
+        element._berryactCleanup = null;
+      }
+
+      // Recursively clean up child elements
+      if (element.childNodes) {
+        Array.from(element.childNodes).forEach((child) => {
+          if (child._berryactCleanup && typeof child._berryactCleanup === 'function') {
+            child._berryactCleanup();
+            child._berryactCleanup = null;
+          }
+          if (child._berryactCleanups) {
+            child._berryactCleanups.forEach((cleanup) => {
+              if (typeof cleanup === 'function') {
+                cleanup();
+              }
+            });
+            child._berryactCleanups = [];
+          }
+        });
+      }
+
+      // Remove from event delegation map
       this.eventDelegation.delete(element);
+
+      // Remove from DOM
       element.parentNode.removeChild(element);
     }
   }

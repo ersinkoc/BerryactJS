@@ -93,7 +93,7 @@ export const BuildOptimizerPlugin = createPlugin({
       // Transform code
       transform(code, id) {
         // Remove development-only code
-        if (process.env.NODE_ENV === 'production') {
+        if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'production') {
           code = code.replace(
             /if\s*\(\s*process\.env\.NODE_ENV\s*!==?\s*['"]production['"]\s*\)\s*{[\s\S]*?}/g,
             ''
