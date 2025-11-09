@@ -72,13 +72,13 @@ export function createErrorHandler(options = {}) {
 export const errorHandler = createErrorHandler();
 
 export function warn(message, component) {
-  if (process.env.NODE_ENV !== 'production') {
+  if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production') {
     console.warn(`[Berryact Warning]: ${message}`, component || '');
   }
 }
 
 export function deprecate(message, version) {
-  if (process.env.NODE_ENV !== 'production') {
+  if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production') {
     console.warn(`[Berryact Deprecation]: ${message} (deprecated in v${version})`);
   }
 }

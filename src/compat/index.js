@@ -105,7 +105,7 @@ export function useImperativeHandle(ref, createHandle, deps) {
 
 export function useDebugValue(value, format) {
   // No-op in production, could be used by devtools
-  if (process.env.NODE_ENV !== 'production') {
+  if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production') {
     // Store debug value for devtools
     const currentComponent = getCurrentComponent();
     if (currentComponent) {

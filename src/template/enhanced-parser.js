@@ -40,7 +40,6 @@ export class TemplateParser {
 
     // Replace @ event handlers with data- attributes to preserve them during parsing
     template = template.replace(/@(\w+)=/g, 'data-event-$1=');
-    // DEBUG: console.log('Template after @ replacement:', template);
 
     // Parse HTML - handle SSR environment
     let doc, templateEl;
@@ -56,9 +55,24 @@ export class TemplateParser {
       templateEl = doc.querySelector('template');
     } else {
       // Fallback for pure Node.js environment
-      const { parseHTML } = require('node-html-parser');
-      const root = parseHTML(`<template>${template}</template>`);
-      templateEl = root.querySelector('template');
+      try {
+        const { parseHTML } = require('node-html-parser');
+        const root = parseHTML(`<template>${template}</template>`);
+        templateEl = root.querySelector('template');
+      } catch (error) {
+        // Fallback if node-html-parser is not available
+        // This can happen in some SSR environments where the package is optional
+        console.warn(
+          'node-html-parser not available in SSR environment, template parsing may be limited'
+        );
+        // Return a simplified template object
+        return {
+          type: 'template',
+          template,
+          values,
+          isEnhanced: false,
+        };
+      }
     }
 
     if (!templateEl) {
@@ -204,7 +218,6 @@ export class TemplateParser {
     }
 
     // Parse individual attributes
-    // DEBUG: console.log('Parsing attributes for', node.tagName, 'Attributes:', Array.from(node.attributes).map(a => `${a.name}="${a.value}"`));
     Array.from(node.attributes).forEach((attr) => {
       const name = attr.name;
       const value = attr.value;

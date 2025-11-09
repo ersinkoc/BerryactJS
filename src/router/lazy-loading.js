@@ -176,7 +176,8 @@ export class BundleAnalyzer {
   constructor() {
     this.chunks = new Map();
     this.loadTimes = new Map();
-    this.enabled = process.env.NODE_ENV === 'development';
+    this.enabled =
+      typeof process !== 'undefined' && process.env?.NODE_ENV === 'development';
   }
 
   trackChunkLoad(chunkName, startTime, endTime, size) {
