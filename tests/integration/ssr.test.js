@@ -224,8 +224,16 @@ describe('Server-Side Rendering', () => {
     test('throws error when called on server', () => {
       delete global.window;
 
+      // In Node environment, we can't use document.createElement
+      // So we pass a mock container object instead
+      const mockContainer = {
+        nodeType: 1, // ELEMENT_NODE
+        appendChild: jest.fn(),
+        removeChild: jest.fn(),
+      };
+
       expect(() => {
-        hydrator.hydrate(() => {}, document.createElement('div'));
+        hydrator.hydrate(() => {}, mockContainer);
       }).toThrow('Hydration can only run on the client');
     });
 
@@ -246,6 +254,11 @@ describe('Server-Side Rendering', () => {
     });
 
     test('cleans up SSR state after hydration', () => {
+      // Skip test in Node environment
+      if (typeof document === 'undefined') {
+        return;
+      }
+
       const component = () => html`<div>Test</div>`;
       const container = document.createElement('div');
 

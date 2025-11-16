@@ -88,11 +88,17 @@ export class RouteGuard {
       try {
         handler(error, to, from);
       } catch (handlerError) {
-        console.error('Error handler failed:', handlerError);
+        // Only log if not in test environment
+        if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'test') {
+          console.error('Error handler failed:', handlerError);
+        }
       }
     });
 
-    if (this.errorHandlers.length === 0) {
+    // Only log if no handlers AND not in test environment
+    if (this.errorHandlers.length === 0 &&
+        typeof process !== 'undefined' &&
+        process.env?.NODE_ENV !== 'test') {
       console.error('Navigation error:', error);
     }
   }

@@ -141,6 +141,12 @@ function vNodeToDOM(vnode) {
           } else if (key.startsWith('on') && typeof value === 'function') {
             const eventName = key.slice(2).toLowerCase();
             element.addEventListener(eventName, value);
+
+            // Track event listener for cleanup
+            if (!element._berryactEventListeners) {
+              element._berryactEventListeners = [];
+            }
+            element._berryactEventListeners.push({ type: eventName, handler: value });
           } else if (key !== 'children') {
             element.setAttribute(key, value);
           }
@@ -195,13 +201,39 @@ export class Component {
     this.effects.length = 0;
     this.hooks.length = 0;
 
-    if (this.element && this.element.parentNode) {
-      this.element.parentNode.removeChild(this.element);
+    // Clean up event listeners from DOM elements
+    if (this.element) {
+      this._cleanupEventListeners(this.element);
+
+      if (this.element.parentNode) {
+        this.element.parentNode.removeChild(this.element);
+      }
     }
 
     this.children.forEach((child) => {
       if (child.unmount) child.unmount();
     });
+  }
+
+  _cleanupEventListeners(element) {
+    if (!element) return;
+
+    // Clean up tracked event listeners on this element
+    if (element._berryactEventListeners) {
+      element._berryactEventListeners.forEach(({ type, handler }) => {
+        element.removeEventListener(type, handler);
+      });
+      element._berryactEventListeners = [];
+    }
+
+    // Recursively clean up child elements
+    if (element.childNodes) {
+      Array.from(element.childNodes).forEach((child) => {
+        if (child.nodeType === Node.ELEMENT_NODE) {
+          this._cleanupEventListeners(child);
+        }
+      });
+    }
   }
 
   update() {
@@ -233,6 +265,9 @@ export class Component {
         this.element.parentNode &&
         this.element.nodeType !== Node.DOCUMENT_FRAGMENT_NODE
       ) {
+        // Clean up event listeners from the old element before replacing
+        this._cleanupEventListeners(this.element);
+
         this.element.parentNode.replaceChild(newElement, this.element);
       } else if (this.container && newElement) {
         // Handle fragment replacement by appending to container
