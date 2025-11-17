@@ -213,7 +213,15 @@ export class TemplateParser {
     if (spreadIndex != null) {
       const spreadProps = values[parseInt(spreadIndex)];
       if (spreadProps && typeof spreadProps === 'object') {
-        Object.assign(props, spreadProps);
+        // Prevent prototype pollution by filtering dangerous keys
+        for (const key in spreadProps) {
+          if (spreadProps.hasOwnProperty(key) &&
+              key !== '__proto__' &&
+              key !== 'constructor' &&
+              key !== 'prototype') {
+            props[key] = spreadProps[key];
+          }
+        }
       }
     }
 
