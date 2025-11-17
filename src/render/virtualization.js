@@ -17,6 +17,9 @@ export class VirtualList {
     this.viewport = null;
     this.content = null;
 
+    // BUG-S5-005 FIX: Bind handleScroll once in constructor to prevent memory leak
+    this.handleScroll = this.handleScroll.bind(this);
+
     this.updateVisibleRange();
   }
 
@@ -79,7 +82,8 @@ export class VirtualList {
     this.viewport.appendChild(this.content);
     this.container.appendChild(this.viewport);
 
-    this.container.addEventListener('scroll', this.handleScroll.bind(this));
+    // BUG-S5-005 FIX: Use pre-bound handler (bound in constructor)
+    this.container.addEventListener('scroll', this.handleScroll);
     this.render();
   }
 
@@ -104,7 +108,10 @@ export class VirtualGrid {
 
     this.scrollTop = 0;
     this.scrollLeft = 0;
+
+    // BUG-S5-019 FIX: Prevent division by zero
     this.cols = Math.floor(this.containerWidth / (this.itemWidth + this.gap));
+    if (this.cols === 0) this.cols = 1;  // Ensure at least 1 column
     this.rows = Math.ceil(this.items.length / this.cols);
 
     this.visibleStartRow = 0;
@@ -116,11 +123,15 @@ export class VirtualGrid {
     this.viewport = null;
     this.content = null;
 
+    // BUG-S5-005 FIX: Bind handleScroll once in constructor to prevent memory leak
+    this.handleScroll = this.handleScroll.bind(this);
+
     this.updateVisibleRange();
   }
 
   setItems(items) {
     this.items = items;
+    // BUG-S5-019 FIX: cols is already ensured to be >= 1 in constructor
     this.rows = Math.ceil(items.length / this.cols);
     this.updateVisibleRange();
     this.render();
@@ -187,7 +198,8 @@ export class VirtualGrid {
     this.viewport.appendChild(this.content);
     this.container.appendChild(this.viewport);
 
-    this.container.addEventListener('scroll', this.handleScroll.bind(this));
+    // BUG-S5-005 FIX: Use pre-bound handler (bound in constructor)
+    this.container.addEventListener('scroll', this.handleScroll);
     this.render();
   }
 

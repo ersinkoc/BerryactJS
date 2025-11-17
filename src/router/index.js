@@ -95,14 +95,22 @@ export class Router {
     return this.push(to.path, options);
   }
 
+  // BUG-S5-012 FIX: Return promise for async navigation patterns
   push(path, options = {}) {
-    const url = this.resolveUrl(path);
+    return new Promise((resolve, reject) => {
+      try {
+        const url = this.resolveUrl(path);
 
-    if (options.replace) {
-      this.history.replace(url);
-    } else {
-      this.history.push(url);
-    }
+        if (options.replace) {
+          this.history.replace(url);
+        } else {
+          this.history.push(url);
+        }
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
+    });
   }
 
   replace(path) {
