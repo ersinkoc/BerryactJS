@@ -1,3 +1,5 @@
+import { computed } from '../core/signal.js';
+
 export class StoreModule {
   constructor(options = {}) {
     this.state = options.state || {};

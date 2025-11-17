@@ -114,7 +114,7 @@ export class Router {
   }
 
   replace(path) {
-    this.push(path, { replace: true });
+    return this.push(path, { replace: true });
   }
 
   go(delta) {

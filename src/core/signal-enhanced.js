@@ -38,7 +38,9 @@ export function getPerformanceMetrics() {
 // Signal factory with object pooling
 function createSignalObject() {
   if (signalPool.length > 0) {
-    return signalPool.pop();
+    const obj = signalPool.pop();
+    obj.disposed = false;  // Reset disposed flag when reusing from pool
+    return obj;
   }
 
   return {

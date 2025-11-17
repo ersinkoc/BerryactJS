@@ -41,8 +41,13 @@ function flushUpdates() {
   updateQueue.length = 0;
 
   queue.forEach((component) => {
-    if (component.isMounted && component.shouldUpdate()) {
-      component.update();
+    try {
+      if (component.isMounted && component.shouldUpdate()) {
+        component.update();
+      }
+    } catch (error) {
+      console.error('Component update error:', error, component);
+      // Continue processing other components even if one fails
     }
   });
 }

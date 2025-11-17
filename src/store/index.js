@@ -171,7 +171,7 @@ export class Store {
         if (immediate) {
           callback(newValue, oldValue);
         }
-      } else if (newValue !== oldValue || deep) {
+      } else if (newValue !== oldValue) {
         callback(newValue, oldValue);
         oldValue = deep ? JSON.parse(JSON.stringify(newValue)) : newValue;
       }
