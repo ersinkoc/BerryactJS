@@ -1,0 +1,63 @@
+BUG-ID,Severity,Category,File,Lines,Description,Impact,Status,Fix Complexity,Estimated Hours
+BUG-S5-001,CRITICAL,Memory Leak,component.js|signal-enhanced.js|reconciler.js,103-118|53-60|77-81,Dual-syntax test memory leak - multiple sources,Framework verification blocked,NOT FIXED,HIGH,16
+BUG-S5-002,CRITICAL,Security-XSS,dom.js|jsx-runtime.js|directives.js|i18n.js|performance.js,152-153|66-68|162-170|331-332|255-258,innerHTML without sanitization - 5 locations,Site compromise via XSS,NEW,MEDIUM,8
+BUG-S5-003,CRITICAL,Security-Auth,guards.js,120|129,Authentication tokens in localStorage,Account takeover risk,NEW,MEDIUM,12
+BUG-S5-004,CRITICAL,Memory Leak,directives.js,70|78|88|97|105,Directive event listeners never cleaned up,Memory leak with forms,NEW,MEDIUM,6
+BUG-S5-005,CRITICAL,Memory Leak,virtualization.js,82|190,VirtualList scroll handler bind() leak,Performance degradation,NEW,LOW,2
+BUG-S5-006,CRITICAL,Error Handling,service-worker.js,434-435|485-487|491-493|595-597,Unhandled promise rejections - 4 instances,Silent failures,NEW,LOW,4
+BUG-S5-007,CRITICAL,Memory Leak,portal.js,262-266|324,Modal backdrop listener never removed,Memory leak,NEW,LOW,2
+BUG-S5-008,CRITICAL,Security-Pollution,enhanced-parser.js,216,Prototype pollution via spread props,Object.prototype compromise,NEW,MEDIUM,4
+BUG-S5-009,CRITICAL,Memory Leak,reconciler.js,77-81,Effects created without cleanup tracking,Memory leak,NEW,MEDIUM,4
+BUG-S5-010,HIGH,Memory Leak,compiler.js,151|154,Template compiler event listeners leak,Memory accumulation,NEW,MEDIUM,6
+BUG-S5-011,HIGH,Memory Leak,portal.js,117-123,Portal active effect not disposed,Memory leak,NEW,LOW,2
+BUG-S5-012,HIGH,Functional-API,index.js (router),98-106,Missing return value in push(),Async navigation broken,NEW,LOW,1
+BUG-S5-013,HIGH,Functional-Loop,virtual-scroller.js,46-70,Infinite loop risk in visibleRange,Rendering issues,NEW,MEDIUM,4
+BUG-S5-014,HIGH,Functional-Array,index.js (store),244-265,Off-by-one error in history,Time-travel debugging broken,NEW,MEDIUM,3
+BUG-S5-015,HIGH,Functional-Async,reactive-forms.js,165-188,Race condition in validation,Inconsistent validation,NEW,MEDIUM,6
+BUG-S5-016,HIGH,Functional-Edge,patch.js,147-166,Missing null checks in patchChildren,Runtime crashes,NEW,LOW,2
+BUG-S5-017,HIGH,Functional-State,hooks.js,107-122,useEffect runs twice on mount,Duplicate side effects,NEW,MEDIUM,4
+BUG-S5-018,HIGH,Functional-Type,index.js (router),323-325,Route params undefined risk,Navigation failures,NEW,MEDIUM,3
+BUG-S5-019,HIGH,Functional-Math,virtualization.js,107-108,Division by zero in grid,Runtime error,NEW,LOW,1
+BUG-S5-020,HIGH,Functional-State,component.js,289-307,Component element never set,No initial render,NEW,MEDIUM,4
+BUG-S5-021,HIGH,Error Handling,module.js,119-131|29-46,Missing null checks on modules,Runtime errors,NEW,LOW,2
+BUG-S5-022,HIGH,Error Handling,scheduler.js,45-60,Errors swallowed in scheduler,Silent failures,NEW,MEDIUM,3
+BUG-S5-023,HIGH,Memory Leak,error-boundary.js,278|281,AsyncErrorBoundary listener leak,Memory leak,NEW,LOW,2
+BUG-S5-024,HIGH,Memory Leak,dom.js,21-25,Global event listeners never cleaned,Memory leak,NEW,MEDIUM,4
+BUG-S5-025,HIGH,Memory Leak,middleware.js,200-231,Progress middleware timeout leak,Timer accumulation,NEW,MEDIUM,3
+BUG-S5-026,HIGH,Memory Leak,signal-enhanced.js,301-324,Effect pooling reuses disposed objects,State corruption,NEW,HIGH,8
+BUG-S5-027,HIGH,Security-CSRF,Multiple,N/A,No CSRF protection,Cross-site attacks,NEW,HIGH,12
+BUG-S5-028,MEDIUM,Memory Leak,component.js,175-182,Component parent circular references,GC prevention,NEW,LOW,2
+BUG-S5-029,MEDIUM,Memory Leak,dom.js,130-139,DOM effect cleanups inconsistent,Memory leak,NEW,MEDIUM,4
+BUG-S5-030,MEDIUM,Memory Leak,performance.js,170-188,Debounce/throttle timers not clearable,Timer leaks,NEW,MEDIUM,4
+BUG-S5-031,MEDIUM,Memory Leak,suspense.js,125-132,Suspense subscriptions not cleaned,Memory leak,NEW,MEDIUM,4
+BUG-S5-032,MEDIUM,Memory Leak,error-boundary.js,62-67|152-175,ErrorBoundary signals not disposed,Memory leak,NEW,MEDIUM,4
+BUG-S5-033,MEDIUM,Security-Storage,guards.js|middleware.js|plugins.js,Multiple,Sensitive data in localStorage,Data exposure,NEW,HIGH,12
+BUG-S5-034,MEDIUM,Security-Storage,plugins.js,67-73|101-119,No encryption for persisted state,Unencrypted sensitive data,NEW,HIGH,8
+BUG-S5-035,MEDIUM,Security-Storage,plugins.js,104-122,Multi-tab sync without validation,State injection,NEW,MEDIUM,6
+BUG-S5-036,MEDIUM,Security-Storage,time-travel.js,219|227,Debug state in localStorage,Complete state exposure,NEW,LOW,2
+BUG-S5-037,MEDIUM,Security-Input,index.js (router),131-133,Route parameter injection,URL injection,NEW,MEDIUM,4
+BUG-S5-038,MEDIUM,Security-Input,index.js (router),392-397,Query param decoding without validation,Malformed data bypass,NEW,MEDIUM,3
+BUG-S5-039,MEDIUM,Security-ReDoS,service-worker.js,534,Unsafe regex pattern matching,Performance DoS,NEW,LOW,2
+BUG-S5-040,MEDIUM,Security-ReDoS,index.js (router),337-349,Route regex without escaping,Performance issues,NEW,MEDIUM,4
+BUG-S5-041,MEDIUM,Security-Template,enhanced-parser.js,44-76,HTML parsing without encoding,HTML injection,NEW,MEDIUM,4
+BUG-S5-042,MEDIUM,Error Handling,plugins.js,70|107|208|214,JSON.parse without try-catch,App crashes,NEW,LOW,2
+BUG-S5-043,MEDIUM,Error Handling,index.js (store),176|253|277,Deep clone loses functions,Silent data loss,NEW,LOW,2
+BUG-S5-044,MEDIUM,Security-Forms,index.js (forms),624-625|651,Passwords in reactive state,Credential exposure risk,NEW,MEDIUM,4
+BUG-S5-045,MEDIUM,Functional-State,signal-enhanced.js,196-210,Computed signal duplicates storage,Memory waste,NEW,MEDIUM,4
+BUG-S5-046,MEDIUM,Functional-Edge,parser.js,62-86,Array bounds in parseTextNode,NaN from parseInt,NEW,LOW,2
+BUG-S5-047,MEDIUM,Functional-API,index.js (store),86-117,Inconsistent dispatch return,API contract broken,NEW,LOW,1
+BUG-S5-048,MEDIUM,Functional-Null,reconciler.js,288-292,Null dereference in commitDeletion,Runtime errors,NEW,MEDIUM,3
+BUG-S5-049,MEDIUM,Functional-State,signal-enhanced.js,58-59,Disposed flag set incorrectly,State inconsistency,NEW,LOW,1
+BUG-S5-050,MEDIUM,Functional-Input,index.js (router),380-401,Missing validation in parseQuery,Malformed URLs pass,NEW,LOW,2
+BUG-S5-051,MEDIUM,Functional-Cleanup,reactive-forms.js,293-331,Incomplete FormField disposal,Side effects after disposal,NEW,MEDIUM,3
+BUG-S5-052,MEDIUM,Functional-Loop,virtualization.js,152-168,Break only exits inner loop,Out-of-bounds rendering,NEW,LOW,2
+BUG-S5-053,MEDIUM,Functional-State,signal-enhanced.js,53-60,Signal pool sets disposed=true,Reused signals broken,NEW,LOW,1
+BUG-S5-054,LOW,Code Quality,dom.js,84-86,Redundant null check,Code smell,NEW,LOW,1
+BUG-S5-055,LOW,Error Handling,signal.js,154-159,Missing function type validation,Unclear errors,NEW,LOW,1
+BUG-S5-056,LOW,Functional-Algorithm,patch.js,224-230,Stable sort not guaranteed,Rare rendering issue,NEW,LOW,1
+BUG-S5-057,LOW,Error Handling,parser.js,24-27,Missing DOM validation,Error caught upstream,NEW,LOW,1
+BUG-S5-058,LOW,Performance,index.js (store),71|253,Shallow copy for nested objects,Nested state bugs,NEW,LOW,2
+BUG-S5-059,LOW,Security-Logging,plugins.js,31-33|54-55,State exposed in console,Sensitive data logging,NEW,LOW,1
+BUG-S5-060,LOW,Code Quality,Multiple,Multiple,47 unused variable warnings,Code cleanliness,NEW,LOW,4
+BUG-S5-061,LOW,Code Quality,Multiple,Multiple,100 console statements,Production noise,NEW,MEDIUM,8
+BUG-S5-062,LOW,Code Quality,Multiple,Multiple,35 missing JSDoc entries,Documentation gaps,NEW,LOW,6

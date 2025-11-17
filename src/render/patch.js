@@ -144,7 +144,12 @@ function setProp(element, key, value, oldValue) {
   }
 }
 
+// BUG-S5-016 FIX: Handle undefined children arrays
 function patchChildren(oldChildren, newChildren, container) {
+  // Defensive: ensure children are arrays
+  if (!oldChildren) oldChildren = [];
+  if (!newChildren) newChildren = [];
+
   const maxLength = Math.max(oldChildren.length, newChildren.length);
 
   for (let i = 0; i < maxLength; i++) {

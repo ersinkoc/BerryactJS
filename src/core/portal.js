@@ -258,12 +258,15 @@ export function createModal(content, options = {}) {
       z-index: 9998;
     `;
 
+    // BUG-S5-007 FIX: Store backdrop click handler for cleanup
+    let backdropClickHandler = null;
     if (closeOnBackdrop) {
-      backdropElement.addEventListener('click', (e) => {
+      backdropClickHandler = (e) => {
         if (e.target === backdropElement) {
           close();
         }
-      });
+      };
+      backdropElement.addEventListener('click', backdropClickHandler);
     }
 
     document.body.appendChild(backdropElement);
@@ -320,8 +323,14 @@ export function createModal(content, options = {}) {
 
     portal.dispose();
 
-    if (backdropElement && backdropElement.parentNode) {
-      backdropElement.parentNode.removeChild(backdropElement);
+    // BUG-S5-007 FIX: Remove backdrop click listener before removing element
+    if (backdropElement) {
+      if (backdropClickHandler) {
+        backdropElement.removeEventListener('click', backdropClickHandler);
+      }
+      if (backdropElement.parentNode) {
+        backdropElement.parentNode.removeChild(backdropElement);
+      }
     }
 
     if (closeOnEscape) {
