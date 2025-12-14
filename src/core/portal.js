@@ -243,6 +243,8 @@ export function createModal(content, options = {}) {
 
   let portal;
   let backdropElement;
+  // BUG-S5-007 FIX: Declare backdropClickHandler in outer scope so close() can access it
+  let backdropClickHandler = null;
 
   // Create backdrop if needed
   if (backdrop) {
@@ -258,8 +260,6 @@ export function createModal(content, options = {}) {
       z-index: 9998;
     `;
 
-    // BUG-S5-007 FIX: Store backdrop click handler for cleanup
-    let backdropClickHandler = null;
     if (closeOnBackdrop) {
       backdropClickHandler = (e) => {
         if (e.target === backdropElement) {
